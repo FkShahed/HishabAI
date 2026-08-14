@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -204,7 +204,11 @@ export default function AuthScreen() {
         {/* Header Hero */}
         <View style={styles.hero}>
           <View style={[styles.iconCircle, { backgroundColor: colors.bg.secondary }]}>
-            <Ionicons name="person-circle-outline" size={60} color={colors.accent.primary} />
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={styles.logoImage}
+              resizeMode="cover"
+            />
           </View>
           <Text variant="xl" weight="bold" align="center" color={colors.text.primary} style={{ marginTop: Spacing.md }}>
             {mode === 'signin' ? 'Welcome Back' : 'Save & Sync Your Data'}
@@ -346,9 +350,20 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
   },
   toggleRow: {
     flexDirection: 'row',

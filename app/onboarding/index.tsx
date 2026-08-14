@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useUIStore } from '../../src/store';
 import { Text } from '../../src/components/ui/Text';
@@ -22,7 +22,11 @@ export default function OnboardingScreen() {
         {/* Hero Section */}
         <View style={styles.hero}>
           <View style={styles.iconContainer}>
-            <Ionicons name="sparkles" size={48} color={Colors.accent.primary} />
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={styles.logoImage}
+              resizeMode="cover"
+            />
           </View>
           <Text variant="hero" weight="extrabold" align="center" style={styles.title}>
             HisabAI
@@ -98,11 +102,22 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 96,
     height: 96,
-    borderRadius: 48,
+    borderRadius: 24,
     backgroundColor: Colors.bg.elevated,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.lg,
+    overflow: 'hidden',
+    shadowColor: Colors.accent.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  logoImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 24,
   },
   title: {
     color: Colors.accent.primary,

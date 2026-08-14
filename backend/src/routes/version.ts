@@ -1,8 +1,15 @@
 import { Router, Request, Response } from 'express';
+import path from 'path';
 import { VersionService } from '../services/VersionService';
 
 const router = Router();
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
+
+// ─── 0. Public API Endpoint: App Icon Image ──────────────────────────────────
+router.get('/icon', (req: Request, res: Response) => {
+  const iconPath = path.resolve(__dirname, '../../../assets/images/icon.png');
+  res.sendFile(iconPath);
+});
 
 // ─── 1. Public API Endpoint: Get latest version info ──────────────────────────
 router.get('/latest', (req: Request, res: Response) => {
@@ -573,7 +580,7 @@ export function renderAdminPage(): string {
   <!-- Header -->
   <header class="header">
     <div class="brand">
-      <div class="brand-logo">🚀</div>
+      <img src="/api/version/icon" alt="HisabAI Logo" style="width: 48px; height: 48px; border-radius: 14px; object-fit: cover; box-shadow: 0 8px 20px var(--accent-glow);">
       <div class="brand-title">
         <h1>HisabAI Release Manager</h1>
         <p>OTA & APK Version Control Dashboard</p>
@@ -1004,7 +1011,7 @@ export function renderDownloadPage(): string {
 <body>
 
 <div class="card">
-  <div class="logo-badge">💎</div>
+  <img src="/api/version/icon" alt="HisabAI Logo" style="width: 76px; height: 76px; border-radius: 22px; object-fit: cover; margin: 0 auto 20px; display: block; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);">
   <h1>HisabAI for Android</h1>
   <p class="tagline">Smart AI Voice & OCR Expense Tracker</p>
 
