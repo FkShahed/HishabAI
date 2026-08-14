@@ -28,7 +28,7 @@ export class VersionService {
   }
 
   /**
-   * Get current latest app version configuration
+   * Get current latest active app version configuration
    */
   public static getLatestVersion(): AppVersionInfo {
     this.ensureDataDir();
@@ -40,13 +40,44 @@ export class VersionService {
     } catch (error) {
       console.error('[VersionService] Error reading version-info.json:', error);
     }
-    // If file doesn't exist, create it with default
     this.saveVersion(DEFAULT_VERSION_INFO);
     return DEFAULT_VERSION_INFO;
   }
 
   /**
-   * Update version info and append to history log
+   * Get all version releases history
+   */
+  public static getHistory(): VersionHistoryItem[] {
+    this.ensureDataDir();
+    try {
+      if (fs.existsSync(HISTORY_FILE)) {
+        const raw = fs.readFileSync(HISTORY_FILE, 'utf-8');
+        const list: VersionHistoryItem[] = JSON.parse(raw);
+        return list;
+      }
+    } catch (error) {
+      console.error('[VersionService] Error reading version-history.json:', error);
+    }
+    // If history is empty, populate with current version
+    const current = this.getLatestVersion();
+    const initialItem: VersionHistoryItem = {
+      ...current,
+      id: uuidv4(),
+    };
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify([initialItem], null, 2), 'utf-8');
+    return [initialItem];
+  }
+
+  /**
+   * Get single release by ID
+   */
+  public static getReleaseById(id: string): VersionHistoryItem | null {
+    const history = this.getHistory();
+    return history.find((h) => h.id === id) || null;
+  }
+
+  /**
+   * Save / Publish Active Version
    */
   public static saveVersion(info: Partial<AppVersionInfo>): AppVersionInfo {
     this.ensureDataDir();
@@ -61,46 +92,153 @@ export class VersionService {
     };
 
     fs.writeFileSync(VERSION_FILE, JSON.stringify(updated, null, 2), 'utf-8');
-
-    // Also append to history
     this.appendHistory(updated);
-
     return updated;
   }
 
   /**
-   * Get version history list
+   * Create a new Release entry
    */
-  public static getHistory(): VersionHistoryItem[] {
+  public static createRelease(data: Partial<AppVersionInfo>, setAsActive: boolean = true): VersionHistoryItem {
     this.ensureDataDir();
-    try {
-      if (fs.existsSync(HISTORY_FILE)) {
-        const raw = fs.readFileSync(HISTORY_FILE, 'utf-8');
-        return JSON.parse(raw);
-      }
-    } catch (error) {
-      console.error('[VersionService] Error reading version-history.json:', error);
+    const newItem: VersionHistoryItem = {
+      version: String(data.version || '1.0.0').trim(),
+      buildNumber: Number(data.buildNumber) || 1,
+      apkUrl: data.apkUrl ? String(data.apkUrl).trim() : '',
+      releaseNotes: data.releaseNotes ? String(data.releaseNotes).trim() : '',
+      forceUpdate: Boolean(data.forceUpdate),
+      minVersion: data.minVersion ? String(data.minVersion).trim() : '1.0.0',
+      releaseDate: data.releaseDate || new Date().toISOString().split('T')[0],
+      fileSize: data.fileSize ? String(data.fileSize).trim() : '32.5 MB',
+      updatedAt: new Date().toISOString(),
+      id: uuidv4(),
+    };
+
+    const history = this.getHistory();
+    const filtered = history.filter(
+      (h) => !(h.version === newItem.version && h.buildNumber === newItem.buildNumber)
+    );
+    filtered.unshift(newItem);
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(filtered.slice(0, 50), null, 2), 'utf-8');
+
+    if (setAsActive) {
+      const { id, ...versionInfo } = newItem;
+      fs.writeFileSync(VERSION_FILE, JSON.stringify(versionInfo, null, 2), 'utf-8');
     }
-    return [];
+
+    return newItem;
+  }
+
+  /**
+   * Update an existing release in history by ID
+   */
+  public static updateRelease(id: string, updatedData: Partial<AppVersionInfo>, setAsActive: boolean = false): VersionHistoryItem {
+    this.ensureDataDir();
+    const history = this.getHistory();
+    const index = history.findIndex((h) => h.id === id);
+
+    if (index === -1) {
+      throw new Error(`Release with ID "${id}" not found`);
+    }
+
+    const existing = history[index];
+    const updatedItem: VersionHistoryItem = {
+      ...existing,
+      ...updatedData,
+      updatedAt: new Date().toISOString(),
+      id: existing.id,
+    };
+
+    history[index] = updatedItem;
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2), 'utf-8');
+
+    // If marked active or if this was the currently active version
+    const active = this.getLatestVersion();
+    if (setAsActive || (active.version === existing.version && active.buildNumber === existing.buildNumber)) {
+      const { id: _, ...versionInfo } = updatedItem;
+      fs.writeFileSync(VERSION_FILE, JSON.stringify(versionInfo, null, 2), 'utf-8');
+    }
+
+    return updatedItem;
+  }
+
+  /**
+   * Delete a release from history
+   */
+  public static deleteRelease(id: string): { success: boolean; deleted: VersionHistoryItem } {
+    this.ensureDataDir();
+    const history = this.getHistory();
+    const index = history.findIndex((h) => h.id === id);
+
+    if (index === -1) {
+      throw new Error(`Release with ID "${id}" not found`);
+    }
+
+    if (history.length <= 1) {
+      throw new Error('Cannot delete the only release. At least one version must exist.');
+    }
+
+    const deleted = history.splice(index, 1)[0];
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2), 'utf-8');
+
+    // If the deleted version was the active version, activate the most recent remaining version
+    const active = this.getLatestVersion();
+    if (active.version === deleted.version && active.buildNumber === deleted.buildNumber) {
+      const nextActive = history[0];
+      const { id: _, ...versionInfo } = nextActive;
+      fs.writeFileSync(VERSION_FILE, JSON.stringify(versionInfo, null, 2), 'utf-8');
+    }
+
+    return { success: true, deleted };
+  }
+
+  /**
+   * Activate / Set Live a specific release
+   */
+  public static activateRelease(id: string): AppVersionInfo {
+    this.ensureDataDir();
+    const history = this.getHistory();
+    const target = history.find((h) => h.id === id);
+
+    if (!target) {
+      throw new Error(`Release with ID "${id}" not found`);
+    }
+
+    const { id: _, ...versionInfo } = target;
+    const updated: AppVersionInfo = {
+      ...versionInfo,
+      updatedAt: new Date().toISOString(),
+    };
+
+    fs.writeFileSync(VERSION_FILE, JSON.stringify(updated, null, 2), 'utf-8');
+    return updated;
   }
 
   private static appendHistory(versionInfo: AppVersionInfo) {
     try {
       const history = this.getHistory();
-      const newItem: VersionHistoryItem = {
-        ...versionInfo,
-        id: uuidv4(),
-      };
-      
-      // Avoid immediate duplicate version & buildNumber in history
-      const filtered = history.filter(
-        (h) => !(h.version === newItem.version && h.buildNumber === newItem.buildNumber)
+      const existing = history.find(
+        (h) => h.version === versionInfo.version && h.buildNumber === versionInfo.buildNumber
       );
-      filtered.unshift(newItem); // newest first
 
-      // Keep up to 20 history items
-      const trimmed = filtered.slice(0, 20);
-      fs.writeFileSync(HISTORY_FILE, JSON.stringify(trimmed, null, 2), 'utf-8');
+      if (existing) {
+        // Update existing item in history
+        existing.apkUrl = versionInfo.apkUrl;
+        existing.releaseNotes = versionInfo.releaseNotes;
+        existing.forceUpdate = versionInfo.forceUpdate;
+        existing.minVersion = versionInfo.minVersion;
+        existing.fileSize = versionInfo.fileSize;
+        existing.releaseDate = versionInfo.releaseDate;
+        existing.updatedAt = new Date().toISOString();
+      } else {
+        const newItem: VersionHistoryItem = {
+          ...versionInfo,
+          id: uuidv4(),
+        };
+        history.unshift(newItem);
+      }
+
+      fs.writeFileSync(HISTORY_FILE, JSON.stringify(history.slice(0, 50), null, 2), 'utf-8');
     } catch (e) {
       console.error('[VersionService] Failed to append history:', e);
     }

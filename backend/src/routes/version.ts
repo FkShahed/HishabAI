@@ -11,7 +11,7 @@ router.get('/icon', (req: Request, res: Response) => {
   res.sendFile(iconPath);
 });
 
-// ─── 1. Public API Endpoint: Get latest version info ──────────────────────────
+// ─── 1. Public API Endpoint: Get latest active version ───────────────────────
 router.get('/latest', (req: Request, res: Response) => {
   try {
     const versionInfo = VersionService.getLatestVersion();
@@ -46,7 +46,76 @@ router.get('/download', (req: Request, res: Response) => {
   }
 });
 
-// ─── 3. Admin API Endpoint: Update version ────────────────────────────────────
+// ─── 3. CRUD API: Read All Releases History ───────────────────────────────────
+router.get('/history', (req: Request, res: Response) => {
+  try {
+    const history = VersionService.getHistory();
+    const active = VersionService.getLatestVersion();
+    res.json({ success: true, data: history, active });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── 4. CRUD API: Read Single Release by ID ───────────────────────────────────
+router.get('/release/:id', (req: Request, res: Response) => {
+  try {
+    const release = VersionService.getReleaseById(req.params.id);
+    if (!release) {
+      return res.status(404).json({ success: false, error: 'Release not found' });
+    }
+    res.json({ success: true, data: release });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── 5. CRUD API: Create New Release ──────────────────────────────────────────
+router.post('/create', (req: Request, res: Response) => {
+  try {
+    const { 
+      version, 
+      buildNumber, 
+      apkUrl, 
+      releaseNotes, 
+      forceUpdate, 
+      minVersion, 
+      releaseDate, 
+      fileSize,
+      setAsActive = true,
+      adminKey 
+    } = req.body;
+
+    if (adminKey && adminKey !== ADMIN_SECRET) {
+      return res.status(401).json({ success: false, error: 'Invalid admin secret key' });
+    }
+
+    if (!version) {
+      return res.status(400).json({ success: false, error: 'Version string is required (e.g. 1.0.1)' });
+    }
+
+    const created = VersionService.createRelease({
+      version: String(version).trim(),
+      buildNumber: Number(buildNumber) || 1,
+      apkUrl: apkUrl ? String(apkUrl).trim() : '',
+      releaseNotes: releaseNotes ? String(releaseNotes).trim() : '',
+      forceUpdate: Boolean(forceUpdate),
+      minVersion: minVersion ? String(minVersion).trim() : '1.0.0',
+      releaseDate: releaseDate || new Date().toISOString().split('T')[0],
+      fileSize: fileSize ? String(fileSize).trim() : '32.5 MB',
+    }, Boolean(setAsActive));
+
+    res.json({
+      success: true,
+      message: 'New release created successfully',
+      data: created,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── 6. CRUD API: Update Active Version or Create ────────────────────────────
 router.post('/update', (req: Request, res: Response) => {
   try {
     const { 
@@ -61,7 +130,6 @@ router.post('/update', (req: Request, res: Response) => {
       adminKey 
     } = req.body;
 
-    // Optional admin key check if configured
     if (adminKey && adminKey !== ADMIN_SECRET) {
       return res.status(401).json({ success: false, error: 'Invalid admin secret key' });
     }
@@ -78,7 +146,7 @@ router.post('/update', (req: Request, res: Response) => {
       forceUpdate: Boolean(forceUpdate),
       minVersion: minVersion ? String(minVersion).trim() : '1.0.0',
       releaseDate: releaseDate || new Date().toISOString().split('T')[0],
-      fileSize: fileSize ? String(fileSize).trim() : undefined,
+      fileSize: fileSize ? String(fileSize).trim() : '32.5 MB',
     });
 
     res.json({
@@ -91,17 +159,91 @@ router.post('/update', (req: Request, res: Response) => {
   }
 });
 
-// ─── 4. Admin API Endpoint: Get version history ───────────────────────────────
-router.get('/history', (req: Request, res: Response) => {
+// ─── 7. CRUD API: Update Specific Release in History ─────────────────────────
+router.put('/release/:id', (req: Request, res: Response) => {
   try {
-    const history = VersionService.getHistory();
-    res.json({ success: true, data: history });
+    const { id } = req.params;
+    const { 
+      version, 
+      buildNumber, 
+      apkUrl, 
+      releaseNotes, 
+      forceUpdate, 
+      minVersion, 
+      releaseDate, 
+      fileSize,
+      setAsActive = false,
+      adminKey 
+    } = req.body;
+
+    if (adminKey && adminKey !== ADMIN_SECRET) {
+      return res.status(401).json({ success: false, error: 'Invalid admin secret key' });
+    }
+
+    const updated = VersionService.updateRelease(id, {
+      version: version ? String(version).trim() : undefined,
+      buildNumber: buildNumber !== undefined ? Number(buildNumber) : undefined,
+      apkUrl: apkUrl !== undefined ? String(apkUrl).trim() : undefined,
+      releaseNotes: releaseNotes !== undefined ? String(releaseNotes).trim() : undefined,
+      forceUpdate: forceUpdate !== undefined ? Boolean(forceUpdate) : undefined,
+      minVersion: minVersion !== undefined ? String(minVersion).trim() : undefined,
+      releaseDate: releaseDate !== undefined ? String(releaseDate).trim() : undefined,
+      fileSize: fileSize !== undefined ? String(fileSize).trim() : undefined,
+    }, Boolean(setAsActive));
+
+    res.json({
+      success: true,
+      message: 'Release updated successfully',
+      data: updated,
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// ─── 5. HTML Web Page: Admin Dashboard (/admin & /admin/version) ───────────────
+// ─── 8. CRUD API: Delete Release from History ────────────────────────────────
+router.delete('/release/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { adminKey } = req.body;
+
+    if (adminKey && adminKey !== ADMIN_SECRET) {
+      return res.status(401).json({ success: false, error: 'Invalid admin secret key' });
+    }
+
+    const result = VersionService.deleteRelease(id);
+    res.json({
+      success: true,
+      message: `Release v${result.deleted.version} deleted successfully`,
+      data: result.deleted,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── 9. CRUD API: Activate / Make Live a Release ──────────────────────────────
+router.post('/activate/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { adminKey } = req.body;
+
+    if (adminKey && adminKey !== ADMIN_SECRET) {
+      return res.status(401).json({ success: false, error: 'Invalid admin secret key' });
+    }
+
+    const activated = VersionService.activateRelease(id);
+    res.json({
+      success: true,
+      message: `Version v${activated.version} is now LIVE for all users!`,
+      data: activated,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── 10. Admin Web Dashboard (/admin) with Full CRUD UI ───────────────────────
 export function renderAdminPage(): string {
   const current = VersionService.getLatestVersion();
   const history = VersionService.getHistory();
@@ -118,7 +260,7 @@ export function renderAdminPage(): string {
   <style>
     :root {
       --bg-main: #090D16;
-      --bg-card: rgba(18, 24, 38, 0.75);
+      --bg-card: rgba(18, 24, 38, 0.85);
       --bg-input: #0F1626;
       --border-subtle: rgba(255, 255, 255, 0.08);
       --border-focus: #6366F1;
@@ -146,7 +288,7 @@ export function renderAdminPage(): string {
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 0 auto;
       padding: 32px 20px 80px;
     }
@@ -167,17 +309,6 @@ export function renderAdminPage(): string {
       align-items: center;
       gap: 14px;
     }
-    .brand-logo {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #4F46E5, #10B981);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 8px 20px var(--accent-glow);
-    }
     .brand-title h1 {
       font-size: 22px;
       font-weight: 800;
@@ -194,6 +325,7 @@ export function renderAdminPage(): string {
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     /* Top Stats Grid */
@@ -260,6 +392,11 @@ export function renderAdminPage(): string {
       color: #FB7185;
       border: 1px solid rgba(244, 63, 94, 0.3);
     }
+    .badge-dim {
+      background: rgba(255, 255, 255, 0.05);
+      color: #94A3B8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
     /* Main Grid Layout */
     .main-grid {
@@ -285,7 +422,7 @@ export function renderAdminPage(): string {
       margin-bottom: 6px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
     }
     .card-desc {
       font-size: 13px;
@@ -295,7 +432,7 @@ export function renderAdminPage(): string {
 
     /* Form Styles */
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
     .form-row {
       display: grid;
@@ -341,7 +478,7 @@ export function renderAdminPage(): string {
     }
     textarea {
       resize: vertical;
-      min-height: 110px;
+      min-height: 100px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
     }
@@ -406,7 +543,7 @@ export function renderAdminPage(): string {
       font-family: inherit;
       font-size: 14px;
       font-weight: 700;
-      padding: 12px 22px;
+      padding: 11px 20px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
@@ -417,7 +554,6 @@ export function renderAdminPage(): string {
       background: linear-gradient(135deg, #4F46E5, #6366F1);
       color: white;
       box-shadow: 0 4px 16px var(--accent-glow);
-      width: 100%;
     }
     .btn-primary:hover {
       background: linear-gradient(135deg, #4338CA, #4F46E5);
@@ -435,6 +571,20 @@ export function renderAdminPage(): string {
       background: linear-gradient(135deg, #059669, #10B981);
       color: white;
       box-shadow: 0 4px 16px var(--emerald-glow);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover {
+      background: #EF4444;
+      color: white;
+    }
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 8px;
     }
 
     /* Mobile Preview Mockup */
@@ -460,18 +610,6 @@ export function renderAdminPage(): string {
       border-radius: 20px;
       padding: 20px;
       text-align: center;
-    }
-    .preview-badge-anim {
-      width: 52px;
-      height: 52px;
-      background: linear-gradient(135deg, #6366F1, #10B981);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      margin: 0 auto 12px;
-      box-shadow: 0 6px 18px var(--accent-glow);
     }
     .preview-title {
       font-size: 16px;
@@ -527,19 +665,26 @@ export function renderAdminPage(): string {
       display: block;
     }
 
-    /* Changelog Table */
+    /* CRUD Table */
     .history-card {
       margin-top: 36px;
+    }
+    .table-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
     .history-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
-      margin-top: 16px;
     }
     .history-table th {
       text-align: left;
-      padding: 12px;
+      padding: 14px 12px;
       color: var(--text-muted);
       border-bottom: 1px solid var(--border-subtle);
       font-weight: 600;
@@ -547,9 +692,64 @@ export function renderAdminPage(): string {
     .history-table td {
       padding: 14px 12px;
       border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
     }
     .history-table tr:hover {
       background: rgba(255,255,255,0.02);
+    }
+    .action-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Modal dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    .modal-box {
+      background: #111827;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      max-width: 580px;
+      width: 100%;
+      padding: 32px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      animation: zoomIn 0.2s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes zoomIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
     }
 
     /* Toast */
@@ -565,7 +765,7 @@ export function renderAdminPage(): string {
       font-size: 14px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       display: none;
-      z-index: 1000;
+      z-index: 3000;
       animation: slideUp 0.3s ease;
     }
     @keyframes slideUp {
@@ -583,10 +783,13 @@ export function renderAdminPage(): string {
       <img src="/api/version/icon" alt="HisabAI Logo" style="width: 48px; height: 48px; border-radius: 14px; object-fit: cover; box-shadow: 0 8px 20px var(--accent-glow);">
       <div class="brand-title">
         <h1>HisabAI Release Manager</h1>
-        <p>OTA & APK Version Control Dashboard</p>
+        <p>Full CRUD App Version Control & OTA Dashboard</p>
       </div>
     </div>
     <div class="header-actions">
+      <button onclick="openCreateModal()" class="btn btn-success">
+        ➕ New Release
+      </button>
       <a href="/download" target="_blank" class="btn btn-secondary">
         🌐 Public Download Page
       </a>
@@ -599,11 +802,11 @@ export function renderAdminPage(): string {
   <!-- Top Stats -->
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-label">Current Version</div>
+      <div class="stat-label">Live Active Version</div>
       <div class="stat-value">
         <span id="stat-version">v${current.version}</span>
         <span class="badge ${current.forceUpdate ? 'badge-rose' : 'badge-emerald'}">
-          ${current.forceUpdate ? 'Mandatory Update' : 'Live'}
+          ${current.forceUpdate ? 'Mandatory' : 'Live ✓'}
         </span>
       </div>
       <div class="stat-sub">Build Number: <strong id="stat-build">#${current.buildNumber}</strong></div>
@@ -616,9 +819,9 @@ export function renderAdminPage(): string {
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">APK Download Status</div>
+      <div class="stat-label">Live APK Status</div>
       <div class="stat-value">
-        ${current.apkUrl ? '<span class="badge badge-emerald">Ready ✓</span>' : '<span class="badge badge-amber">No URL</span>'}
+        ${current.apkUrl ? '<span class="badge badge-emerald">Configured ✓</span>' : '<span class="badge badge-amber">No APK Link</span>'}
       </div>
       <div class="stat-sub">
         ${current.fileSize ? `Size: ${current.fileSize}` : 'Size: Not specified'}
@@ -628,10 +831,13 @@ export function renderAdminPage(): string {
 
   <!-- Main Layout -->
   <div class="main-grid">
-    <!-- Form Card -->
+    <!-- Active Version Editor Card -->
     <div class="card">
-      <h2 class="card-title">📝 Publish New Version</h2>
-      <p class="card-desc">Enter the latest Expo EAS build APK URL or direct link. Mobile app users will receive this update notification in Settings.</p>
+      <div class="card-title">
+        <span>⚡ Quick Update Live Version</span>
+        <span class="badge badge-emerald">Live</span>
+      </div>
+      <p class="card-desc">Instantly update the active release served to HisabAI mobile app users.</p>
 
       <form id="version-form">
         <div class="form-row">
@@ -646,7 +852,7 @@ export function renderAdminPage(): string {
         </div>
 
         <div class="form-group">
-          <label for="apkUrl">APK Download URL <span class="hint">(Expo EAS build link or direct APK link)</span></label>
+          <label for="apkUrl">APK Download Link <span class="hint">(Expo EAS build URL or direct link)</span></label>
           <div style="display: flex; gap: 8px;">
             <input type="url" id="apkUrl" name="apkUrl" value="${current.apkUrl || ''}" placeholder="https://expo.dev/artifacts/eas/... or https://..." style="flex:1;" oninput="updateLivePreview()">
             <button type="button" class="btn btn-secondary" onclick="testApkLink()" style="padding: 0 16px;">Test</button>
@@ -655,11 +861,11 @@ export function renderAdminPage(): string {
 
         <div class="form-row">
           <div class="form-group">
-            <label for="fileSize">File Size <span class="hint">(optional, e.g. 34.5 MB)</span></label>
+            <label for="fileSize">File Size <span class="hint">(e.g. 32.5 MB)</span></label>
             <input type="text" id="fileSize" name="fileSize" value="${current.fileSize || '32.5 MB'}" placeholder="32.5 MB" oninput="updateLivePreview()">
           </div>
           <div class="form-group">
-            <label for="minVersion">Min Supported Version <span class="hint">(e.g. 1.0.0)</span></label>
+            <label for="minVersion">Min Version <span class="hint">(e.g. 1.0.0)</span></label>
             <input type="text" id="minVersion" name="minVersion" value="${current.minVersion || '1.0.0'}" placeholder="1.0.0">
           </div>
         </div>
@@ -678,17 +884,17 @@ export function renderAdminPage(): string {
         </div>
 
         <div class="form-group">
-          <label for="releaseNotes">Release Notes / What's New <span class="hint">(one item per line)</span></label>
-          <textarea id="releaseNotes" name="releaseNotes" placeholder="• New feature 1&#10;• Bug fix 2&#10;• Performance improvements" oninput="updateLivePreview()">${current.releaseNotes || ''}</textarea>
+          <label for="releaseNotes">Release Notes <span class="hint">(one item per line)</span></label>
+          <textarea id="releaseNotes" name="releaseNotes" placeholder="• New features&#10;• Performance improvements" oninput="updateLivePreview()">${current.releaseNotes || ''}</textarea>
         </div>
 
         <div class="form-group">
-          <label for="adminKey">Admin Secret PIN / Key <span class="hint">(Default: admin123)</span></label>
-          <input type="password" id="adminKey" name="adminKey" value="admin123" placeholder="Enter admin key">
+          <label for="adminKey">Admin Secret Key <span class="hint">(Default: admin123)</span></label>
+          <input type="password" id="adminKey" name="adminKey" value="admin123">
         </div>
 
-        <button type="submit" class="btn btn-primary" id="save-btn">
-          🚀 Save & Publish Update
+        <button type="submit" class="btn btn-primary" id="save-btn" style="width:100%;">
+          💾 Save & Publish Live
         </button>
       </form>
     </div>
@@ -697,12 +903,12 @@ export function renderAdminPage(): string {
     <div>
       <div class="card">
         <h2 class="card-title">📱 In-App Mobile Preview</h2>
-        <p class="card-desc">How this update appears to users in the HisabAI app:</p>
+        <p class="card-desc">How this update prompt appears inside the HisabAI mobile app:</p>
 
         <div class="preview-phone">
           <div class="phone-notch"></div>
           <div class="preview-dialog">
-            <div class="preview-badge-anim">✨</div>
+            <img src="/api/version/icon" style="width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 12px; display: block; box-shadow: 0 6px 18px var(--accent-glow);">
             <div class="preview-title">New Update Available!</div>
             <div class="preview-version-tag" id="prev-tag">v${current.version} (Build #${current.buildNumber})</div>
             
@@ -721,7 +927,7 @@ export function renderAdminPage(): string {
         <!-- QR Code for fast mobile downloading -->
         <div class="qr-card">
           <div style="font-size: 13px; font-weight: 700; color: #E2E8F0;">📲 Scan with Android to Download</div>
-          <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Instantly open the APK download on your phone</p>
+          <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Instantly download the APK on your phone</p>
           <img 
             id="qr-image" 
             class="qr-img" 
@@ -738,47 +944,218 @@ export function renderAdminPage(): string {
     </div>
   </div>
 
-  <!-- Version Changelog History -->
+  <!-- CRUD Releases History Table -->
   <div class="card history-card">
-    <h2 class="card-title">📜 Release History Log</h2>
-    <p class="card-desc">Previous versions and build releases tracked in HisabAI.</p>
+    <div class="table-header-row">
+      <div>
+        <h2 class="card-title">📜 Version Releases (CRUD Management)</h2>
+        <p class="card-desc" style="margin-bottom:0;">View, edit, activate, or delete published releases.</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button onclick="openCreateModal()" class="btn btn-success btn-sm">
+          ➕ Add Release
+        </button>
+        <button onclick="fetchHistoryAndRender()" class="btn btn-secondary btn-sm">
+          🔄 Refresh
+        </button>
+      </div>
+    </div>
 
-    <table class="history-table">
-      <thead>
-        <tr>
-          <th>Version</th>
-          <th>Build</th>
-          <th>Type</th>
-          <th>Release Date</th>
-          <th>File Size</th>
-          <th>APK Link</th>
-        </tr>
-      </thead>
-      <tbody id="history-body">
-        ${history.map(item => `
+    <div style="overflow-x: auto;">
+      <table class="history-table">
+        <thead>
           <tr>
-            <td><strong>v${item.version}</strong></td>
-            <td>#${item.buildNumber}</td>
-            <td>
-              <span class="badge ${item.forceUpdate ? 'badge-rose' : 'badge-emerald'}">
-                ${item.forceUpdate ? 'Mandatory' : 'Standard'}
-              </span>
-            </td>
-            <td>${item.releaseDate || 'N/A'}</td>
-            <td>${item.fileSize || '—'}</td>
-            <td>
-              ${item.apkUrl ? `<a href="${item.apkUrl}" target="_blank" style="color:#38BDF8; text-decoration:none;">Download ↗</a>` : '<span style="color:#64748B;">None</span>'}
-            </td>
+            <th>Version</th>
+            <th>Build</th>
+            <th>Status</th>
+            <th>Release Date</th>
+            <th>File Size</th>
+            <th>APK Download</th>
+            <th>Actions (CRUD)</th>
           </tr>
-        `).join('')}
-      </tbody>
-    </table>
+        </thead>
+        <tbody id="history-body">
+          ${history.map(item => {
+            const isLive = item.version === current.version && item.buildNumber === current.buildNumber;
+            return `
+            <tr id="row-${item.id}">
+              <td><strong>v${item.version}</strong></td>
+              <td>#${item.buildNumber}</td>
+              <td>
+                ${isLive ? '<span class="badge badge-emerald">Live Active</span>' : '<span class="badge badge-dim">Inactive</span>'}
+                ${item.forceUpdate ? '<span class="badge badge-rose" style="margin-left:4px;">Mandatory</span>' : ''}
+              </td>
+              <td>${item.releaseDate || 'N/A'}</td>
+              <td>${item.fileSize || '—'}</td>
+              <td>
+                ${item.apkUrl ? `<a href="${item.apkUrl}" target="_blank" style="color:#38BDF8; text-decoration:none;">Download ↗</a>` : '<span style="color:#64748B;">None</span>'}
+              </td>
+              <td>
+                <div class="action-group">
+                  ${!isLive ? `
+                    <button class="btn btn-success btn-sm" onclick="activateRelease('${item.id}', '${item.version}')" title="Make this version active">
+                      ⚡ Make Live
+                    </button>
+                  ` : ''}
+                  <button class="btn btn-secondary btn-sm" onclick="openEditModal('${item.id}')" title="Edit release details">
+                    ✏️ Edit
+                  </button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteRelease('${item.id}', '${item.version}')" title="Delete release">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;}).join('')}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<div id="toast">✅ Update Published Successfully!</div>
+<!-- Modal: Create New Release -->
+<div class="modal-overlay" id="create-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">➕ Create New App Release</h3>
+      <button class="close-btn" onclick="closeModal('create-modal')">&times;</button>
+    </div>
+    <form id="create-form" onsubmit="handleCreateSubmit(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="create-version">Version String *</label>
+          <input type="text" id="create-version" required placeholder="1.0.2">
+        </div>
+        <div class="form-group">
+          <label for="create-build">Build Number *</label>
+          <input type="number" id="create-build" required min="1" placeholder="3">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="create-apk">APK Download URL</label>
+        <input type="url" id="create-apk" placeholder="https://expo.dev/artifacts/eas/... or https://...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="create-size">Package Size</label>
+          <input type="text" id="create-size" value="32.5 MB" placeholder="32.5 MB">
+        </div>
+        <div class="form-group">
+          <label for="create-min">Min Supported Version</label>
+          <input type="text" id="create-min" value="1.0.0" placeholder="1.0.0">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="switch-container">
+          <div class="switch-info">
+            <h4>Mandatory Force Update</h4>
+            <p>Block usage until user updates to this version</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="create-force">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="switch-container">
+          <div class="switch-info">
+            <h4>Set as Live Active Version</h4>
+            <p>Immediately serve this release to mobile app users</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="create-active" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="create-notes">Release Notes / What's New</label>
+        <textarea id="create-notes" placeholder="• Feature 1&#10;• Bug fix 2"></textarea>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('create-modal')" style="flex:1;">Cancel</button>
+        <button type="submit" class="btn btn-success" style="flex:1;">🚀 Create Release</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Edit Release -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">✏️ Edit Release (<span id="edit-version-title">v1.0.0</span>)</h3>
+      <button class="close-btn" onclick="closeModal('edit-modal')">&times;</button>
+    </div>
+    <form id="edit-form" onsubmit="handleEditSubmit(event)">
+      <input type="hidden" id="edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="edit-version">Version String *</label>
+          <input type="text" id="edit-version" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-build">Build Number *</label>
+          <input type="number" id="edit-build" required min="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="edit-apk">APK Download URL</label>
+        <input type="url" id="edit-apk">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="edit-size">Package Size</label>
+          <input type="text" id="edit-size">
+        </div>
+        <div class="form-group">
+          <label for="edit-min">Min Supported Version</label>
+          <input type="text" id="edit-min">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="switch-container">
+          <div class="switch-info">
+            <h4>Mandatory Force Update</h4>
+            <p>Require user to update</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="edit-force">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="switch-container">
+          <div class="switch-info">
+            <h4>Set as Live Active Release</h4>
+            <p>Activate this release for app users</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="edit-active">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="edit-notes">Release Notes</label>
+        <textarea id="edit-notes"></textarea>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('edit-modal')" style="flex:1;">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="flex:1;">💾 Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast">✅ Action Completed!</div>
 
 <script>
+  let releasesCache = ${JSON.stringify(history)};
+  let activeCache = ${JSON.stringify(current)};
+
   function updateLivePreview() {
     const v = document.getElementById('version').value || '1.0.0';
     const b = document.getElementById('buildNumber').value || '1';
@@ -821,6 +1198,47 @@ export function renderAdminPage(): string {
     setTimeout(() => { toast.style.display = 'none'; }, 3500);
   }
 
+  function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+  }
+  function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  function openCreateModal() {
+    const nextBuild = (activeCache.buildNumber || 1) + 1;
+    document.getElementById('create-build').value = nextBuild;
+    openModal('create-modal');
+  }
+
+  async function openEditModal(id) {
+    let item = releasesCache.find(r => r.id === id);
+    if (!item) {
+      try {
+        const res = await fetch('/api/version/release/' + id);
+        const data = await res.json();
+        if (data.success) item = data.data;
+      } catch (e) {}
+    }
+    if (!item) return;
+
+    const isLive = item.version === activeCache.version && item.buildNumber === activeCache.buildNumber;
+
+    document.getElementById('edit-id').value = item.id;
+    document.getElementById('edit-version-title').innerText = 'v' + item.version;
+    document.getElementById('edit-version').value = item.version;
+    document.getElementById('edit-build').value = item.buildNumber;
+    document.getElementById('edit-apk').value = item.apkUrl || '';
+    document.getElementById('edit-size').value = item.fileSize || '32.5 MB';
+    document.getElementById('edit-min').value = item.minVersion || '1.0.0';
+    document.getElementById('edit-force').checked = Boolean(item.forceUpdate);
+    document.getElementById('edit-active').checked = isLive;
+    document.getElementById('edit-notes').value = item.releaseNotes || '';
+
+    openModal('edit-modal');
+  }
+
+  // 1. Quick Live Update Form Submit
   document.getElementById('version-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('save-btn');
@@ -846,11 +1264,8 @@ export function renderAdminPage(): string {
       });
       const data = await res.json();
       if (data.success) {
-        showToast('🚀 Version ' + payload.version + ' published successfully!');
-        document.getElementById('stat-version').innerText = 'v' + payload.version;
-        document.getElementById('stat-build').innerText = '#' + payload.buildNumber;
-        document.getElementById('stat-min').innerText = 'v' + payload.minVersion;
-        setTimeout(() => location.reload(), 1200);
+        showToast('🚀 Version ' + payload.version + ' published live!');
+        setTimeout(() => location.reload(), 1000);
       } else {
         alert('Error: ' + (data.error || 'Failed to update version'));
       }
@@ -858,16 +1273,145 @@ export function renderAdminPage(): string {
       alert('Network error: ' + err.message);
     } finally {
       btn.disabled = false;
-      btn.innerText = '🚀 Save & Publish Update';
+      btn.innerText = '💾 Save & Publish Live';
     }
   });
+
+  // 2. Create New Release Submit
+  async function handleCreateSubmit(e) {
+    e.preventDefault();
+    const payload = {
+      version: document.getElementById('create-version').value,
+      buildNumber: parseInt(document.getElementById('create-build').value, 10),
+      apkUrl: document.getElementById('create-apk').value,
+      fileSize: document.getElementById('create-size').value,
+      minVersion: document.getElementById('create-min').value,
+      forceUpdate: document.getElementById('create-force').checked,
+      setAsActive: document.getElementById('create-active').checked,
+      releaseNotes: document.getElementById('create-notes').value,
+      adminKey: document.getElementById('adminKey').value,
+    };
+
+    try {
+      const res = await fetch('/api/version/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        closeModal('create-modal');
+        showToast('🎉 New release v' + payload.version + ' created successfully!');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        alert('Error: ' + (data.error || 'Failed to create release'));
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    }
+  }
+
+  // 3. Edit Release Submit
+  async function handleEditSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit-id').value;
+    const payload = {
+      version: document.getElementById('edit-version').value,
+      buildNumber: parseInt(document.getElementById('edit-build').value, 10),
+      apkUrl: document.getElementById('edit-apk').value,
+      fileSize: document.getElementById('edit-size').value,
+      minVersion: document.getElementById('edit-min').value,
+      forceUpdate: document.getElementById('edit-force').checked,
+      setAsActive: document.getElementById('edit-active').checked,
+      releaseNotes: document.getElementById('edit-notes').value,
+      adminKey: document.getElementById('adminKey').value,
+    };
+
+    try {
+      const res = await fetch('/api/version/release/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        closeModal('edit-modal');
+        showToast('✏️ Release updated successfully!');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        alert('Error: ' + (data.error || 'Failed to update release'));
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    }
+  }
+
+  // 4. Delete Release
+  async function deleteRelease(id, version) {
+    if (!confirm('Are you sure you want to delete release v' + version + '? This action cannot be undone.')) {
+      return;
+    }
+    const adminKey = document.getElementById('adminKey').value;
+    try {
+      const res = await fetch('/api/version/release/' + id, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminKey })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('🗑️ Release v' + version + ' deleted!');
+        const row = document.getElementById('row-' + id);
+        if (row) row.remove();
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        alert('Error: ' + (data.error || 'Failed to delete release'));
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    }
+  }
+
+  // 5. Activate Release (Make Live)
+  async function activateRelease(id, version) {
+    if (!confirm('Make version v' + version + ' the ACTIVE LIVE version for all app users?')) {
+      return;
+    }
+    const adminKey = document.getElementById('adminKey').value;
+    try {
+      const res = await fetch('/api/version/activate/' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminKey })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('⚡ Version v' + version + ' is now LIVE!');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        alert('Error: ' + (data.error || 'Failed to activate release'));
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    }
+  }
+
+  async function fetchHistoryAndRender() {
+    try {
+      const res = await fetch('/api/version/history');
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      }
+    } catch (e) {}
+  }
 </script>
 
 </body>
 </html>`;
 }
 
-// ─── 6. HTML Web Page: Public Download Landing Page (/download & /apk) ────────
+// ─── 11. Public Download Landing Page (/download & /apk) ───────────────────────
 export function renderDownloadPage(): string {
   const current = VersionService.getLatestVersion();
 
@@ -915,18 +1459,6 @@ export function renderDownloadPage(): string {
       padding: 36px 28px;
       text-align: center;
       box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    }
-    .logo-badge {
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, #4F46E5, #10B981);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      margin: 0 auto 20px;
-      box-shadow: 0 10px 25px var(--accent-glow);
     }
     h1 {
       font-size: 26px;
