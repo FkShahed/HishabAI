@@ -1,0 +1,70 @@
+{
+  "expo": {
+    "name": "HisabAI",
+    "slug": "hisabai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "hisabai",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0F"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.hisabai.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "HisabAI uses your microphone to record voice transactions",
+        "NSCameraUsageDescription": "HisabAI uses your camera to scan receipts",
+        "NSPhotoLibraryUsageDescription": "HisabAI accesses your photos to upload receipts"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0A0A0F"
+      },
+      "package": "com.hisabai.app",
+      "permissions": [
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "HisabAI needs camera access to scan receipts"
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "HisabAI needs microphone access for voice transactions"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "HisabAI needs photo access to upload receipt images"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
