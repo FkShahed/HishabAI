@@ -47,8 +47,7 @@ export const isFirebaseConfigured = true;
 const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(firebaseApp);
 
-// Explicitly initialize Auth with AsyncStorage to eliminate the persistence warning
-// Wrap in try-catch to support Expo Fast Refresh without "auth/already-initialized" crashes
+// Explicitly initialize Auth with AsyncStorage persistence
 let auth: any;
 try {
   if (Platform.OS === 'web') {
@@ -59,10 +58,10 @@ try {
     });
   }
 } catch (error: any) {
-  if (error.code === 'auth/already-initialized') {
+  try {
     auth = getAuth(firebaseApp);
-  } else {
-    throw error;
+  } catch (fallbackErr) {
+    console.warn('[Firebase Auth] Fallback initialization warning:', fallbackErr);
   }
 }
 

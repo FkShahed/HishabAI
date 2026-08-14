@@ -52,13 +52,13 @@ export const useTransactionStore = create<TransactionState>()(
   setTransactions: (transactions) => set({ transactions }),
   addTransaction: (transaction) => {
     set((state) => ({ transactions: [transaction, ...state.transactions] }));
-    if (auth.currentUser) {
+    if (auth?.currentUser) {
       FirebaseService.saveTransaction(auth.currentUser.uid, transaction).catch(console.error);
     }
   },
   addTransactions: (newTransactions) => {
     set((state) => ({ transactions: [...newTransactions, ...state.transactions] }));
-    if (auth.currentUser) {
+    if (auth?.currentUser) {
       newTransactions.forEach(t => 
         FirebaseService.saveTransaction(auth.currentUser!.uid, t).catch(console.error)
       );
@@ -70,7 +70,7 @@ export const useTransactionStore = create<TransactionState>()(
         t.id === id ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t
       ),
     }));
-    if (auth.currentUser) {
+    if (auth?.currentUser) {
       const updated = get().transactions.find(t => t.id === id);
       if (updated) {
         FirebaseService.saveTransaction(auth.currentUser.uid, updated).catch(console.error);
@@ -79,7 +79,7 @@ export const useTransactionStore = create<TransactionState>()(
   },
   deleteTransaction: (id) => {
     set((state) => ({ transactions: state.transactions.filter((t) => t.id !== id) }));
-    if (auth.currentUser) {
+    if (auth?.currentUser) {
       FirebaseService.deleteTransaction(auth.currentUser.uid, id).catch(console.error);
     }
   },
@@ -173,7 +173,7 @@ export const useCategoryStore = create<CategoryState>()(
       setCategories: (categories) => set({ categories }),
       addCategory: (category) => {
         set((state) => ({ categories: [...state.categories, category] }));
-        if (auth.currentUser && !category.isDefault) {
+        if (auth?.currentUser && !category.isDefault) {
           FirebaseService.saveCategory(auth.currentUser.uid, category).catch(console.error);
         }
       },
@@ -181,7 +181,7 @@ export const useCategoryStore = create<CategoryState>()(
         set((state) => ({
           categories: state.categories.map((c) => (c.id === id ? { ...c, ...updates } : c)),
         }));
-        if (auth.currentUser) {
+        if (auth?.currentUser) {
           const updated = get().categories.find(c => c.id === id);
           if (updated && !updated.isDefault) {
             FirebaseService.saveCategory(auth.currentUser.uid, updated).catch(console.error);
@@ -194,7 +194,7 @@ export const useCategoryStore = create<CategoryState>()(
             c.id === id ? { ...c, isActive: false } : c
           ),
         }));
-        if (auth.currentUser) {
+        if (auth?.currentUser) {
           const deleted = get().categories.find(c => c.id === id);
           if (deleted && !deleted.isDefault) {
             FirebaseService.saveCategory(auth.currentUser.uid, deleted).catch(console.error);
