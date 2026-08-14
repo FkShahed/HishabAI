@@ -6,8 +6,24 @@ import { createOCRService } from '../services/OCRService';
 const router = express.Router();
 const upload = multer();
 
-const aiService = createAIService();
-const ocrService = createOCRService();
+let aiServiceInstance: ReturnType<typeof createAIService> | null = null;
+function getAIService() {
+  if (!process.env.GOOGLE_GEMINI_API_KEY) {
+    throw new Error('GOOGLE_GEMINI_API_KEY is not set in backend/.env. Please configure your Gemini API key.');
+  }
+  if (!aiServiceInstance) {
+    aiServiceInstance = createAIService();
+  }
+  return aiServiceInstance;
+}
+
+let ocrServiceInstance: ReturnType<typeof createOCRService> | null = null;
+function getOCRService() {
+  if (!ocrServiceInstance) {
+    ocrServiceInstance = createOCRService();
+  }
+  return ocrServiceInstance;
+}
 
 // Temporary mock category list for AI context
 const MOCK_CATEGORIES = [
@@ -41,7 +57,7 @@ router.post('/voice', upload.single('audio'), async (req: Request, res: Response
     };
 
     const base64Audio = buffer.toString('base64');
-    const result = await aiService.parseVoiceAudio(base64Audio, mimetype, context);
+    const result = await getAIService().parseVoiceAudio(base64Audio, mimetype, context);
     
     res.json({
       success: true,
@@ -83,7 +99,7 @@ router.post('/receipt', express.json({ limit: '10mb' }), async (req: Request, re
 
     // 1. Try Cloud Vision OCR if configured
     try {
-      const ocrResult = await ocrService.extractText(cleanBase64, mimeType || 'image/jpeg');
+      const ocrResult = await getOCRService().extractText(cleanBase64, mimeType || 'image/jpeg');
       if (ocrResult.text) {
         ocrText = ocrResult.text;
         if (ocrResult.confidence !== undefined) {
@@ -102,7 +118,7 @@ router.post('/receipt', express.json({ limit: '10mb' }), async (req: Request, re
     };
 
     // 2. Parse image directly with Gemini 2.5 Flash Multimodal Vision
-    const result = await aiService.parseReceiptText(ocrText || 'Direct receipt image analysis', context, cleanBase64);
+    const result = await getAIService().parseReceiptText(ocrText || 'Direct receipt image analysis', context, cleanBase64);
 
     res.json({
       success: true,
