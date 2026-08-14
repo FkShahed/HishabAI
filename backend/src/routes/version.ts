@@ -827,6 +827,9 @@ export function renderAdminPage(): string {
       <a href="/api/version/latest" target="_blank" class="btn btn-secondary">
         ⚡ JSON API
       </a>
+      <button onclick="lockDashboard()" class="btn btn-secondary" title="Lock Dashboard session">
+        🔒 Lock
+      </button>
     </div>
   </header>
 
@@ -1187,6 +1190,47 @@ export function renderAdminPage(): string {
   let releasesCache = ${JSON.stringify(history)};
   let activeCache = ${JSON.stringify(current)};
   let currentAdminKey = '';
+  const SESSION_STORAGE_KEY = 'hisabai_admin_auth_expiry';
+  const TEN_MINUTES_MS = 10 * 60 * 1000;
+
+  function checkSessionOnLoad() {
+    try {
+      const expiry = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (expiry && parseInt(expiry, 10) > Date.now()) {
+        unlockDashboard(false);
+      } else {
+        lockDashboard();
+      }
+    } catch (e) {
+      lockDashboard();
+    }
+  }
+
+  function unlockDashboard(showToastMsg = true) {
+    currentAdminKey = '71217';
+    document.getElementById('auth-gate-modal').style.display = 'none';
+    document.getElementById('main-app-container').style.display = 'block';
+
+    if (document.getElementById('adminKey')) {
+      document.getElementById('adminKey').value = '71217';
+    }
+    if (showToastMsg) {
+      showToast('🔓 Dashboard Unlocked (Active for 10 min)!');
+    }
+  }
+
+  function lockDashboard() {
+    try {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (e) {}
+    document.getElementById('auth-gate-modal').style.display = 'flex';
+    document.getElementById('main-app-container').style.display = 'none';
+    const input = document.getElementById('auth-password');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+  }
 
   function handleAuthGateSubmit(e) {
     e.preventDefault();
@@ -1194,14 +1238,12 @@ export function renderAdminPage(): string {
     const authError = document.getElementById('auth-error');
 
     if (entered === '71217') {
-      currentAdminKey = '71217';
-      document.getElementById('auth-gate-modal').style.display = 'none';
-      document.getElementById('main-app-container').style.display = 'block';
-
-      if (document.getElementById('adminKey')) {
-        document.getElementById('adminKey').value = '71217';
-      }
-      showToast('🔓 Dashboard Unlocked Successfully!');
+      const expiry = Date.now() + TEN_MINUTES_MS;
+      try {
+        localStorage.setItem(SESSION_STORAGE_KEY, expiry.toString());
+      } catch (e) {}
+      authError.style.display = 'none';
+      unlockDashboard(true);
     } else {
       authError.style.display = 'block';
       const input = document.getElementById('auth-password');
@@ -1209,6 +1251,20 @@ export function renderAdminPage(): string {
       input.focus();
     }
   }
+
+  // Periodic check: auto-lock when 10 minutes expire
+  setInterval(() => {
+    try {
+      const expiry = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (expiry && Date.now() >= parseInt(expiry, 10)) {
+        lockDashboard();
+        showToast('🔒 Session expired after 10 minutes. Please enter PIN.');
+      }
+    } catch (e) {}
+  }, 5000);
+
+  // Initialize check on page load
+  checkSessionOnLoad();
 
   function updateLivePreview() {
     const v = document.getElementById('version').value || '1.0.0';
