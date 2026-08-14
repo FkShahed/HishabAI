@@ -40,9 +40,13 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`[HisabAI] Server running on port ${PORT}`);
-  console.log(`[HisabAI] AI Engine: ${process.env.GEMINI_MODEL || 'gemini-3.6-flash'}`);
-  console.log(`[HisabAI] OCR Engine: ${process.env.OCR_PROVIDER || 'google_vision'}`);
-});
+// Start Server (only when running as standalone Node process, not in Vercel serverless)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`[HisabAI] Server running on port ${PORT}`);
+    console.log(`[HisabAI] AI Engine: ${process.env.GEMINI_MODEL || 'gemini-3.6-flash'}`);
+    console.log(`[HisabAI] OCR Engine: ${process.env.OCR_PROVIDER || 'google_vision'}`);
+  });
+}
+
+export default app;
