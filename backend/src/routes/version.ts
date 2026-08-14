@@ -3,7 +3,7 @@ import path from 'path';
 import { VersionService } from '../services/VersionService';
 
 const router = Router();
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
+const ADMIN_SECRET = process.env.ADMIN_SECRET || '71217';
 
 // ─── 0. Public API Endpoint: App Icon Image ──────────────────────────────────
 router.get('/icon', (req: Request, res: Response) => {
@@ -772,11 +772,40 @@ export function renderAdminPage(): string {
       from { transform: translateY(20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
-  </style>
-</head>
 <body>
 
-<div class="container">
+<!-- Password Gate Popup Modal (Locked until 71217 is entered) -->
+<div id="auth-gate-modal" class="modal-overlay" style="display: flex; background: rgba(9, 13, 22, 0.96); backdrop-filter: blur(25px); z-index: 9999;">
+  <div class="modal-box" style="max-width: 420px; text-align: center; border: 1px solid rgba(99, 102, 241, 0.35); box-shadow: 0 24px 70px rgba(0,0,0,0.85); padding: 36px 28px;">
+    <img src="/api/version/icon" alt="HisabAI Logo" style="width: 72px; height: 72px; border-radius: 20px; object-fit: cover; margin: 0 auto 18px; display: block; box-shadow: 0 10px 30px var(--accent-glow);">
+    <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 6px;">🔐 Admin Access Required</h2>
+    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5;">Enter the admin PIN to access the Version Control & Release Center.</p>
+
+    <form id="auth-gate-form" onsubmit="handleAuthGateSubmit(event)">
+      <div class="form-group" style="margin-bottom: 18px;">
+        <input 
+          type="password" 
+          id="auth-password" 
+          placeholder="•••••" 
+          required 
+          autocomplete="off"
+          style="text-align: center; font-size: 24px; letter-spacing: 6px; font-weight: 800; padding: 14px; border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 14px;"
+          autofocus
+        >
+      </div>
+
+      <div id="auth-error" style="display: none; background: rgba(239,68,68,0.15); color: #F87171; border: 1px solid rgba(239,68,68,0.3); padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 18px;">
+        ❌ Incorrect password. Access denied.
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="auth-btn" style="width: 100%; padding: 14px; font-size: 15px; border-radius: 14px;">
+        🔓 Unlock Dashboard
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="container" id="main-app-container" style="display: none;">
   <!-- Header -->
   <header class="header">
     <div class="brand">
@@ -1155,6 +1184,29 @@ export function renderAdminPage(): string {
 <script>
   let releasesCache = ${JSON.stringify(history)};
   let activeCache = ${JSON.stringify(current)};
+  let currentAdminKey = '';
+
+  function handleAuthGateSubmit(e) {
+    e.preventDefault();
+    const entered = (document.getElementById('auth-password').value || '').trim();
+    const authError = document.getElementById('auth-error');
+
+    if (entered === '71217') {
+      currentAdminKey = '71217';
+      document.getElementById('auth-gate-modal').style.display = 'none';
+      document.getElementById('main-app-container').style.display = 'block';
+
+      if (document.getElementById('adminKey')) {
+        document.getElementById('adminKey').value = '71217';
+      }
+      showToast('🔓 Dashboard Unlocked Successfully!');
+    } else {
+      authError.style.display = 'block';
+      const input = document.getElementById('auth-password');
+      input.value = '';
+      input.focus();
+    }
+  }
 
   function updateLivePreview() {
     const v = document.getElementById('version').value || '1.0.0';
