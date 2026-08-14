@@ -237,7 +237,7 @@ export default function ProfileScreen() {
   const currentCurrencySymbol = getCurrencySymbol(currency);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.bg.primary }]}>
+    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <Header title="Settings & Account" showBack={false} />
 
       <ScrollView contentContainerStyle={styles.content}>

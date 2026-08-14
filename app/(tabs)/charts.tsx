@@ -81,7 +81,7 @@ export default function ChartsScreen() {
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.bg.primary }]}>
+    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <Header title="Analytics" showBack={false} />
       
       <MonthSelector 

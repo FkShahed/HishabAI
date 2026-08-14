@@ -62,7 +62,7 @@ export default function ReportsScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.bg.primary }]}>
+    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <Header title="Reports & Budget" showBack={false} />
       
       <MonthSelector 
