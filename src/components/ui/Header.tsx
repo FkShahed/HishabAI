@@ -19,20 +19,37 @@ export function Header({ title, showBack = false, onBack, rightElement }: Header
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.bg.primary, borderBottomColor: colors.border.subtle }]}>
       <View style={styles.content}>
-        <View style={styles.left}>
+        {/* Left Side */}
+        <View style={styles.side}>
           {showBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <Ionicons name="chevron-back" size={28} color={colors.text.primary} />
+            <TouchableOpacity 
+              onPress={onBack} 
+              style={styles.backButton}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chevron-back" size={26} color={colors.text.primary} />
             </TouchableOpacity>
           )}
         </View>
 
-        <Text variant="lg" weight="bold" style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
+        {/* Title: Takes maximum available width and scales gracefully */}
+        <View style={styles.titleWrapper}>
+          <Text 
+            variant="lg" 
+            weight="bold" 
+            style={styles.title} 
+            numberOfLines={1}
+            adjustsFontSizeToFit={true}
+            minimumFontScale={0.85}
+          >
+            {title}
+          </Text>
+        </View>
 
-        <View style={styles.right}>
-          {rightElement}
+        {/* Right Side */}
+        <View style={[styles.side, styles.rightSide]}>
+          {rightElement || null}
         </View>
       </View>
     </View>
@@ -50,20 +67,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
   },
-  left: {
-    flex: 1,
+  side: {
+    width: 44,
+    justifyContent: 'center',
     alignItems: 'flex-start',
+  },
+  rightSide: {
+    alignItems: 'flex-end',
   },
   backButton: {
     padding: Spacing.xs,
     marginLeft: -Spacing.xs,
   },
-  title: {
-    flex: 2,
-    textAlign: 'center',
-  },
-  right: {
+  titleWrapper: {
     flex: 1,
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  title: {
+    textAlign: 'center',
+    width: '100%',
   },
 });
