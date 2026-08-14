@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.0.1",
+    "buildNumber": 1,
+    "apkUrl": "http://localhost:3000/admin",
+    "releaseNotes": "Test",
+    "forceUpdate": false,
+    "minVersion": "1.0.0",
+    "releaseDate": "2026-08-14",
+    "fileSize": "32.5 MB",
+    "updatedAt": "2026-08-14T19:15:57.228Z",
+    "id": "400ab7ee-e392-4113-87ff-d34859d5e9af"
+  },
+  {
     "version": "1.0.0",
     "buildNumber": 1,
     "apkUrl": "http://localhost:3000/admin",

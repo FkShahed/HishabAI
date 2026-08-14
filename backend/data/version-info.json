@@ -1,11 +1,11 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "buildNumber": 1,
   "apkUrl": "http://localhost:3000/admin",
-  "releaseNotes": "• Initial release of HisabAI expense tracker\n• AI Voice transaction parsing with Gemini\n• Smart receipt scanner with Google Vision OCR\n• Interactive charts and dark/light theme\n• Firebase cloud sync & local backup",
+  "releaseNotes": "Test",
   "forceUpdate": false,
   "minVersion": "1.0.0",
   "releaseDate": "2026-08-14",
   "fileSize": "32.5 MB",
-  "updatedAt": "2026-08-14T19:10:35.996Z"
+  "updatedAt": "2026-08-14T19:15:57.228Z"
 }
