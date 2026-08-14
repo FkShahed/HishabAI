@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, Image, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, Image, Platform, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import Constants from 'expo-constants';
 
 import { Text } from '../../src/components/ui/Text';
 import { Header } from '../../src/components/ui/Header';
@@ -13,6 +14,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { useTransactionStore, useBudgetStore, useCategoryStore, useUIStore } from '../../src/store';
 import { SUPPORTED_CURRENCIES, getCurrencySymbol } from '../../src/utils/finance';
 import { NotificationService } from '../../src/services/notifications';
+import { VersionServiceClient, CheckUpdateResult } from '../../src/services/api';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -39,6 +41,12 @@ export default function ProfileScreen() {
   const [isDeleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
+  // Version Control & Update State
+  const currentAppVersion = Constants.expoConfig?.version || '1.0.0';
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<CheckUpdateResult | null>(null);
+  const [isUpdateModalVisible, setUpdateModalVisible] = useState(false);
+
   const rawPhotoUrl = currentUser?.photoURL || currentUser?.providerData?.[0]?.photoURL || userPhotoUrl;
   const photoUrl = !imageFailed && rawPhotoUrl ? rawPhotoUrl : null;
 
@@ -55,8 +63,56 @@ export default function ProfileScreen() {
         }
       }
     });
+    
+    // Check update on screen load
+    handleCheckForUpdates(false);
+
     return () => unsubscribe();
   }, []);
+
+  const handleCheckForUpdates = async (manual = false) => {
+    try {
+      setIsCheckingUpdate(true);
+      const result = await VersionServiceClient.checkUpdate(currentAppVersion, 1);
+      setUpdateInfo(result);
+      if (result.hasUpdate) {
+        if (manual) {
+          setUpdateModalVisible(true);
+        }
+      } else if (manual) {
+        Alert.alert('Up to Date! 🎉', `You are running the latest version of HisabAI (v${currentAppVersion}).`);
+      }
+    } catch (err: any) {
+      if (manual) {
+        Alert.alert('Update Check', 'Could not connect to the update server. Please verify your connection.');
+      }
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  const handleDownloadUpdate = async (apkUrl?: string) => {
+    const targetUrl = apkUrl || updateInfo?.apkUrl;
+    if (!targetUrl) {
+      Alert.alert('No APK Link', 'The APK download link is not available yet.');
+      return;
+    }
+    try {
+      await Linking.openURL(targetUrl);
+    } catch (e) {
+      Alert.alert('Download Error', 'Could not open the APK download URL in your browser.');
+    }
+  };
+
+  const handleOpenAdminWeb = async () => {
+    const host = Constants.expoConfig?.hostUri?.split(':')[0] || 'localhost';
+    const adminUrl = `http://${host}:3000/admin`;
+    try {
+      await Linking.openURL(adminUrl);
+    } catch (e) {
+      Alert.alert('Admin Console', `Open ${adminUrl} on your computer browser.`);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -298,6 +354,131 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* App Version & Updates Section */}
+        <View style={styles.settingsGroup}>
+          <Text variant="sm" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
+            APP UPDATES & VERSION
+          </Text>
+
+          {/* Update Available Banner */}
+          {updateInfo?.hasUpdate && (
+            <View style={[styles.updateBannerCard, { backgroundColor: colors.accent.primaryDim, borderColor: colors.accent.primary }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm }}>
+                <View style={[styles.updateIconBadge, { backgroundColor: colors.accent.primary }]}>
+                  <Ionicons name="sparkles" size={16} color="#FFFFFF" />
+                </View>
+                <View style={{ marginLeft: Spacing.sm, flex: 1 }}>
+                  <Text variant="md" weight="bold" color={colors.text.primary}>
+                    New Update Available!
+                  </Text>
+                  <Text variant="xs" color={colors.accent.primary} weight="bold">
+                    v{updateInfo.latestVersion} (Build #{updateInfo.latestBuildNumber})
+                  </Text>
+                </View>
+                {updateInfo.forceUpdate && (
+                  <View style={[styles.forceBadge, { backgroundColor: colors.semantic.dangerDim }]}>
+                    <Text variant="xs" weight="bold" color={colors.semantic.danger}>
+                      Required
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {updateInfo.releaseNotes ? (
+                <Text variant="xs" color={colors.text.secondary} numberOfLines={2} style={{ marginBottom: Spacing.sm }}>
+                  {updateInfo.releaseNotes}
+                </Text>
+              ) : null}
+
+              <View style={{ flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.xs }}>
+                <TouchableOpacity
+                  style={[styles.bannerActionBtn, { backgroundColor: colors.accent.primary, flex: 1 }]}
+                  onPress={() => handleDownloadUpdate(updateInfo.apkUrl)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="cloud-download-outline" size={16} color="#FFFFFF" />
+                  <Text variant="xs" weight="bold" color="#FFFFFF" style={{ marginLeft: 4 }}>
+                    Download & Install APK
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.bannerActionBtn, { backgroundColor: colors.bg.card, borderColor: colors.border.medium, borderWidth: 1 }]}
+                  onPress={() => setUpdateModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text variant="xs" weight="medium" color={colors.text.primary}>
+                    What's New
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Current Version Item */}
+          <TouchableOpacity
+            style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
+            onPress={() => handleCheckForUpdates(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.settingLeft}>
+              <Ionicons name="information-circle-outline" size={24} color={colors.text.primary} />
+              <View style={{ marginLeft: Spacing.md }}>
+                <Text variant="md" style={styles.settingText}>Installed Version</Text>
+                <Text variant="xs" color={colors.text.tertiary} style={{ marginLeft: Spacing.md }}>Tap to view release details</Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.versionPill, { backgroundColor: colors.bg.elevated, borderColor: colors.border.subtle }]}>
+                <Text variant="xs" weight="bold" color={colors.text.primary}>
+                  v{currentAppVersion}
+                </Text>
+              </View>
+              {updateInfo?.hasUpdate && (
+                <View style={[styles.dotIndicator, { backgroundColor: colors.accent.primary }]} />
+              )}
+            </View>
+          </TouchableOpacity>
+
+          {/* Check for Updates Button */}
+          <TouchableOpacity
+            style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
+            onPress={() => handleCheckForUpdates(true)}
+            disabled={isCheckingUpdate}
+            activeOpacity={0.7}
+          >
+            <View style={styles.settingLeft}>
+              <Ionicons name="refresh-circle-outline" size={24} color={colors.accent.primary} />
+              <Text variant="md" style={styles.settingText}>Check for Updates</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {isCheckingUpdate ? (
+                <ActivityIndicator size="small" color={colors.accent.primary} />
+              ) : (
+                <Text variant="sm" color={colors.accent.primary} weight="bold">
+                  {updateInfo?.hasUpdate ? 'Update Available!' : 'Check Now'}
+                </Text>
+              )}
+            </View>
+          </TouchableOpacity>
+
+          {/* Backend Release Manager Webpage */}
+          <TouchableOpacity
+            style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}
+            onPress={handleOpenAdminWeb}
+            activeOpacity={0.7}
+          >
+            <View style={styles.settingLeft}>
+              <Ionicons name="globe-outline" size={24} color={colors.text.secondary} />
+              <View style={{ marginLeft: Spacing.md }}>
+                <Text variant="md" style={styles.settingText}>Release Manager Web</Text>
+                <Text variant="xs" color={colors.text.tertiary} style={{ marginLeft: Spacing.md }}>Manage APK link & versions</Text>
+              </View>
+            </View>
+            <Ionicons name="open-outline" size={18} color={colors.text.tertiary} />
+          </TouchableOpacity>
+        </View>
+
         {/* Support & Account Section */}
         <View style={styles.settingsGroup}>
           <Text variant="sm" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
@@ -528,6 +709,69 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      {/* App Update Details Modal */}
+      <Modal visible={isUpdateModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.accent.primary, borderWidth: 1 }]}>
+            <View style={{ alignItems: 'center', marginBottom: Spacing.md }}>
+              <View style={[styles.updateIconModalBadge, { backgroundColor: colors.accent.primary }]}>
+                <Ionicons name="rocket-outline" size={32} color="#FFFFFF" />
+              </View>
+              <Text variant="xl" weight="bold" style={{ marginTop: Spacing.sm }}>
+                {updateInfo?.hasUpdate ? 'Update Available!' : 'App Release Details'}
+              </Text>
+              <View style={[styles.versionTagPill, { backgroundColor: colors.accent.primaryDim, borderColor: colors.accent.primary }]}>
+                <Text variant="xs" weight="bold" color={colors.accent.primary}>
+                  Latest: v{updateInfo?.latestVersion || currentAppVersion} (Build #{updateInfo?.latestBuildNumber || 1})
+                </Text>
+              </View>
+            </View>
+
+            {updateInfo?.fileSize || updateInfo?.releaseDate ? (
+              <View style={styles.metaRow}>
+                {updateInfo.fileSize ? (
+                  <Text variant="xs" color={colors.text.tertiary}>
+                    📦 Size: {updateInfo.fileSize}
+                  </Text>
+                ) : null}
+                {updateInfo.releaseDate ? (
+                  <Text variant="xs" color={colors.text.tertiary}>
+                    📅 Released: {updateInfo.releaseDate}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+
+            <Text variant="sm" weight="bold" color={colors.text.primary} style={{ marginTop: Spacing.sm, marginBottom: 4 }}>
+              What's New:
+            </Text>
+            <ScrollView style={[styles.releaseNotesScroll, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+              <Text variant="xs" color={colors.text.secondary} style={{ lineHeight: 18 }}>
+                {updateInfo?.releaseNotes || '• Bug fixes and performance improvements.'}
+              </Text>
+            </ScrollView>
+
+            <View style={{ flexDirection: 'column', gap: Spacing.sm, marginTop: Spacing.md }}>
+              {updateInfo?.hasUpdate && (
+                <Button
+                  label="Download & Install APK"
+                  onPress={() => {
+                    setUpdateModalVisible(false);
+                    handleDownloadUpdate(updateInfo.apkUrl);
+                  }}
+                  leftIcon={<Ionicons name="download-outline" size={18} color="#FFFFFF" />}
+                />
+              )}
+              <Button
+                label={updateInfo?.hasUpdate ? "Later" : "Close"}
+                variant="secondary"
+                onPress={() => setUpdateModalVisible(false)}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -651,5 +895,69 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: Spacing.md,
+  },
+  updateBannerCard: {
+    padding: Spacing.md,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+  },
+  updateIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  forceBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radii.sm,
+  },
+  bannerActionBtn: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  versionPill: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+  },
+  dotIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 6,
+  },
+  updateIconModalBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  versionTagPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: Radii.full,
+    borderWidth: 1,
+    marginTop: 6,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  releaseNotesScroll: {
+    maxHeight: 140,
+    padding: Spacing.sm,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
   },
 });

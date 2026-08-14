@@ -97,4 +97,89 @@ export const AIServiceClient = {
   }
 };
 
+export interface AppVersionInfo {
+  version: string;
+  buildNumber: number;
+  apkUrl: string;
+  releaseNotes: string;
+  forceUpdate: boolean;
+  minVersion: string;
+  releaseDate: string;
+  fileSize?: string;
+  updatedAt: string;
+}
+
+export interface CheckUpdateResult {
+  hasUpdate: boolean;
+  forceUpdate: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  latestBuildNumber: number;
+  apkUrl: string;
+  releaseNotes: string;
+  fileSize?: string;
+  releaseDate?: string;
+}
+
+function compareSemver(v1: string, v2: string): number {
+  const clean1 = (v1 || '0.0.0').replace(/^v/i, '');
+  const clean2 = (v2 || '0.0.0').replace(/^v/i, '');
+  const p1 = clean1.split('.').map(n => parseInt(n, 10) || 0);
+  const p2 = clean2.split('.').map(n => parseInt(n, 10) || 0);
+  
+  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+    const num1 = p1[i] || 0;
+    const num2 = p2[i] || 0;
+    if (num1 > num2) return 1;
+    if (num1 < num2) return -1;
+  }
+  return 0;
+}
+
+export const VersionServiceClient = {
+  /**
+   * Fetch the latest version info from backend
+   */
+  async getLatestVersion(): Promise<AppVersionInfo> {
+    try {
+      const response = await api.get('/version/latest');
+      return response.data.data;
+    } catch (error: any) {
+      console.error('[API] Failed to get latest version:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Check if an update is available comparing against current app version and build
+   */
+  async checkUpdate(
+    currentVersion: string = Constants.expoConfig?.version || '1.0.0',
+    currentBuildNumber: number = 1
+  ): Promise<CheckUpdateResult> {
+    const latest = await this.getLatestVersion();
+    
+    const semverDiff = compareSemver(latest.version, currentVersion);
+    const hasNewerVersion = semverDiff > 0;
+    const hasNewerBuild = semverDiff === 0 && (latest.buildNumber || 1) > currentBuildNumber;
+    const hasUpdate = (hasNewerVersion || hasNewerBuild) && Boolean(latest.apkUrl);
+
+    // Force update if forceUpdate is true and user version is behind
+    const isBelowMin = compareSemver(currentVersion, latest.minVersion || '1.0.0') < 0;
+    const forceUpdate = hasUpdate && (latest.forceUpdate || isBelowMin);
+
+    return {
+      hasUpdate,
+      forceUpdate,
+      currentVersion,
+      latestVersion: latest.version,
+      latestBuildNumber: latest.buildNumber,
+      apkUrl: latest.apkUrl,
+      releaseNotes: latest.releaseNotes,
+      fileSize: latest.fileSize,
+      releaseDate: latest.releaseDate,
+    };
+  }
+};
+
 export default api;

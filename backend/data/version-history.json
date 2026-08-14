@@ -1,0 +1,26 @@
+[
+  {
+    "version": "1.0.1",
+    "buildNumber": 2,
+    "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v1.0.1/hisabai-v1.0.1.apk",
+    "releaseNotes": ". AI Voice recognition accuracy improvements\n. Direct APK in-app update & downloader\n. Custom currency and theme preferences\n. Performance optimizations",
+    "forceUpdate": false,
+    "minVersion": "1.0.0",
+    "releaseDate": "2026-08-14",
+    "fileSize": "28.4 MB",
+    "updatedAt": "2026-08-14T19:08:01.362Z",
+    "id": "a29df83e-8b95-424f-8282-ae907cebd81d"
+  },
+  {
+    "version": "1.0.0",
+    "buildNumber": 1,
+    "apkUrl": "",
+    "releaseNotes": "• Initial release of HisabAI expense tracker\n• AI Voice transaction parsing with Gemini\n• Smart receipt scanner with Google Vision OCR\n• Interactive charts and dark/light theme\n• Firebase cloud sync & local backup",
+    "forceUpdate": false,
+    "minVersion": "1.0.0",
+    "releaseDate": "2026-08-14",
+    "fileSize": "32.5 MB",
+    "updatedAt": "2026-08-14T19:06:26.241Z",
+    "id": "55ebd1c5-0977-4170-9378-0774dffe85d0"
+  }
+]

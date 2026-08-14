@@ -163,3 +163,21 @@ export interface ProcessReceiptRequestBody {
   currentDateTime: string;
   categoryList: CategoryForAI[];
 }
+
+// ─── Version Control & OTA Types ─────────────────────────────────────────────
+
+export interface AppVersionInfo {
+  version: string;             // e.g. "1.0.1"
+  buildNumber: number;         // e.g. 2
+  apkUrl: string;              // Direct download link or Expo EAS build URL
+  releaseNotes: string;        // Markdown / bullet points of what's new
+  forceUpdate: boolean;        // If true, older versions must update
+  minVersion: string;          // Minimum supported version
+  releaseDate: string;         // ISO date or formatted date
+  fileSize?: string;           // e.g. "28.5 MB"
+  updatedAt: string;           // ISO timestamp of last modification
+}
+
+export interface VersionHistoryItem extends AppVersionInfo {
+  id: string;
+}

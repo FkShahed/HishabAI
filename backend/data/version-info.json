@@ -1,0 +1,11 @@
+{
+  "version": "1.0.1",
+  "buildNumber": 2,
+  "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v1.0.1/hisabai-v1.0.1.apk",
+  "releaseNotes": ". AI Voice recognition accuracy improvements\n. Direct APK in-app update & downloader\n. Custom currency and theme preferences\n. Performance optimizations",
+  "forceUpdate": false,
+  "minVersion": "1.0.0",
+  "releaseDate": "2026-08-14",
+  "fileSize": "28.4 MB",
+  "updatedAt": "2026-08-14T19:08:01.362Z"
+}
