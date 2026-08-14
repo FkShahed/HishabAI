@@ -2,40 +2,17 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// Auto-detect the correct backend URL:
-// - Real Android/iOS phone over Wi-Fi → use PC's LAN IP (same network)
-// - Android Emulator → use 10.0.2.2 (special alias for host machine localhost)
-// - Web / no manifest → localhost
-const getBaseUrl = () => {
-  if (__DEV__) {
-    // Expo provides the host machine's IP via manifest in Expo Go
-    const expoHost = Constants.expoConfig?.hostUri?.split(':')[0];
-    
-    if (expoHost && expoHost !== 'localhost' && expoHost !== '127.0.0.1') {
-      // Real device connected over Wi-Fi or Tunnel → use Expo host IP
-      return `http://${expoHost}:3000/api`;
-    }
-    
-    if (Platform.OS === 'android') {
-      // Android Emulator uses this special alias for the host machine
-      return 'http://10.0.2.2:3000/api';
-    }
-    
-    return 'http://localhost:3000/api';
-  }
-  
-  // Production URL
-  return 'https://api.hisabai.com/api';
-};
+// Live Production Backend URL hosted on Vercel
+export const BACKEND_URL = 'https://hishab-ai-backend.vercel.app';
+export const API_BASE_URL = `${BACKEND_URL}/api`;
 
 const api = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL: API_BASE_URL,
   timeout: 90000, // 90 seconds — allows up to 4 retry attempts with backoff
 });
 
-// Log API base URL in dev mode
 if (__DEV__) {
-  console.log('[API] Backend URL:', getBaseUrl());
+  console.log('[API] Connected to live backend:', API_BASE_URL);
 }
 
 export const AIServiceClient = {
