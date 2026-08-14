@@ -772,6 +772,8 @@ export function renderAdminPage(): string {
       from { transform: translateY(20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+  </style>
+</head>
 <body>
 
 <!-- Password Gate Popup Modal (Locked until 71217 is entered) -->
