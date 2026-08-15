@@ -539,7 +539,11 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}>
+          <TouchableOpacity 
+            style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}
+            onPress={() => router.push('/terms' as any)}
+            activeOpacity={0.7}
+          >
             <View style={styles.settingLeft}>
               <View style={styles.settingIconWrapper}>
                 <Ionicons name="document-text-outline" size={20} color={colors.text.primary} />
