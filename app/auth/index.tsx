@@ -30,11 +30,14 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
+
   // Mobile Google Auth Hook with configured client IDs
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '254866158438-mobile.apps.googleusercontent.com',
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '254866158438-ios.apps.googleusercontent.com',
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-web.apps.googleusercontent.com',
+    androidClientId: GOOGLE_CLIENT_ID,
+    iosClientId: GOOGLE_CLIENT_ID,
+    webClientId: GOOGLE_CLIENT_ID,
+    clientId: GOOGLE_CLIENT_ID,
     scopes: ['profile', 'email'],
   });
 
@@ -173,24 +176,16 @@ export default function AuthScreen() {
         }
       } else {
         // Native Mobile
-        const hasRealClientId = Boolean(
-          process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
-          process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
-        );
-        if (!hasRealClientId) {
-          setErrorMessage('Google OAuth is not set up on mobile yet. Please use Email & Password below to sign in or create an account!');
-          return;
-        }
         if (promptAsync) {
           await promptAsync();
         } else {
-          setErrorMessage('Google Sign-In is not available on this device. Please sign in with Email & Password.');
+          setErrorMessage('Google Sign-In is initializing. Please tap again or use Email & Password.');
         }
       }
     } catch (error: any) {
       console.error('Google Auth failed:', error);
       if (error.code !== 'auth/popup-closed-by-user') {
-        setErrorMessage(error.message || 'Google authentication failed. Please use Email & Password.');
+        setErrorMessage(error.message || 'Google authentication failed. Please try again or use Email & Password.');
       }
     } finally {
       setLoading(false);
