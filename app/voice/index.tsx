@@ -57,10 +57,16 @@ export default function VoiceAIScreen() {
 
         if (recording) {
           try {
-            await recording.stopAndUnloadAsync();
+            const status = await recording.getStatusAsync();
+            if (status.canRecord || status.isRecording) {
+              await recording.stopAndUnloadAsync();
+            }
             audioUri = recording.getURI();
           } catch (e) {
             console.warn('Audio unload warning:', e);
+            try {
+              audioUri = recording.getURI();
+            } catch {}
           }
         }
 
@@ -76,16 +82,20 @@ export default function VoiceAIScreen() {
               setPreview(result.transactions, 'voice', result.rawTranscript);
               parsedSuccessfully = true;
             }
-          } catch (apiError) {
-            console.warn('[VoiceAI] Backend API call failed — using intelligent fallback:', apiError);
+          } catch (apiError: any) {
+            console.warn('[VoiceAI] Backend API call failed:', apiError);
+            alert(apiError.message || 'Voice processing failed. Please try again.');
+            setIsProcessing(false);
+            setRecording(null);
+            return;
           }
         }
 
         if (!parsedSuccessfully) {
           if (transcript.trim().length > 0) {
-            alert(`The AI heard: "${transcript}", but couldn't find any amounts or categories. Try again.`);
+            alert(`The AI heard: "${transcript}", but couldn't identify transaction details. Please try again.`);
           } else {
-            alert('The AI heard silence. Your microphone might be blocked by the simulator/device. Please try again.');
+            alert('No audio was captured. Please speak clearly into the microphone and try again.');
           }
           setIsProcessing(false);
           setRecording(null);
@@ -98,31 +108,42 @@ export default function VoiceAIScreen() {
 
       } else {
         // Start recording
-        const permission = await Audio.requestPermissionsAsync();
-        
-        if (permission.granted) {
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: true,
-            playsInSilentModeIOS: true,
-            shouldDuckAndroid: true,
-            playThroughEarpieceAndroid: false,
-          });
-
-          const { recording: newRecording } = await Audio.Recording.createAsync(
-            Audio.RecordingOptionsPresets.HIGH_QUALITY
-          );
-          
-          setRecording(newRecording);
-          setIsRecording(true);
-        } else {
-          alert('Microphone permission is required to use Voice AI.');
+        let perm = await Audio.getPermissionsAsync();
+        if (!perm.granted) {
+          perm = await Audio.requestPermissionsAsync();
         }
+
+        if (!perm.granted) {
+          alert('Microphone permission is required to use Voice AI. Please enable it in Settings.');
+          return;
+        }
+
+        try {
+          if (recording) {
+            await recording.stopAndUnloadAsync();
+          }
+        } catch {}
+
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+          staysActiveInBackground: false,
+        });
+
+        const { recording: newRecording } = await Audio.Recording.createAsync(
+          Audio.RecordingOptionsPresets.HIGH_QUALITY
+        );
+        
+        setRecording(newRecording);
+        setIsRecording(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Recording toggle error:', error);
       setIsProcessing(false);
       setIsRecording(false);
-      alert('An error occurred with the microphone or AI processing.');
+      alert(error.message || 'An error occurred with the microphone or AI processing.');
     }
   };
 

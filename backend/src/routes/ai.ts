@@ -57,7 +57,11 @@ router.post('/voice', upload.single('audio'), async (req: Request, res: Response
     };
 
     const base64Audio = buffer.toString('base64');
-    const result = await getAIService().parseVoiceAudio(base64Audio, mimetype, context);
+    let effectiveMime = mimetype;
+    if (!effectiveMime || effectiveMime === 'application/octet-stream') {
+      effectiveMime = 'audio/mp4';
+    }
+    const result = await getAIService().parseVoiceAudio(base64Audio, effectiveMime, context);
     
     res.json({
       success: true,
