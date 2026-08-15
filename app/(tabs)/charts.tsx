@@ -259,7 +259,7 @@ export default function ChartsScreen() {
           <View style={styles.calendarGrid}>
             {/* Empty slots for leading weekday padding */}
             {Array.from({ length: calendarData.startDayOfWeek }).map((_, idx) => (
-              <View key={`empty-${idx}`} style={styles.calendarEmptySlot} />
+              <View key={`empty-${idx}`} style={styles.calendarSlot} />
             ))}
 
             {/* Actual day cells */}
@@ -274,49 +274,50 @@ export default function ChartsScreen() {
               const intensity = hasTransactions ? Math.min(dayTotal / calendarData.maxDayAmount, 1) : 0;
 
               return (
-                <TouchableOpacity
-                  key={`day-${dayNum}`}
-                  style={[
-                    styles.calendarDayCell,
-                    { 
-                      borderColor: colors.border.subtle,
-                      backgroundColor: hasTransactions && selectedType === 'expense' 
-                        ? colors.bg.secondary 
-                        : 'transparent'
-                    },
-                    hasTransactions && selectedType === 'income' && {
-                      backgroundColor: `rgba(5, 150, 105, ${0.08 + intensity * 0.18})`,
-                      borderColor: `rgba(5, 150, 105, ${0.25 + intensity * 0.35})`,
-                    },
-                    isSelected && {
-                      borderColor: colors.accent.primary,
-                      borderWidth: 2,
-                      backgroundColor: colors.accent.primaryDim,
-                    }
-                  ]}
-                  onPress={() => setSelectedDay(isSelected ? null : dayNum)}
-                  activeOpacity={0.7}
-                >
-                  <Text 
-                    variant="xs" 
-                    weight={hasTransactions || isSelected ? "bold" : "regular"}
-                    color={isSelected ? colors.accent.primary : hasTransactions ? colors.text.primary : colors.text.tertiary}
+                <View key={`slot-${dayNum}`} style={styles.calendarSlot}>
+                  <TouchableOpacity
+                    style={[
+                      styles.calendarDayCell,
+                      { 
+                        borderColor: colors.border.subtle,
+                        backgroundColor: hasTransactions && selectedType === 'expense' 
+                          ? colors.bg.secondary 
+                          : 'transparent'
+                      },
+                      hasTransactions && selectedType === 'income' && {
+                        backgroundColor: `rgba(5, 150, 105, ${0.08 + intensity * 0.18})`,
+                        borderColor: `rgba(5, 150, 105, ${0.25 + intensity * 0.35})`,
+                      },
+                      isSelected && {
+                        borderColor: colors.accent.primary,
+                        borderWidth: 1.5,
+                        backgroundColor: colors.accent.primaryDim,
+                      }
+                    ]}
+                    onPress={() => setSelectedDay(isSelected ? null : dayNum)}
+                    activeOpacity={0.7}
                   >
-                    {dayNum}
-                  </Text>
-                  
-                  {hasTransactions && (
                     <Text 
                       variant="xs" 
-                      weight="bold" 
-                      color={isSelected ? colors.accent.primary : activeThemeColor} 
-                      numberOfLines={1}
-                      style={styles.dayAmountText}
+                      weight={hasTransactions || isSelected ? "bold" : "medium"}
+                      color={isSelected ? colors.accent.primary : hasTransactions ? colors.text.primary : colors.text.tertiary}
                     >
-                      {formatCompactAmount(dayTotal, currencySymbol)}
+                      {dayNum}
                     </Text>
-                  )}
-                </TouchableOpacity>
+                    
+                    {hasTransactions && (
+                      <Text 
+                        variant="xs" 
+                        weight="bold" 
+                        color={isSelected ? colors.accent.primary : activeThemeColor} 
+                        numberOfLines={1}
+                        style={styles.dayAmountText}
+                      >
+                        {formatCompactAmount(dayTotal, currencySymbol)}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               );
             })}
           </View>
@@ -533,7 +534,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   weekdayLabel: {
-    width: '14.28%',
+    width: '14.285%',
     textAlign: 'center',
   },
   calendarGrid: {
@@ -541,19 +542,21 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
   },
-  calendarEmptySlot: {
-    width: '14.28%',
+  calendarSlot: {
+    width: '14.285%',
     height: 48,
+    paddingHorizontal: 2.5,
+    paddingVertical: 2,
   },
   calendarDayCell: {
-    width: '14.28%',
-    height: 48,
+    flex: 1,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radii.sm,
     borderWidth: 1,
-    paddingVertical: 2,
-    marginVertical: 1,
+    paddingVertical: 1,
   },
   dayAmountText: {
     fontSize: 9,
