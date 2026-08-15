@@ -300,7 +300,7 @@ export const useUIStore = create<UIState>()(
       selectedYear: new Date().getFullYear(),
       currency: 'BDT',
       isFirstLaunch: true,
-      theme: 'dark',
+      theme: 'light',
       userName: 'Guest User',
       userPhotoUrl: null,
       dailyReminderEnabled: false,

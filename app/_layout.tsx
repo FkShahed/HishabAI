@@ -1,19 +1,21 @@
 import { Stack } from 'expo-router';
-import { Colors } from '../src/constants/colors';
+import { useThemeColors } from '../src/constants/colors';
 import { StatusBar } from 'expo-status-bar';
 
 export default function RootLayout() {
+  const colors = useThemeColors();
+
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="light" backgroundColor={colors.topbar.bg} />
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: Colors.bg.primary,
+            backgroundColor: colors.topbar.bg,
           },
-          headerTintColor: Colors.text.primary,
+          headerTintColor: colors.topbar.text,
           contentStyle: {
-            backgroundColor: Colors.bg.primary,
+            backgroundColor: colors.bg.primary,
           },
         }}
       >
