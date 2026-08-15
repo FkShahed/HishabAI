@@ -174,16 +174,16 @@ export default function PreviewScreen() {
           <View style={[styles.summaryCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
             {totalExpense > 0 && (
               <View style={styles.summaryTotals}>
-                <Text variant="md" color={colors.text.secondary}>Total Expense: </Text>
-                <Text variant="lg" weight="bold" color={colors.semantic.expense}>
+                <Text variant="sm" color={colors.text.secondary}>Total Expense: </Text>
+                <Text variant="md" weight="bold" color={colors.semantic.expense}>
                   {formatSignedAmount(totalExpense, 'expense', currency)}
                 </Text>
               </View>
             )}
             {totalIncome > 0 && (
               <View style={styles.summaryTotals}>
-                <Text variant="md" color={colors.text.secondary}>Total Income: </Text>
-                <Text variant="lg" weight="bold" color={colors.semantic.income}>
+                <Text variant="sm" color={colors.text.secondary}>Total Income: </Text>
+                <Text variant="md" weight="bold" color={colors.semantic.income}>
                   {formatSignedAmount(totalIncome, 'income', currency)}
                 </Text>
               </View>
@@ -193,8 +193,8 @@ export default function PreviewScreen() {
 
         {hasUncertainItems && (
           <View style={[styles.uncertainBanner, { backgroundColor: colors.semantic.warningDim, borderColor: colors.semantic.warning }]}>
-            <Ionicons name="warning" size={20} color={colors.semantic.warning} />
-            <Text variant="sm" color={colors.semantic.warning} style={{ marginLeft: 8, flex: 1 }}>
+            <Ionicons name="warning" size={18} color={colors.semantic.warning} />
+            <Text variant="xs" color={colors.semantic.warning} style={{ marginLeft: 8, flex: 1 }}>
               Some items are marked as uncertain. Please verify them.
             </Text>
           </View>
@@ -220,13 +220,13 @@ export default function PreviewScreen() {
               >
                 <View style={styles.itemHeader}>
                   <View style={styles.itemCategory}>
-                    <Text style={{ fontSize: 20 }}>{icon}</Text>
+                    <Text style={{ fontSize: 18 }}>{icon}</Text>
                     <Text variant="base" weight="semibold" style={{ marginLeft: 8 }}>
                       {name}
                     </Text>
                   </View>
                   <Text 
-                    variant="lg" 
+                    variant="base" 
                     weight="bold" 
                     color={item.type === 'expense' ? colors.semantic.expense : colors.semantic.income}
                   >
@@ -235,7 +235,7 @@ export default function PreviewScreen() {
                 </View>
 
                 <View style={styles.itemDetails}>
-                  <Text variant="sm" color={colors.text.primary} weight="medium">
+                  <Text variant="xs" color={colors.text.secondary} weight="medium">
                     {item.comment || 'No details'}
                   </Text>
                 </View>
@@ -375,43 +375,44 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: Radii.md,
     borderWidth: 1,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   summaryCard: {
-    borderRadius: Radii.lg,
-    padding: Spacing.lg,
+    borderRadius: Radii.md,
+    padding: Spacing.md,
     borderWidth: 1,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   summaryTotals: {
     flexDirection: 'row',
+    alignItems: 'center',
     marginTop: Spacing.xs,
   },
   itemCard: {
-    borderRadius: Radii.lg,
-    padding: Spacing.lg,
+    borderRadius: Radii.md,
+    padding: Spacing.md,
     borderWidth: 1,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   itemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   itemCategory: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   itemDetails: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   itemFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.xs,
   },
   editButton: {
     flexDirection: 'row',
@@ -419,8 +420,8 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
   },
   uncertainBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: Radii.sm,
   },
   footer: {
@@ -428,7 +429,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: Spacing.lg,
+    padding: Spacing.md,
     borderTopWidth: 1,
   },
   modalOverlay: {
@@ -437,47 +438,48 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: Radii.xl,
-    borderTopRightRadius: Radii.xl,
+    borderTopLeftRadius: Radii.lg,
+    borderTopRightRadius: Radii.lg,
     height: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: Spacing.lg,
+    padding: Spacing.md,
     borderBottomWidth: 1,
   },
   modalBody: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   inputLabel: {
     marginBottom: Spacing.xs,
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
   },
   textInput: {
     borderWidth: 1,
     borderRadius: Radii.md,
-    padding: Spacing.md,
-    fontSize: 16,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    fontSize: 15,
   },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     marginTop: Spacing.xs,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   catChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: Spacing.xs + 2,
     borderRadius: Radii.full,
     borderWidth: 1,
   },
   modalFooter: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
     borderTopWidth: 1,
-  }
+  },
 });

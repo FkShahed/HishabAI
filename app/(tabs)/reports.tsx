@@ -78,8 +78,8 @@ export default function ReportsScreen() {
         <View style={[styles.card, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
           <View style={styles.cardHeader}>
             <View>
-              <Text variant="lg" weight="bold">Monthly Budget</Text>
-              <Text variant="sm" color={colors.text.secondary}>Overall Spending Limit</Text>
+              <Text variant="md" weight="bold">Monthly Budget</Text>
+              <Text variant="xs" color={colors.text.secondary}>Overall Spending Limit</Text>
             </View>
             <Button 
               label={monthlyBudget ? "Edit" : "Set Budget"} 
@@ -200,8 +200,8 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   card: {
-    borderRadius: Radii.lg,
-    padding: Spacing.lg,
+    borderRadius: Radii.md,
+    padding: Spacing.md,
     marginBottom: Spacing.md,
     borderWidth: 1,
   },
@@ -209,10 +209,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   cardTitle: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   budgetBody: {
     gap: Spacing.sm,

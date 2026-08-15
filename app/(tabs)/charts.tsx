@@ -95,7 +95,7 @@ export default function ChartsScreen() {
         
         {/* Category Breakdown (SVG Donut Chart) */}
         <View style={[styles.card, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
-          <Text variant="lg" weight="bold" style={styles.cardTitle}>Spending by Category</Text>
+          <Text variant="md" weight="bold" style={styles.cardTitle}>Spending by Category</Text>
           
           {pieData.data.length > 0 ? (
             <>
@@ -218,13 +218,13 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   card: {
-    borderRadius: Radii.lg,
-    padding: Spacing.lg,
+    borderRadius: Radii.md,
+    padding: Spacing.md,
     marginBottom: Spacing.md,
     borderWidth: 1,
   },
   cardTitle: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   chartContainer: {
     alignItems: 'center',

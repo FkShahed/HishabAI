@@ -144,17 +144,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
-    padding: Spacing.xl,
+    padding: Spacing.lg,
   },
   modalCard: {
-    borderRadius: Radii.xl,
-    padding: Spacing.lg,
+    borderRadius: Radii.md,
+    padding: Spacing.md,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.xs,
     borderBottomWidth: 1,
   },
   closeBtn: {
@@ -164,15 +164,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.xs,
   },
   weekdayRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   weekdayCell: {
-    width: 36,
+    width: 34,
     textAlign: 'center',
   },
   grid: {
@@ -182,16 +182,16 @@ const styles = StyleSheet.create({
   },
   dayCell: {
     width: '14.28%',
-    height: 40,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: Radii.full,
-    marginVertical: 2,
+    marginVertical: 1,
   },
   dayCellSelected: {
   },
   footer: {
     flexDirection: 'row',
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
 });

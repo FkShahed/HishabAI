@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewProps, StyleSheet } from 'react-native';
-import { Colors, Radii, Spacing, Shadows } from '../../constants/colors';
+import { Radii, Spacing, Shadows, useThemeColors } from '../../constants/colors';
 
 export interface CardProps extends ViewProps {
   variant?: 'default' | 'elevated' | 'outline';
@@ -14,13 +14,14 @@ export function Card({
   children,
   ...props
 }: CardProps) {
+  const colors = useThemeColors();
   const getPadding = () => {
     switch (padding) {
       case 'none': return 0;
-      case 'sm': return Spacing.md;
-      case 'md': return Spacing.lg;
-      case 'lg': return Spacing.xl;
-      default: return Spacing.lg;
+      case 'sm': return Spacing.sm;
+      case 'md': return Spacing.md;
+      case 'lg': return Spacing.lg;
+      default: return Spacing.md;
     }
   };
 
@@ -28,8 +29,11 @@ export function Card({
     <View
       style={[
         styles.card,
-        { padding: getPadding() },
-        variant === 'default' && styles.default,
+        { 
+          padding: getPadding(),
+          backgroundColor: variant === 'elevated' ? colors.bg.elevated : colors.bg.card,
+          borderColor: colors.border.subtle,
+        },
         variant === 'elevated' && styles.elevated,
         variant === 'outline' && styles.outline,
         style,
@@ -43,19 +47,13 @@ export function Card({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: Radii.lg,
+    borderRadius: Radii.md,
     overflow: 'hidden',
   },
-  default: {
-    backgroundColor: Colors.bg.card,
-  },
   elevated: {
-    backgroundColor: Colors.bg.elevated,
-    ...Shadows.md,
+    ...Shadows.sm,
   },
   outline: {
-    backgroundColor: Colors.bg.card,
     borderWidth: 1,
-    borderColor: Colors.border.subtle,
   },
 });

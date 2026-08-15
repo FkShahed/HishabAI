@@ -49,10 +49,10 @@ export function Button({
 
   const getHeight = () => {
     switch (size) {
-      case 'sm': return 36;
-      case 'md': return 48;
-      case 'lg': return 56;
-      default: return 48;
+      case 'sm': return 34;
+      case 'md': return 44;
+      case 'lg': return 50;
+      default: return 44;
     }
   };
 
@@ -65,6 +65,8 @@ export function Button({
         {
           backgroundColor: getBgColor(),
           height: getHeight(),
+          borderRadius: Radii.md,
+          paddingHorizontal: size === 'sm' ? Spacing.sm + 2 : Spacing.md,
         },
         style,
       ]}
@@ -78,7 +80,7 @@ export function Button({
           <Text
             weight="semibold"
             color={getTextColor()}
-            variant={size === 'lg' ? 'lg' : 'base'}
+            variant={size === 'sm' ? 'xs' : 'base'}
           >
             {label}
           </Text>
@@ -91,10 +93,10 @@ export function Button({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: Radii.lg,
+    borderRadius: Radii.md,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.md,
   },
   content: {
     flexDirection: 'row',

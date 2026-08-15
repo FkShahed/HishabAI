@@ -45,9 +45,11 @@ export function TransactionItem({ transaction, onPress, showDate = false }: Tran
           <Text variant="base" weight="semibold" numberOfLines={1}>
             {transaction.categoryNameSnapshot}
           </Text>
-          <Text variant="sm" color={colors.text.secondary} numberOfLines={1}>
-            {transaction.comment}
-          </Text>
+          {transaction.comment ? (
+            <Text variant="xs" color={colors.text.secondary} numberOfLines={1} style={{ marginTop: 1 }}>
+              {transaction.comment}
+            </Text>
+          ) : null}
           {showDate && (
             <Text variant="xs" color={colors.text.tertiary} style={styles.date}>
               {formatDateShort(transaction.transactionDate)}
@@ -59,11 +61,11 @@ export function TransactionItem({ transaction, onPress, showDate = false }: Tran
       <View style={styles.right}>
         {sourceIcon && (
           <View style={styles.sourceBadge}>
-            <Ionicons name="sparkles" size={12} color={colors.accent.primary} />
+            <Ionicons name="sparkles" size={11} color={colors.accent.primary} />
           </View>
         )}
         <Text
-          variant="md"
+          variant="base"
           weight="bold"
           color={
             transaction.type === 'expense'
@@ -85,8 +87,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.md,
     borderBottomWidth: 1,
   },
   left: {

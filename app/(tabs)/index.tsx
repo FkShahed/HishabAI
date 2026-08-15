@@ -88,10 +88,10 @@ export default function HomeScreen() {
         <View style={[styles.summaryCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }]}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text variant="xs" color={colors.text.secondary} weight="medium">
+              <Text variant="xs" color={colors.text.secondary} weight="semibold">
                 EXPENSES
               </Text>
-              <Text variant="lg" weight="bold" color={colors.semantic.expense} style={{ marginTop: 2 }}>
+              <Text variant="md" weight="bold" color={colors.semantic.expense} style={{ marginTop: 2 }}>
                 {formatCurrency(summary.totalExpense, currency)}
               </Text>
             </View>
@@ -99,10 +99,10 @@ export default function HomeScreen() {
             <View style={[styles.summaryDivider, { backgroundColor: colors.border.subtle }]} />
 
             <View style={styles.summaryItem}>
-              <Text variant="xs" color={colors.text.secondary} weight="medium">
+              <Text variant="xs" color={colors.text.secondary} weight="semibold">
                 INCOME
               </Text>
-              <Text variant="lg" weight="bold" color={colors.semantic.income} style={{ marginTop: 2 }}>
+              <Text variant="md" weight="bold" color={colors.semantic.income} style={{ marginTop: 2 }}>
                 {formatCurrency(summary.totalIncome, currency)}
               </Text>
             </View>
@@ -110,11 +110,11 @@ export default function HomeScreen() {
             <View style={[styles.summaryDivider, { backgroundColor: colors.border.subtle }]} />
 
             <View style={styles.summaryItem}>
-              <Text variant="xs" color={colors.text.secondary} weight="medium">
+              <Text variant="xs" color={colors.text.secondary} weight="semibold">
                 BALANCE
               </Text>
               <Text
-                variant="lg"
+                variant="md"
                 weight="bold"
                 color={summary.balance >= 0 ? colors.semantic.income : colors.semantic.expense}
                 style={{ marginTop: 2 }}
@@ -206,16 +206,16 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
   },
   summaryCard: {
-    marginHorizontal: Spacing.lg,
-    backgroundColor: Colors.bg.card,
-    borderRadius: Radii.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.xl,
+    marginHorizontal: Spacing.md,
+    borderRadius: Radii.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   summaryRow: {
     flexDirection: 'row',

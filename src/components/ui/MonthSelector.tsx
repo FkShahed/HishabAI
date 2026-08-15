@@ -20,11 +20,11 @@ export function MonthSelector({ month, year, onPrev, onNext }: MonthSelectorProp
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
-      <TouchableOpacity onPress={onPrev} style={styles.button}>
-        <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
+      <TouchableOpacity onPress={onPrev} style={styles.button} activeOpacity={0.7}>
+        <Ionicons name="chevron-back" size={20} color={colors.text.primary} />
       </TouchableOpacity>
 
-      <Text variant="lg" weight="semibold" style={styles.label}>
+      <Text variant="md" weight="semibold" style={styles.label}>
         {getMonthLabel(month, year)}
       </Text>
 
@@ -32,10 +32,11 @@ export function MonthSelector({ month, year, onPrev, onNext }: MonthSelectorProp
         onPress={onNext}
         style={styles.button}
         disabled={isCurrentMonth}
+        activeOpacity={0.7}
       >
         <Ionicons
           name="chevron-forward"
-          size={24}
+          size={20}
           color={isCurrentMonth ? colors.text.tertiary : colors.text.primary}
         />
       </TouchableOpacity>
@@ -48,14 +49,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
   },
   button: {
-    padding: Spacing.sm,
+    padding: Spacing.xs + 2,
   },
   label: {
-    minWidth: 150,
+    minWidth: 140,
     textAlign: 'center',
   },
 });

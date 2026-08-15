@@ -25,6 +25,8 @@ export function Text({
       style={[
         {
           fontSize: Typography.sizes[variant],
+          lineHeight: Typography.lineHeights[variant],
+          letterSpacing: Typography.letterSpacings[variant],
           fontWeight: Typography.weights[weight],
           color: textColor,
           textAlign: align,
