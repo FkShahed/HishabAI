@@ -68,9 +68,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   side: {
-    width: 44,
+    minWidth: 44,
     justifyContent: 'center',
     alignItems: 'flex-start',
+    flexShrink: 0,
   },
   rightSide: {
     alignItems: 'flex-end',

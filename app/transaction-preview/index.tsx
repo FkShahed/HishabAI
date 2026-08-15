@@ -149,10 +149,15 @@ export default function PreviewScreen() {
     <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <Header 
         title="Review Transactions" 
-        showBack={false}
+        showBack={true}
+        onBack={handleDiscard}
         rightElement={
-          <TouchableOpacity onPress={handleDiscard} style={{ padding: Spacing.xs }}>
-            <Text color={colors.text.secondary} weight="semibold">Cancel</Text>
+          <TouchableOpacity 
+            onPress={handleDiscard} 
+            style={[styles.headerCancelBtn, { backgroundColor: colors.semantic.dangerDim }]}
+            activeOpacity={0.7}
+          >
+            <Text variant="xs" weight="bold" color={colors.semantic.danger}>Cancel</Text>
           </TouchableOpacity>
         }
       />
@@ -259,14 +264,24 @@ export default function PreviewScreen() {
 
       </ScrollView>
 
-      {/* Footer Confirm Action */}
+      {/* Footer Confirm & Cancel Actions */}
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Spacing.md), backgroundColor: colors.bg.primary, borderTopColor: colors.border.subtle }]}>
-        <Button 
-          label={`Confirm & Save All (${previewTransactions.length})`}
-          variant="primary"
-          onPress={handleSave}
-          style={{ width: '100%' }}
-        />
+        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <Button 
+            label="Cancel"
+            variant="secondary"
+            size="md"
+            onPress={handleDiscard}
+            style={{ flex: 1 }}
+          />
+          <Button 
+            label={`Save All (${previewTransactions.length})`}
+            variant="primary"
+            size="md"
+            onPress={handleSave}
+            style={{ flex: 2 }}
+          />
+        </View>
       </View>
 
       {/* Edit Modal */}
@@ -274,9 +289,9 @@ export default function PreviewScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.bg.modal }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
-              <Text variant="lg" weight="bold">Edit Extracted Item</Text>
-              <TouchableOpacity onPress={() => setEditingTransaction(null)}>
-                <Ionicons name="close" size={24} color={colors.text.primary} />
+              <Text variant="md" weight="bold">Edit Extracted Item</Text>
+              <TouchableOpacity onPress={() => setEditingTransaction(null)} style={{ padding: Spacing.xs }}>
+                <Ionicons name="close" size={20} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -325,13 +340,23 @@ export default function PreviewScreen() {
             </ScrollView>
 
             <View style={[styles.modalFooter, { backgroundColor: colors.bg.modal, borderTopColor: colors.border.subtle }]}>
-              <Button label="Save Changes" onPress={saveEdit} style={{ width: '100%', marginBottom: Spacing.sm }} />
-              <Button 
-                label="Delete Item" 
-                variant="danger" 
-                onPress={handleDelete} 
-                style={{ width: '100%' }} 
-              />
+              <Button label="Save Changes" size="sm" onPress={saveEdit} style={{ width: '100%', marginBottom: Spacing.xs }} />
+              <View style={{ flexDirection: 'row', gap: Spacing.xs, width: '100%' }}>
+                <Button 
+                  label="Cancel" 
+                  variant="secondary" 
+                  size="sm"
+                  onPress={() => setEditingTransaction(null)} 
+                  style={{ flex: 1 }} 
+                />
+                <Button 
+                  label="Delete Item" 
+                  variant="danger" 
+                  size="sm"
+                  onPress={handleDelete} 
+                  style={{ flex: 1 }} 
+                />
+              </View>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -477,6 +502,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs + 2,
     borderRadius: Radii.full,
     borderWidth: 1,
+  },
+  headerCancelBtn: {
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: 4,
+    borderRadius: Radii.sm,
   },
   modalFooter: {
     padding: Spacing.md,
