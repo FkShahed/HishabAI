@@ -173,6 +173,14 @@ export default function AuthScreen() {
         }
       } else {
         // Native Mobile
+        const hasRealClientId = Boolean(
+          process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
+          process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+        );
+        if (!hasRealClientId) {
+          setErrorMessage('Google OAuth is not set up on mobile yet. Please use Email & Password below to sign in or create an account!');
+          return;
+        }
         if (promptAsync) {
           await promptAsync();
         } else {
