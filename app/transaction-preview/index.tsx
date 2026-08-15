@@ -16,7 +16,7 @@ import { useUIStore } from '../../src/store';
 export default function PreviewScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const { previewTransactions, source, clearPreview, updatePreviewTransaction } = usePreviewStore();
+  const { previewTransactions, source, clearPreview, updatePreviewTransaction, removePreviewTransaction } = usePreviewStore();
   const addTransactions = useTransactionStore((s) => s.addTransactions);
   const getCategoriesForType = useCategoryStore((s) => s.getCategoriesForType);
   const currency = useUIStore((s) => s.currency);
@@ -37,7 +37,7 @@ export default function PreviewScreen() {
   };
 
   const saveEdit = () => {
-    if (!editingTransaction) return;
+    if (!editingTransaction || !editingTransaction.tempId) return;
     
     // Find selected category to update name, icon, color
     const allCategories = [...getCategoriesForType('expense'), ...getCategoriesForType('income')];
@@ -56,6 +56,12 @@ export default function PreviewScreen() {
       uncertain: false,
     });
 
+    setEditingTransaction(null);
+  };
+
+  const handleDelete = () => {
+    if (!editingTransaction || !editingTransaction.tempId) return;
+    removePreviewTransaction(editingTransaction.tempId);
     setEditingTransaction(null);
   };
 
@@ -97,8 +103,25 @@ export default function PreviewScreen() {
     router.back();
   };
 
-  const items: PreviewTransaction[] = [...previewTransactions].sort((a, b) => a.categoryId.localeCompare(b.categoryId));
+  if (previewTransactions.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+        <Header title="Review Transactions" onBack={handleDiscard} />
+        <View style={styles.emptyContainer}>
+          <Ionicons name="checkmark-done-circle-outline" size={64} color={colors.accent.primary} />
+          <Text variant="lg" weight="bold" style={{ marginTop: Spacing.md, marginBottom: Spacing.xs }}>
+            No Transactions to Review
+          </Text>
+          <Text variant="sm" color={colors.text.secondary} align="center" style={{ marginBottom: Spacing.xl }}>
+            All extracted items have been saved or cleared.
+          </Text>
+          <Button label="Go to Home" onPress={() => router.replace('/(tabs)')} style={{ minWidth: 160 }} />
+        </View>
+      </View>
+    );
+  }
 
+  const items: PreviewTransaction[] = [...previewTransactions].sort((a, b) => a.categoryId.localeCompare(b.categoryId));
   const totalExpense = items.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const totalIncome = items.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
 
@@ -282,7 +305,13 @@ export default function PreviewScreen() {
             </ScrollView>
 
             <View style={[styles.modalFooter, { backgroundColor: colors.bg.modal, borderTopColor: colors.border.subtle }]}>
-              <Button label="Save Changes" onPress={saveEdit} style={{ width: '100%' }} />
+              <Button label="Save Changes" onPress={saveEdit} style={{ width: '100%', marginBottom: Spacing.sm }} />
+              <Button 
+                label="Delete Item" 
+                variant="danger" 
+                onPress={handleDelete} 
+                style={{ width: '100%' }} 
+              />
             </View>
           </View>
         </KeyboardAvoidingView>

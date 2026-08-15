@@ -373,7 +373,15 @@ export const usePreviewStore = create<PreviewState>((set) => ({
   processingNotes: null,
 
   setPreview: (transactions, source, rawTranscript, processingNotes) =>
-    set({ previewTransactions: transactions, source, rawTranscript: rawTranscript ?? null, processingNotes: processingNotes ?? null }),
+    set({
+      previewTransactions: (transactions || []).map((t, idx) => ({
+        ...t,
+        tempId: t.tempId || `preview_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 9)}`,
+      })),
+      source: source || null,
+      rawTranscript: rawTranscript ?? null,
+      processingNotes: processingNotes ?? null,
+    }),
 
   updatePreviewTransaction: (tempId, updates) =>
     set((state) => ({
