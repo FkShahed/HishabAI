@@ -30,8 +30,11 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Mobile Google Auth Hook
+  // Mobile Google Auth Hook with configured client IDs
   const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '254866158438-mobile.apps.googleusercontent.com',
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '254866158438-ios.apps.googleusercontent.com',
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-web.apps.googleusercontent.com',
     scopes: ['profile', 'email'],
   });
 
@@ -68,7 +71,7 @@ export default function AuthScreen() {
 
   // If user is already signed in, prevent viewing sign in / sign up page
   useEffect(() => {
-    if (auth.currentUser && !auth.currentUser.isAnonymous && auth.currentUser.email) {
+    if (auth?.currentUser && !auth.currentUser.isAnonymous && auth.currentUser.email) {
       router.replace('/(tabs)');
     }
   }, []);
@@ -170,12 +173,16 @@ export default function AuthScreen() {
         }
       } else {
         // Native Mobile
-        await promptAsync();
+        if (promptAsync) {
+          await promptAsync();
+        } else {
+          setErrorMessage('Google Sign-In is not available on this device. Please sign in with Email & Password.');
+        }
       }
     } catch (error: any) {
       console.error('Google Auth failed:', error);
       if (error.code !== 'auth/popup-closed-by-user') {
-        setErrorMessage(error.message || 'Google authentication failed.');
+        setErrorMessage(error.message || 'Google authentication failed. Please use Email & Password.');
       }
     } finally {
       setLoading(false);
