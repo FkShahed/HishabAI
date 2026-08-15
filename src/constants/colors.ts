@@ -1,5 +1,4 @@
 // Design System Constants for HisabAI
-import { useUIStore } from '../store';
 
 export const DarkColors = {
   // ── Backgrounds ──────────────────────────────────────────────────────────
@@ -158,22 +157,16 @@ export function getThemeColors(theme: 'dark' | 'light' = 'dark'): typeof DarkCol
 }
 
 export function useThemeColors(): typeof DarkColors {
-  const theme = useUIStore((s) => s.theme);
-  return getThemeColors(theme);
+  try {
+    const { useUIStore } = require('../store');
+    const theme = useUIStore((s: any) => s.theme);
+    return getThemeColors(theme);
+  } catch {
+    return DarkColors;
+  }
 }
 
-export const Colors = new Proxy(DarkColors, {
-  get(target, prop: string) {
-    try {
-      const state = useUIStore?.getState ? useUIStore.getState() : null;
-      const theme = state?.theme || 'dark';
-      const activeColors = getThemeColors(theme);
-      return (activeColors as any)[prop] ?? (target as any)[prop];
-    } catch {
-      return (target as any)[prop];
-    }
-  }
-}) as typeof DarkColors;
+export const Colors = DarkColors;
 
 export const Spacing = {
   xs: 4,

@@ -29,7 +29,6 @@ import {
 } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { useUIStore } from '../store';
 
 // Real Firebase Web App Configuration for project "hishab-ai"
 const firebaseConfig = {
@@ -116,6 +115,7 @@ export const AuthService = {
     if (photo) {
       (result.user as any).customPhotoURL = photo;
       try {
+        const { useUIStore } = require('../store');
         useUIStore.getState().setUserPhotoUrl(photo);
       } catch (e) {}
     }
