@@ -107,16 +107,16 @@ export default function TransactionDetailScreen() {
           <CategoryIcon 
             icon={transaction.categoryIcon} 
             color={transaction.categoryColor} 
-            size="lg" 
+            size="md" 
           />
-          <Text variant="xl" weight="bold" style={{ marginTop: Spacing.md }}>
+          <Text variant="base" weight="bold" style={{ marginTop: Spacing.sm }}>
             {transaction.categoryNameSnapshot}
           </Text>
           <Text 
-            variant="xxxl" 
+            variant="xxl" 
             weight="extrabold" 
             color={transaction.type === 'expense' ? colors.semantic.expense : colors.semantic.income}
-            style={{ marginTop: Spacing.xs }}
+            style={{ marginTop: 2 }}
           >
             {transaction.type === 'expense' ? '-' : '+'}{formatCurrency(transaction.amount, currency)}
           </Text>
@@ -125,19 +125,19 @@ export default function TransactionDetailScreen() {
         {/* Details Grid */}
         <View style={[styles.detailsCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
           <View style={[styles.detailRow, { borderBottomColor: colors.border.subtle }]}>
-            <Text variant="sm" color={colors.text.secondary}>Date</Text>
+            <Text variant="xs" color={colors.text.secondary}>Date</Text>
             <Text variant="sm" weight="semibold">{transaction.transactionDate}</Text>
           </View>
           
           <View style={[styles.detailRow, { borderBottomColor: colors.border.subtle }]}>
-            <Text variant="sm" color={colors.text.secondary}>Type</Text>
+            <Text variant="xs" color={colors.text.secondary}>Type</Text>
             <Text variant="sm" weight="semibold" style={{ textTransform: 'capitalize' }}>
               {transaction.type}
             </Text>
           </View>
 
           <View style={[styles.detailRow, { borderBottomColor: colors.border.subtle }]}>
-            <Text variant="sm" color={colors.text.secondary}>Source</Text>
+            <Text variant="xs" color={colors.text.secondary}>Source</Text>
             <View style={[styles.sourceBadge, { backgroundColor: colors.accent.primaryDim }]}>
               <Text variant="xs" weight="bold" color={colors.accent.primary} style={{ textTransform: 'uppercase' }}>
                 {transaction.source}
@@ -147,7 +147,7 @@ export default function TransactionDetailScreen() {
 
           {transaction.comment ? (
             <View style={styles.detailRow}>
-              <Text variant="sm" color={colors.text.secondary}>Note</Text>
+              <Text variant="xs" color={colors.text.secondary}>Note</Text>
               <Text variant="sm" weight="medium" style={{ flex: 1, textAlign: 'right' }}>
                 {transaction.comment}
               </Text>
@@ -159,9 +159,10 @@ export default function TransactionDetailScreen() {
         <Button 
           label="Delete Transaction" 
           variant="danger" 
-          leftIcon={<Ionicons name="trash-outline" size={20} color={colors.semantic.danger} />}
+          size="sm"
+          leftIcon={<Ionicons name="trash-outline" size={16} color={colors.semantic.danger} />}
           onPress={handleDelete}
-          style={{ marginTop: Spacing.xl }}
+          style={{ marginTop: Spacing.lg }}
         />
 
       </ScrollView>
@@ -171,9 +172,9 @@ export default function TransactionDetailScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.bg.modal }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
-              <Text variant="xl" weight="bold">Edit Transaction</Text>
+              <Text variant="md" weight="bold">Edit Transaction</Text>
               <TouchableOpacity onPress={() => setIsEditing(false)}>
-                <Ionicons name="close" size={24} color={colors.text.primary} />
+                <Ionicons name="close" size={20} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -253,25 +254,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   heroCard: {
     alignItems: 'center',
-    borderRadius: Radii.lg,
-    padding: Spacing.xl,
-    marginBottom: Spacing.lg,
+    borderRadius: Radii.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
     borderWidth: 1,
   },
   detailsCard: {
-    borderRadius: Radii.lg,
-    padding: Spacing.lg,
+    borderRadius: Radii.md,
+    padding: Spacing.md,
     borderWidth: 1,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
   },
   sourceBadge: {
@@ -285,19 +286,19 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: Radii.xl,
-    borderTopRightRadius: Radii.xl,
+    borderTopLeftRadius: Radii.lg,
+    borderTopRightRadius: Radii.lg,
     maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: Spacing.xl,
+    padding: Spacing.md,
     borderBottomWidth: 1,
   },
   modalBody: {
-    padding: Spacing.xl,
+    padding: Spacing.md,
   },
   inputLabel: {
     marginBottom: Spacing.xs,
@@ -305,26 +306,27 @@ const styles = StyleSheet.create({
   textInput: {
     borderWidth: 1,
     borderRadius: Radii.md,
-    padding: Spacing.md,
-    fontSize: 16,
-    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    fontSize: 14,
+    marginBottom: Spacing.md,
   },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
-    paddingBottom: Spacing.xxxl,
+    gap: Spacing.xs,
+    paddingBottom: Spacing.xl,
   },
   catChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: Spacing.xs + 2,
     borderRadius: Radii.full,
     borderWidth: 1,
   },
   modalFooter: {
-    padding: Spacing.xl,
+    padding: Spacing.md,
     borderTopWidth: 1,
   },
 });

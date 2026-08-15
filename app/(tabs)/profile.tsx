@@ -250,20 +250,20 @@ export default function ProfileScreen() {
                 <img 
                   src={photoUrl} 
                   referrerPolicy="no-referrer" 
-                  style={{ width: 56, height: 56, borderRadius: 28, objectFit: 'cover' }} 
+                  style={{ width: 48, height: 48, borderRadius: 24, objectFit: 'cover' }} 
                   onError={() => setImageFailed(true)}
                 />
               ) : (
                 <Image 
                   source={{ uri: photoUrl }} 
-                  style={{ width: 56, height: 56, borderRadius: 28 }} 
+                  style={{ width: 48, height: 48, borderRadius: 24 }} 
                   onError={() => setImageFailed(true)}
                 />
               )
             ) : (
               <Ionicons 
                 name={currentUser?.email ? "person" : "person-outline"} 
-                size={32} 
+                size={24} 
                 color="#FFFFFF" 
               />
             )}
@@ -274,12 +274,12 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text variant="lg" weight="bold">
+              <Text variant="base" weight="bold">
                 {userName || currentUser?.email || 'User'}
               </Text>
-              <Ionicons name="pencil" size={14} color={colors.accent.primary} style={{ marginLeft: 6 }} />
+              <Ionicons name="pencil" size={12} color={colors.accent.primary} style={{ marginLeft: 6 }} />
             </View>
-            <Text variant="sm" color={colors.text.secondary}>
+            <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
               {currentUser?.email ? currentUser.email : `UID: ${currentUser?.uid?.substring(0, 8) || 'local'}...`}
             </Text>
           </TouchableOpacity>
@@ -304,7 +304,7 @@ export default function ProfileScreen() {
 
         {/* Preferences Section */}
         <View style={styles.settingsGroup}>
-          <Text variant="sm" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
+          <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
             PREFERENCES
           </Text>
           
@@ -315,14 +315,14 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="person-outline" size={24} color={colors.text.primary} />
-              <Text variant="md" style={styles.settingText}>Your Name</Text>
+              <Ionicons name="person-outline" size={20} color={colors.text.primary} />
+              <Text variant="base" style={styles.settingText}>Your Name</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text variant="md" weight="bold" color={colors.text.primary} style={{ marginRight: Spacing.xs }}>
+              <Text variant="sm" weight="semibold" color={colors.text.primary} style={{ marginRight: Spacing.xs }}>
                 {userName}
               </Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.text.tertiary} />
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
             </View>
           </TouchableOpacity>
 
@@ -333,14 +333,14 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="cash-outline" size={24} color={colors.text.primary} />
-              <Text variant="md" style={styles.settingText}>Currency</Text>
+              <Ionicons name="cash-outline" size={20} color={colors.text.primary} />
+              <Text variant="base" style={styles.settingText}>Currency</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text variant="md" weight="bold" color={colors.accent.primary} style={{ marginRight: Spacing.xs }}>
+              <Text variant="sm" weight="semibold" color={colors.accent.primary} style={{ marginRight: Spacing.xs }}>
                 {currency} ({currentCurrencySymbol})
               </Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.text.tertiary} />
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
             </View>
           </TouchableOpacity>
 
@@ -349,10 +349,10 @@ export default function ProfileScreen() {
             <View style={styles.settingLeft}>
               <Ionicons 
                 name={theme === 'dark' ? "moon-outline" : "sunny-outline"} 
-                size={24} 
+                size={20} 
                 color={colors.text.primary} 
               />
-              <Text variant="md" style={styles.settingText}>Dark Mode</Text>
+              <Text variant="base" style={styles.settingText}>Dark Mode</Text>
             </View>
             <Switch 
               value={theme === 'dark'} 
@@ -365,8 +365,8 @@ export default function ProfileScreen() {
           {/* Daily Reminders */}
           <View style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}>
             <View style={styles.settingLeft}>
-              <Ionicons name="notifications-outline" size={24} color={colors.text.primary} />
-              <Text variant="md" style={styles.settingText}>Daily Reminder (8:00 PM)</Text>
+              <Ionicons name="notifications-outline" size={20} color={colors.text.primary} />
+              <Text variant="base" style={styles.settingText}>Daily Reminder (8:00 PM)</Text>
             </View>
             <Switch 
               value={dailyReminderEnabled} 
@@ -379,19 +379,19 @@ export default function ProfileScreen() {
 
         {/* App Version & Updates Section */}
         <View style={styles.settingsGroup}>
-          <Text variant="sm" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
+          <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
             APP UPDATES & VERSION
           </Text>
 
           {/* Update Available Banner */}
           {updateInfo?.hasUpdate && (
             <View style={[styles.updateBannerCard, { backgroundColor: colors.accent.primaryDim, borderColor: colors.accent.primary }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.xs }}>
                 <View style={[styles.updateIconBadge, { backgroundColor: colors.accent.primary }]}>
-                  <Ionicons name="sparkles" size={16} color="#FFFFFF" />
+                  <Ionicons name="sparkles" size={14} color="#FFFFFF" />
                 </View>
                 <View style={{ marginLeft: Spacing.sm, flex: 1 }}>
-                  <Text variant="md" weight="bold" color={colors.text.primary}>
+                  <Text variant="sm" weight="bold" color={colors.text.primary}>
                     New Update Available!
                   </Text>
                   <Text variant="xs" color={colors.accent.primary} weight="bold">
@@ -419,9 +419,9 @@ export default function ProfileScreen() {
                   onPress={() => handleDownloadUpdate(updateInfo.apkUrl)}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="cloud-download-outline" size={16} color="#FFFFFF" />
+                  <Ionicons name="cloud-download-outline" size={15} color="#FFFFFF" />
                   <Text variant="xs" weight="bold" color="#FFFFFF" style={{ marginLeft: 4 }}>
-                    Download & Install APK
+                    Download APK
                   </Text>
                 </TouchableOpacity>
 
@@ -438,17 +438,17 @@ export default function ProfileScreen() {
             </View>
           )}
 
-          {/* Current Version Item - Tapping opens full update/version details */}
+          {/* Current Version Item */}
           <TouchableOpacity
             style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
             onPress={handleViewVersionInfo}
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="information-circle-outline" size={24} color={colors.text.primary} />
+              <Ionicons name="information-circle-outline" size={20} color={colors.text.primary} />
               <View style={{ marginLeft: Spacing.md }}>
-                <Text variant="md" style={styles.settingText}>Installed Version</Text>
-                <Text variant="xs" color={colors.text.tertiary} style={{ marginLeft: Spacing.md }}>Tap to view release & update info</Text>
+                <Text variant="base" style={styles.settingText}>Installed Version</Text>
+                <Text variant="xs" color={colors.text.tertiary} style={{ marginLeft: Spacing.md }}>Tap for release details</Text>
               </View>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -471,14 +471,14 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="refresh-circle-outline" size={24} color={colors.accent.primary} />
-              <Text variant="md" style={styles.settingText}>Check for Updates</Text>
+              <Ionicons name="refresh-circle-outline" size={20} color={colors.accent.primary} />
+              <Text variant="base" style={styles.settingText}>Check for Updates</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               {isCheckingUpdate ? (
                 <ActivityIndicator size="small" color={colors.accent.primary} />
               ) : (
-                <Text variant="sm" color={colors.accent.primary} weight="bold">
+                <Text variant="xs" color={colors.accent.primary} weight="bold">
                   {updateInfo?.hasUpdate ? 'Update Available!' : 'Check Now'}
                 </Text>
               )}
@@ -488,19 +488,19 @@ export default function ProfileScreen() {
 
         {/* Support & Account Section */}
         <View style={styles.settingsGroup}>
-          <Text variant="sm" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
+          <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
             SUPPORT & ACCOUNT
           </Text>
           
           {currentUser?.email && !currentUser?.isAnonymous ? (
             <View style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}>
               <View style={styles.settingLeft}>
-                <Ionicons name="cloud-done-outline" size={24} color={colors.semantic.safe} />
-                <Text variant="md" style={styles.settingText}>
+                <Ionicons name="cloud-done-outline" size={20} color={colors.semantic.safe} />
+                <Text variant="base" style={styles.settingText}>
                   Account Synced ({currentUser.email})
                 </Text>
               </View>
-              <Ionicons name="checkmark-circle" size={20} color={colors.semantic.safe} />
+              <Ionicons name="checkmark-circle" size={18} color={colors.semantic.safe} />
             </View>
           ) : (
             <TouchableOpacity 
@@ -508,27 +508,27 @@ export default function ProfileScreen() {
               onPress={() => router.push('/auth' as any)}
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="cloud-upload-outline" size={24} color={colors.text.primary} />
-                <Text variant="md" style={styles.settingText}>
+                <Ionicons name="cloud-upload-outline" size={20} color={colors.text.primary} />
+                <Text variant="base" style={styles.settingText}>
                   Sign In / Sync Account
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
             </TouchableOpacity>
           )}
 
           <TouchableOpacity style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}>
             <View style={styles.settingLeft}>
-              <Ionicons name="document-text-outline" size={24} color={colors.text.primary} />
-              <Text variant="md" style={styles.settingText}>Terms & Privacy</Text>
+              <Ionicons name="document-text-outline" size={20} color={colors.text.primary} />
+              <Text variant="base" style={styles.settingText}>Terms & Privacy</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
+            <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
           </TouchableOpacity>
         </View>
 
         {/* Danger Zone Section */}
         <View style={styles.settingsGroup}>
-          <Text variant="sm" weight="bold" color={colors.semantic.danger} style={styles.groupTitle}>
+          <Text variant="xs" weight="bold" color={colors.semantic.danger} style={styles.groupTitle}>
             DANGER ZONE
           </Text>
           
@@ -539,10 +539,10 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="trash-outline" size={24} color={colors.semantic.danger} />
-              <Text variant="md" style={[styles.settingText, { color: colors.semantic.danger }]}>Delete All Data</Text>
+              <Ionicons name="trash-outline" size={20} color={colors.semantic.danger} />
+              <Text variant="base" style={[styles.settingText, { color: colors.semantic.danger }]}>Delete All Data</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.semantic.danger} />
+            <Ionicons name="chevron-forward" size={16} color={colors.semantic.danger} />
           </TouchableOpacity>
 
           {/* Delete Account */}
@@ -552,10 +552,10 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="person-remove-outline" size={24} color={colors.semantic.danger} />
-              <Text variant="md" style={[styles.settingText, { color: colors.semantic.danger }]}>Delete Account</Text>
+              <Ionicons name="person-remove-outline" size={20} color={colors.semantic.danger} />
+              <Text variant="base" style={[styles.settingText, { color: colors.semantic.danger }]}>Delete Account</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.semantic.danger} />
+            <Ionicons name="chevron-forward" size={16} color={colors.semantic.danger} />
           </TouchableOpacity>
         </View>
 
@@ -564,7 +564,7 @@ export default function ProfileScreen() {
             style={[styles.logoutButton, { backgroundColor: colors.semantic.dangerDim }]} 
             onPress={handleSignOut}
           >
-            <Text variant="md" weight="bold" color={colors.semantic.danger}>Sign Out</Text>
+            <Text variant="base" weight="bold" color={colors.semantic.danger}>Sign Out</Text>
           </TouchableOpacity>
         ) : null}
         
@@ -575,8 +575,8 @@ export default function ProfileScreen() {
       {/* Edit Name Modal */}
       <Modal visible={isNameModalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1, padding: Spacing.lg }]}>
-            <Text variant="lg" weight="bold" style={{ marginBottom: Spacing.md }}>Update Your Name</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1, padding: Spacing.md }]}>
+            <Text variant="md" weight="bold" style={{ marginBottom: Spacing.sm }}>Update Your Name</Text>
             <TextInput
               style={[
                 styles.nameInput,
@@ -588,9 +588,9 @@ export default function ProfileScreen() {
               onChangeText={setNameInput}
               autoFocus
             />
-            <View style={{ flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.md }}>
-              <Button label="Cancel" variant="secondary" onPress={() => setNameModalVisible(false)} style={{ flex: 1 }} />
-              <Button label="Save Name" onPress={handleSaveName} style={{ flex: 1 }} />
+            <View style={{ flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm }}>
+              <Button label="Cancel" variant="secondary" size="sm" onPress={() => setNameModalVisible(false)} style={{ flex: 1 }} />
+              <Button label="Save Name" size="sm" onPress={handleSaveName} style={{ flex: 1 }} />
             </View>
           </View>
         </View>
@@ -599,15 +599,15 @@ export default function ProfileScreen() {
       {/* Currency Selection Modal */}
       <Modal visible={isCurrencyModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, padding: Spacing.md }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
-              <Text variant="xl" weight="bold">Select Main Currency</Text>
+              <Text variant="md" weight="bold">Select Main Currency</Text>
               <TouchableOpacity onPress={() => setCurrencyModalVisible(false)} style={{ padding: Spacing.xs }}>
-                <Ionicons name="close" size={24} color={colors.text.primary} />
+                <Ionicons name="close" size={20} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 400 }}>
+            <ScrollView style={{ maxHeight: 360 }}>
               {SUPPORTED_CURRENCIES.map((item) => {
                 const isSelected = currency === item.code;
                 return (
@@ -624,15 +624,15 @@ export default function ProfileScreen() {
                     }}
                   >
                     <View style={styles.currencyInfo}>
-                      <Text variant="md" weight="bold" color={isSelected ? colors.accent.primary : colors.text.primary}>
+                      <Text variant="sm" weight="bold" color={isSelected ? colors.accent.primary : colors.text.primary}>
                         {item.symbol} {item.code}
                       </Text>
-                      <Text variant="sm" color={colors.text.secondary}>
+                      <Text variant="xs" color={colors.text.secondary}>
                         {item.name}
                       </Text>
                     </View>
                     {isSelected && (
-                      <Ionicons name="checkmark-circle" size={24} color={colors.accent.primary} />
+                      <Ionicons name="checkmark-circle" size={18} color={colors.accent.primary} />
                     )}
                   </TouchableOpacity>
                 );
@@ -645,16 +645,16 @@ export default function ProfileScreen() {
       {/* Delete All Data Confirmation Modal */}
       <Modal visible={isDeleteModalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.semantic.dangerDim, borderWidth: 1 }]}>
-            <View style={{ alignItems: 'center', marginBottom: Spacing.lg }}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.semantic.dangerDim, borderWidth: 1, padding: Spacing.md }]}>
+            <View style={{ alignItems: 'center', marginBottom: Spacing.md }}>
               <View style={[styles.warningBadge, { backgroundColor: colors.semantic.dangerDim }]}>
-                <Ionicons name="warning-outline" size={36} color={colors.semantic.danger} />
+                <Ionicons name="warning-outline" size={28} color={colors.semantic.danger} />
               </View>
-              <Text variant="xl" weight="bold" color={colors.semantic.danger} style={{ marginTop: Spacing.md }}>
+              <Text variant="md" weight="bold" color={colors.semantic.danger} style={{ marginTop: Spacing.sm }}>
                 Delete All Data?
               </Text>
-              <Text variant="sm" color={colors.text.secondary} align="center" style={{ marginTop: Spacing.sm, paddingHorizontal: Spacing.sm }}>
-                Are you sure you want to delete all transactions, budgets, and categories? This action is permanent and cannot be undone.
+              <Text variant="xs" color={colors.text.secondary} align="center" style={{ marginTop: Spacing.xs, paddingHorizontal: Spacing.xs }}>
+                Are you sure you want to delete all transactions, budgets, and categories? This action cannot be undone.
               </Text>
             </View>
 
@@ -662,6 +662,7 @@ export default function ProfileScreen() {
               <Button 
                 label="Cancel" 
                 variant="secondary" 
+                size="sm"
                 onPress={() => setDeleteModalVisible(false)}
                 style={{ flex: 1, marginRight: Spacing.sm }}
                 disabled={isDeleting}
@@ -669,10 +670,11 @@ export default function ProfileScreen() {
               <Button 
                 label={isDeleting ? "Deleting..." : "Yes, Delete All"} 
                 variant="danger" 
+                size="sm"
                 onPress={handleConfirmDeleteAll}
                 style={{ flex: 1 }}
                 disabled={isDeleting}
-                leftIcon={isDeleting ? <ActivityIndicator size="small" color="#FFF" /> : <Ionicons name="trash" size={18} color="#FFF" />}
+                leftIcon={isDeleting ? <ActivityIndicator size="small" color="#FFF" /> : <Ionicons name="trash" size={15} color="#FFF" />}
               />
             </View>
           </View>
@@ -682,16 +684,16 @@ export default function ProfileScreen() {
       {/* Delete Account Confirmation Modal */}
       <Modal visible={isDeleteAccountModalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.semantic.dangerDim, borderWidth: 1 }]}>
-            <View style={{ alignItems: 'center', marginBottom: Spacing.lg }}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.semantic.dangerDim, borderWidth: 1, padding: Spacing.md }]}>
+            <View style={{ alignItems: 'center', marginBottom: Spacing.md }}>
               <View style={[styles.warningBadge, { backgroundColor: colors.semantic.dangerDim }]}>
-                <Ionicons name="person-remove-outline" size={36} color={colors.semantic.danger} />
+                <Ionicons name="person-remove-outline" size={28} color={colors.semantic.danger} />
               </View>
-              <Text variant="xl" weight="bold" color={colors.semantic.danger} style={{ marginTop: Spacing.md }}>
+              <Text variant="md" weight="bold" color={colors.semantic.danger} style={{ marginTop: Spacing.sm }}>
                 Delete Account?
               </Text>
-              <Text variant="sm" color={colors.text.secondary} align="center" style={{ marginTop: Spacing.sm, paddingHorizontal: Spacing.sm }}>
-                This will permanently delete your account, your profile, and all your transaction data from HisabAI cloud servers. This action cannot be undone.
+              <Text variant="xs" color={colors.text.secondary} align="center" style={{ marginTop: Spacing.xs, paddingHorizontal: Spacing.xs }}>
+                This will permanently delete your account and all your transaction data from HisabAI servers.
               </Text>
             </View>
 
@@ -699,6 +701,7 @@ export default function ProfileScreen() {
               <Button 
                 label="Cancel" 
                 variant="secondary" 
+                size="sm"
                 onPress={() => setDeleteAccountModalVisible(false)}
                 style={{ flex: 1, marginRight: Spacing.sm }}
                 disabled={isDeletingAccount}
@@ -706,10 +709,11 @@ export default function ProfileScreen() {
               <Button 
                 label={isDeletingAccount ? "Deleting..." : "Delete Account"} 
                 variant="danger" 
+                size="sm"
                 onPress={handleConfirmDeleteAccount}
                 style={{ flex: 1 }}
                 disabled={isDeletingAccount}
-                leftIcon={isDeletingAccount ? <ActivityIndicator size="small" color="#FFF" /> : <Ionicons name="person-remove" size={18} color="#FFF" />}
+                leftIcon={isDeletingAccount ? <ActivityIndicator size="small" color="#FFF" /> : <Ionicons name="person-remove" size={15} color="#FFF" />}
               />
             </View>
           </View>
@@ -719,17 +723,17 @@ export default function ProfileScreen() {
       {/* App Version & Update Details Modal */}
       <Modal visible={isUpdateModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: updateInfo?.hasUpdate ? colors.accent.primary : colors.border.medium, borderWidth: 1 }]}>
-            <View style={{ alignItems: 'center', marginBottom: Spacing.md }}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: updateInfo?.hasUpdate ? colors.accent.primary : colors.border.medium, borderWidth: 1, padding: Spacing.md }]}>
+            <View style={{ alignItems: 'center', marginBottom: Spacing.sm }}>
               <View style={[styles.updateIconModalBadge, { backgroundColor: updateInfo?.hasUpdate ? colors.accent.primary : colors.semantic.safe }]}>
-                <Ionicons name={updateInfo?.hasUpdate ? "rocket-outline" : "checkmark-circle-outline"} size={32} color="#FFFFFF" />
+                <Ionicons name={updateInfo?.hasUpdate ? "rocket-outline" : "checkmark-circle-outline"} size={26} color="#FFFFFF" />
               </View>
-              <Text variant="xl" weight="bold" style={{ marginTop: Spacing.sm }}>
+              <Text variant="md" weight="bold" style={{ marginTop: Spacing.xs }}>
                 {updateInfo?.hasUpdate ? 'New Update Available!' : 'HisabAI Version Details'}
               </Text>
               <View style={[styles.versionTagPill, { backgroundColor: updateInfo?.hasUpdate ? colors.accent.primaryDim : colors.semantic.safeDim, borderColor: updateInfo?.hasUpdate ? colors.accent.primary : colors.semantic.safe }]}>
                 <Text variant="xs" weight="bold" color={updateInfo?.hasUpdate ? colors.accent.primary : colors.semantic.safe}>
-                  {updateInfo?.hasUpdate ? `Update to v${updateInfo.latestVersion}` : `Version v${currentAppVersion} is Up to Date`}
+                  {updateInfo?.hasUpdate ? `Update to v${updateInfo.latestVersion}` : `v${currentAppVersion} is Up to Date`}
                 </Text>
               </View>
             </View>
@@ -752,45 +756,42 @@ export default function ProfileScreen() {
                   <Text variant="xs" weight="medium" color={colors.text.primary}>{updateInfo.fileSize}</Text>
                 </View>
               ) : null}
-              {updateInfo?.releaseDate ? (
-                <View style={styles.versionDetailRow}>
-                  <Text variant="xs" color={colors.text.secondary}>Release Date:</Text>
-                  <Text variant="xs" weight="medium" color={colors.text.primary}>{updateInfo.releaseDate}</Text>
-                </View>
-              ) : null}
             </View>
 
-            <Text variant="sm" weight="bold" color={colors.text.primary} style={{ marginTop: Spacing.sm, marginBottom: 4 }}>
-              What's New in this Release:
+            <Text variant="xs" weight="bold" color={colors.text.primary} style={{ marginTop: Spacing.xs, marginBottom: 4 }}>
+              What's New:
             </Text>
             <ScrollView style={[styles.releaseNotesScroll, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
-              <Text variant="xs" color={colors.text.secondary} style={{ lineHeight: 19 }}>
+              <Text variant="xs" color={colors.text.secondary} style={{ lineHeight: 18 }}>
                 {updateInfo?.releaseNotes || '• AI Voice command transaction recognition\n• Smart Receipt OCR parsing\n• Financial analytics and budget tracking\n• Performance optimizations and bug fixes'}
               </Text>
             </ScrollView>
 
-            <View style={{ flexDirection: 'column', gap: Spacing.sm, marginTop: Spacing.md }}>
+            <View style={{ flexDirection: 'column', gap: Spacing.xs, marginTop: Spacing.sm }}>
               {updateInfo?.hasUpdate ? (
                 <Button
                   label="Download & Install Now"
+                  size="sm"
                   onPress={() => {
                     setUpdateModalVisible(false);
                     handleDownloadUpdate(updateInfo.apkUrl);
                   }}
-                  leftIcon={<Ionicons name="cloud-download" size={18} color="#FFFFFF" />}
+                  leftIcon={<Ionicons name="cloud-download" size={16} color="#FFFFFF" />}
                 />
               ) : (
                 <Button
                   label="Check for Updates"
                   variant="secondary"
+                  size="sm"
                   disabled={isCheckingUpdate}
                   onPress={() => handleCheckForUpdates(true)}
-                  leftIcon={isCheckingUpdate ? <ActivityIndicator size="small" color={colors.text.primary} /> : <Ionicons name="refresh" size={18} color={colors.text.primary} />}
+                  leftIcon={isCheckingUpdate ? <ActivityIndicator size="small" color={colors.text.primary} /> : <Ionicons name="refresh" size={16} color={colors.text.primary} />}
                 />
               )}
               <Button
                 label="Close"
                 variant="secondary"
+                size="sm"
                 onPress={() => setUpdateModalVisible(false)}
               />
             </View>
@@ -861,50 +862,52 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   logoutButton: {
-    padding: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.md,
     borderRadius: Radii.md,
     alignItems: 'center',
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   modalContent: {
     width: '100%',
-    maxWidth: 420,
-    borderRadius: Radii.xl,
-    padding: Spacing.lg,
+    maxWidth: 400,
+    borderRadius: Radii.md,
+    padding: Spacing.md,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: Spacing.md,
-    marginBottom: Spacing.md,
+    paddingBottom: Spacing.xs,
+    marginBottom: Spacing.xs,
     borderBottomWidth: 1,
   },
   nameInput: {
     borderWidth: 1,
     borderRadius: Radii.md,
-    padding: Spacing.md,
-    fontSize: 16,
-    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    fontSize: 14,
+    marginBottom: Spacing.xs,
   },
   currencyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
     borderBottomWidth: 1,
     borderRadius: Radii.sm,
   },
@@ -912,9 +915,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   warningBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -329,9 +329,8 @@ const styles = StyleSheet.create({
   dateChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.bg.elevated,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: Spacing.xs + 2,
     borderRadius: Radii.md,
     borderWidth: 1,
     borderColor: 'transparent',
@@ -341,10 +340,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent.primaryDim,
   },
   inputGroup: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   label: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   amountContainer: {
     flexDirection: 'row',
@@ -355,27 +354,27 @@ const styles = StyleSheet.create({
   },
   amountInput: {
     flex: 1,
-    fontSize: Typography.sizes.hero,
+    fontSize: Typography.sizes.xxl,
     fontWeight: 'bold',
     color: Colors.text.primary,
     marginLeft: Spacing.sm,
   },
   textInput: {
-    backgroundColor: Colors.bg.elevated,
     color: Colors.text.primary,
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderRadius: Radii.md,
-    fontSize: Typography.sizes.md,
+    fontSize: 14,
   },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.md,
+    gap: Spacing.xs,
   },
   categoryItem: {
-    width: '22%',
+    width: '23%',
     alignItems: 'center',
-    padding: Spacing.sm,
+    padding: Spacing.xs + 2,
     borderRadius: Radii.md,
     borderWidth: 1,
     borderColor: 'transparent',
@@ -385,7 +384,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border.strong,
   },
   categoryName: {
-    marginTop: Spacing.xs,
+    marginTop: 2,
     textAlign: 'center',
   },
   footer: {
@@ -393,9 +392,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Colors.bg.primary,
-    padding: Spacing.lg,
+    padding: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border.subtle,
   },
 });
