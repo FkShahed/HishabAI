@@ -101,36 +101,33 @@ export default function AuthScreen() {
     try {
       let user;
       if (mode === 'signup') {
-        // Check if currently anonymous, link account so existing transactions are kept
-        if (auth.currentUser?.isAnonymous) {
-          try {
-            user = await AuthService.linkAnonymousAccount(email.trim(), password);
-          } catch {
-            user = await AuthService.signUp(email.trim(), password);
-          }
-        } else {
-          user = await AuthService.signUp(email.trim(), password);
-        }
-
-        // Save user's chosen name
-        if (name.trim()) {
-          setUserName(name.trim());
-        }
+        user = await AuthService.signUp(email.trim(), password);
       } else {
         user = await AuthService.signIn(email.trim(), password);
       }
 
       if (user) {
-        // Fetch saved transactions for this account
-        const savedTxns = await FirebaseService.fetchTransactions(user.uid);
-        setTransactions(savedTxns);
+        // Save user's display name or email prefix
+        const displayName = name.trim() || user.displayName || user.email?.split('@')[0] || 'User';
+        setUserName(displayName);
+
+        // 🚀 Navigate IMMEDIATELY to home tab (Zero UI lag!)
         router.replace('/(tabs)');
+
+        // Background sync transactions without blocking auth UI
+        FirebaseService.fetchTransactions(user.uid)
+          .then((savedTxns) => {
+            if (savedTxns && savedTxns.length > 0) {
+              setTransactions(savedTxns);
+            }
+          })
+          .catch((err) => console.warn('[Background Sync] Fetch txns warning:', err));
       }
     } catch (error: any) {
       console.error('Auth action failed:', error);
       let msg = error.message || 'Authentication failed.';
       if (msg.includes('auth/invalid-credential') || msg.includes('auth/user-not-found') || msg.includes('auth/wrong-password')) {
-        msg = 'No account found with this email, or password is incorrect. If you deleted your account, please tap "Create Account" tab.';
+        msg = 'No account found with this email, or password is incorrect. If you need a new account, tap "Create Account".';
       } else if (msg.includes('auth/email-already-in-use')) {
         msg = 'An account with this email already exists. Try signing in instead.';
       }

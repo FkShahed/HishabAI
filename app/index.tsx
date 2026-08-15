@@ -19,11 +19,14 @@ export default function Index() {
           setIsAuthenticated(true);
           console.log('[Auth] Signed in:', user.uid);
           
-          // Fetch existing data
-          const txns = await FirebaseService.fetchTransactions(user.uid);
-          if (txns.length > 0) {
-            setTransactions(txns);
-          }
+          // Background fetch existing data without blocking app launch
+          FirebaseService.fetchTransactions(user.uid)
+            .then((txns) => {
+              if (txns && txns.length > 0) {
+                setTransactions(txns);
+              }
+            })
+            .catch((err) => console.warn('[App Init] Background fetch txns warning:', err));
         } else {
           setIsAuthenticated(false);
           console.log('[Auth] No active session. Redirecting to login.');
