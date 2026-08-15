@@ -35,11 +35,11 @@ export const NotificationService = {
       return false;
     }
     try {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      const { status: existingStatus } = await notif.getPermissionsAsync();
       let finalStatus = existingStatus;
       
       if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
+        const { status } = await notif.requestPermissionsAsync();
         finalStatus = status;
       }
       
