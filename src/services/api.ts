@@ -41,7 +41,13 @@ export const AIServiceClient = {
       } as any);
     }
 
+    const todayStr = new Date().toISOString().split('T')[0];
+    const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
+
     formData.append('categoryList', JSON.stringify(categories));
+    formData.append('currentDate', todayStr);
+    formData.append('timezone', clientTimezone);
+    formData.append('currentDateTime', new Date().toISOString());
 
     try {
       const response = await api.post('/ai/voice', formData, {
@@ -60,11 +66,17 @@ export const AIServiceClient = {
    * Send Base64 image for receipt parsing
    */
   async parseReceipt(imageBase64: string, categories: { id: string; name: string; type: string }[]) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
+
     try {
       const response = await api.post('/ai/receipt', {
         imageBase64,
         mimeType: 'image/jpeg',
         categoryList: categories,
+        currentDate: todayStr,
+        timezone: clientTimezone,
+        currentDateTime: new Date().toISOString(),
       });
       return response.data;
     } catch (error: any) {

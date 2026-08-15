@@ -262,7 +262,7 @@ MANDATORY RULES — violating any of these causes data corruption:
    - "পরশু" / "day before yesterday" / "two days ago" → two days before ${context.currentDate}
    - "গত শুক্রবার" / "last Friday" → resolve to the most recent Friday before ${context.currentDate}
    - Specific dates like "আগস্ট ৫" / "August 5" → use the year from ${context.currentDate}
-5. If the date is ambiguous or not mentioned, set dateSource to "inferred_today" and uncertain to true.
+5. If the date is not explicitly specified or is ambiguous in the audio, you MUST default transactionDate to "${context.currentDate}" (today's date) and set dateSource to "inferred_today".
 6. If the amount is unclear or ambiguous, OMIT the transaction entirely (do not include it).
 7. comment must contain the name of the item, store, or person. If there is no specific item, leave it empty.
 8. confidence: a number 0-1 representing how certain you are about this transaction.
@@ -319,8 +319,8 @@ ${ocrText}
 MANDATORY RULES:
 1. Extract ONLY items/totals clearly present in the receipt. Never invent items or amounts.
 2. categoryId MUST match an ID from AVAILABLE CATEGORIES. Never use an ID not in this list.
-3. If the receipt has a date, use it as transactionDate (dateSource: "receipt_date").
-   If no date found, use ${context.currentDate} (dateSource: "inferred_today", uncertain: true).
+3. If the receipt has a clear printed date, use it as transactionDate (dateSource: "receipt_date").
+   If no date is found or unclear on the receipt, you MUST default transactionDate to "${context.currentDate}" (today's date) and set dateSource to "inferred_today".
 4. Group related items into logical categories where sensible (e.g., food items → Food category).
 5. Use the receipt TOTAL as the main transaction if individual items are unclear.
 6. comment must contain the item name or store name.
@@ -388,6 +388,12 @@ RESPONSE FORMAT — return ONLY valid JSON, no markdown:
     for (const raw of rawTransactions) {
       // Enforce source field
       raw.source = source;
+
+      // Ensure transactionDate defaults to today if not provided, empty, or invalid
+      if (!raw.transactionDate || typeof raw.transactionDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw.transactionDate)) {
+        raw.transactionDate = context.currentDate;
+        raw.dateSource = 'inferred_today';
+      }
 
       // Safety: if categoryId not in user's list, mark uncertain
       if (typeof raw.categoryId === 'string' && !validCategoryIds.has(raw.categoryId)) {

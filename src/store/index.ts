@@ -379,6 +379,7 @@ export const usePreviewStore = create<PreviewState>((set) => ({
       previewTransactions: (transactions || []).map((t, idx) => ({
         ...t,
         tempId: t.tempId || `preview_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 9)}`,
+        transactionDate: t.transactionDate || getTodayString(),
       })),
       source: source || null,
       rawTranscript: rawTranscript ?? null,
