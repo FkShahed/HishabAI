@@ -154,10 +154,10 @@ export default function PreviewScreen() {
         rightElement={
           <TouchableOpacity 
             onPress={handleDiscard} 
-            style={[styles.headerCancelBtn, { backgroundColor: colors.semantic.dangerDim }]}
+            style={[styles.headerCancelBtn, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}
             activeOpacity={0.7}
           >
-            <Text variant="xs" weight="bold" color={colors.semantic.danger}>Cancel</Text>
+            <Text variant="xs" weight="bold" color="#FFFFFF">Cancel</Text>
           </TouchableOpacity>
         }
       />

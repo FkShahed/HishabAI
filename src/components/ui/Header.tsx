@@ -17,7 +17,7 @@ export function Header({ title, showBack = false, onBack, rightElement }: Header
   const colors = useThemeColors();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.bg.primary, borderBottomColor: colors.border.subtle }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.topbar.bg, borderBottomColor: colors.topbar.border }]}>
       <View style={styles.content}>
         {/* Left Side */}
         <View style={styles.side}>
@@ -28,7 +28,7 @@ export function Header({ title, showBack = false, onBack, rightElement }: Header
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               activeOpacity={0.7}
             >
-              <Ionicons name="chevron-back" size={26} color={colors.text.primary} />
+              <Ionicons name="chevron-back" size={24} color={colors.topbar.icon} />
             </TouchableOpacity>
           )}
         </View>
@@ -38,6 +38,7 @@ export function Header({ title, showBack = false, onBack, rightElement }: Header
           <Text 
             variant="lg" 
             weight="bold" 
+            color={colors.topbar.text}
             style={styles.title} 
             numberOfLines={1}
             adjustsFontSizeToFit={true}

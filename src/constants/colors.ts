@@ -53,6 +53,18 @@ export const DarkColors = {
     strong: '#3A3A58',
   },
 
+  // ── Topbar / Header ───────────────────────────────────────────────────────
+  topbar: {
+    bg: '#080810',
+    text: '#F0F0FF',
+    subtext: '#8888AA',
+    border: '#1E1E30',
+    icon: '#F0F0FF',
+    chevron: '#F0F0FF',
+    badgeBg: '#7C3AED',
+    badgeText: '#FFFFFF',
+  },
+
   // ── Category Colors ───────────────────────────────────────────────────────
   category: {
     home: '#10B981',
@@ -146,6 +158,18 @@ export const LightColors: typeof DarkColors = {
     subtle: '#E2E8F0',
     medium: '#CBD5E1',
     strong: '#94A3B8',
+  },
+
+  // ── Topbar / Header (Beguni / Violet theme in Light Mode) ───────────────────
+  topbar: {
+    bg: '#7C3AED',      // beguni (violet) brand theme color
+    text: '#FFFFFF',     // crisp white text
+    subtext: 'rgba(255, 255, 255, 0.85)',
+    border: '#6D28D9',   // slightly deeper violet border
+    icon: '#FFFFFF',
+    chevron: '#FFFFFF',
+    badgeBg: 'rgba(255, 255, 255, 0.25)',
+    badgeText: '#FFFFFF',
   },
 
   // ── Category Colors ───────────────────────────────────────────────────────

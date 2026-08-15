@@ -95,7 +95,7 @@ export default function TransactionDetailScreen() {
         onBack={() => router.back()} 
         rightElement={
           <TouchableOpacity onPress={openEdit} style={{ padding: Spacing.xs }}>
-            <Ionicons name="pencil" size={24} color={colors.text.primary} />
+            <Ionicons name="pencil" size={20} color={colors.topbar.icon} />
           </TouchableOpacity>
         }
       />

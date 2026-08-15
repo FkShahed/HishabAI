@@ -31,53 +31,56 @@ export default function HomeScreen() {
   const photoUrl = !imageFailed && rawPhotoUrl ? rawPhotoUrl : null;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.bg.primary }]}>
+    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Compact Topbar Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text variant="lg" weight="bold" style={{ color: colors.accent.primary }}>
-            HisabAI
-          </Text>
+      {/* Topbar Header Banner */}
+      <View style={[styles.topbarContainer, { paddingTop: insets.top, backgroundColor: colors.topbar.bg, borderBottomColor: colors.topbar.border }]}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text variant="lg" weight="bold" color={colors.topbar.text}>
+              HisabAI
+            </Text>
+          </View>
+
+          <TouchableOpacity 
+            onPress={() => router.push('/profile')}
+            style={[styles.profileBadge, { backgroundColor: colors.topbar.badgeBg, borderColor: 'rgba(255,255,255,0.25)', borderWidth: 1, overflow: 'hidden' }]}
+            activeOpacity={0.8}
+          >
+            {photoUrl ? (
+              Platform.OS === 'web' ? (
+                <img 
+                  src={photoUrl} 
+                  referrerPolicy="no-referrer" 
+                  style={{ width: 32, height: 32, borderRadius: 16, objectFit: 'cover' }} 
+                  onError={() => setImageFailed(true)}
+                />
+              ) : (
+                <Image 
+                  source={{ uri: photoUrl }} 
+                  style={{ width: 32, height: 32, borderRadius: 16 }} 
+                  onError={() => setImageFailed(true)}
+                />
+              )
+            ) : userInitial ? (
+              <Text variant="sm" weight="bold" color={colors.topbar.badgeText}>
+                {userInitial}
+              </Text>
+            ) : (
+              <Ionicons name="person" size={16} color={colors.topbar.badgeText} />
+            )}
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity 
-          onPress={() => router.push('/profile')}
-          style={[styles.profileBadge, { backgroundColor: colors.accent.primary, overflow: 'hidden' }]}
-          activeOpacity={0.8}
-        >
-          {photoUrl ? (
-            Platform.OS === 'web' ? (
-              <img 
-                src={photoUrl} 
-                referrerPolicy="no-referrer" 
-                style={{ width: 34, height: 34, borderRadius: 17, objectFit: 'cover' }} 
-                onError={() => setImageFailed(true)}
-              />
-            ) : (
-              <Image 
-                source={{ uri: photoUrl }} 
-                style={{ width: 34, height: 34, borderRadius: 17 }} 
-                onError={() => setImageFailed(true)}
-              />
-            )
-          ) : userInitial ? (
-            <Text variant="sm" weight="bold" color="#FFFFFF">
-              {userInitial}
-            </Text>
-          ) : (
-            <Ionicons name="person" size={16} color="#FFFFFF" />
-          )}
-        </TouchableOpacity>
+        <MonthSelector
+          month={selectedMonth}
+          year={selectedYear}
+          onPrev={goToPrevMonth}
+          onNext={goToNextMonth}
+          variant="topbar"
+        />
       </View>
-
-      <MonthSelector
-        month={selectedMonth}
-        year={selectedYear}
-        onPrev={goToPrevMonth}
-        onNext={goToNextMonth}
-      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -181,21 +184,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.bg.primary,
   },
+  topbarContainer: {
+    borderBottomWidth: 1,
+    paddingBottom: 2,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.xs,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   profileBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },

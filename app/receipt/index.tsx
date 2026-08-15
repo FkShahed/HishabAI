@@ -75,12 +75,8 @@ export default function ReceiptAIScreen() {
     <View style={[styles.container, { paddingBottom: insets.bottom, backgroundColor: colors.bg.primary }]}>
       <Header 
         title="Scan Receipt" 
-        showBack={false}
-        rightElement={
-          <TouchableOpacity onPress={() => router.back()} style={styles.cancelBtn}>
-            <Ionicons name="close" size={28} color={colors.text.primary} />
-          </TouchableOpacity>
-        }
+        showBack={true}
+        onBack={() => router.back()}
       />
       
       <View style={styles.content}>
