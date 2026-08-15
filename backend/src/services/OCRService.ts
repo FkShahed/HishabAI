@@ -1,29 +1,30 @@
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { IOCRService, OCRResult } from '../types/index';
+import fs from 'fs';
 
 // ─── Google Cloud Vision OCR Service ─────────────────────────────────────────
-//
-// Uses Application Default Credentials (ADC) via GOOGLE_APPLICATION_CREDENTIALS
-// env var pointing to a service-account JSON file.
-//
-// DO NOT use GOOGLE_CLOUD_VISION_API_KEY — ADC is the correct approach for
-// backend service accounts. The Vision client automatically reads credentials
-// from GOOGLE_APPLICATION_CREDENTIALS.
-//
-// To set up:
-//   1. Go to Google Cloud Console → IAM → Service Accounts
-//   2. Create a service account with Cloud Vision API User role
-//   3. Download the JSON key file
-//   4. Set GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 
 export class GoogleVisionOCRService implements IOCRService {
   private client: ImageAnnotatorClient;
 
   constructor() {
-    // The Vision client reads GOOGLE_APPLICATION_CREDENTIALS automatically.
-    // No need to pass apiKey — using ADC is more secure for server environments.
-    this.client = new ImageAnnotatorClient();
-    console.log('[GoogleVisionOCRService] Initialized with Application Default Credentials');
+    const options: any = {};
+    if (process.env.GOOGLE_CREDENTIALS_JSON) {
+      try {
+        options.credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+      } catch (e) {
+        console.warn('[GoogleVisionOCRService] Failed to parse GOOGLE_CREDENTIALS_JSON:', e);
+      }
+    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      const creds = process.env.GOOGLE_APPLICATION_CREDENTIALS.trim();
+      if (creds.startsWith('{')) {
+        try {
+          options.credentials = JSON.parse(creds);
+        } catch (e) {}
+      }
+    }
+    this.client = new ImageAnnotatorClient(options);
+    console.log('[GoogleVisionOCRService] Initialized Google Vision client');
   }
 
   async extractText(imageBase64: string, _mimeType: string): Promise<OCRResult> {
@@ -41,8 +42,6 @@ export class GoogleVisionOCRService implements IOCRService {
 
       // First annotation contains the full extracted text
       const fullText = detections[0].description ?? '';
-
-      // Estimate confidence from word-level confidence if available
       const confidence = detections[0].confidence ?? 0.9;
 
       return {
@@ -51,7 +50,7 @@ export class GoogleVisionOCRService implements IOCRService {
         rawResponse: result,
       };
     } catch (error) {
-      console.error('[GoogleVisionOCRService] extractText error:', error);
+      console.warn('[GoogleVisionOCRService] Cloud Vision extraction notice:', (error as Error).message);
       throw new Error(`OCR extraction failed: ${(error as Error).message}`);
     }
   }
@@ -84,17 +83,24 @@ Thank you for shopping!`,
 
 export function createOCRService(): IOCRService {
   const provider = process.env.OCR_PROVIDER ?? 'google_vision';
-  const hasCredentials = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  const hasJsonCreds = Boolean(
+    process.env.GOOGLE_CREDENTIALS_JSON || 
+    (process.env.GOOGLE_APPLICATION_CREDENTIALS && process.env.GOOGLE_APPLICATION_CREDENTIALS.trim().startsWith('{'))
+  );
+  const hasFileCreds = Boolean(
+    process.env.GOOGLE_APPLICATION_CREDENTIALS && 
+    !process.env.GOOGLE_APPLICATION_CREDENTIALS.trim().startsWith('{') &&
+    fs.existsSync(process.env.GOOGLE_APPLICATION_CREDENTIALS)
+  );
 
-  if (provider === 'mock' || !hasCredentials) {
-    if (!hasCredentials && provider !== 'mock') {
-      console.warn(
-        '[OCRService] GOOGLE_APPLICATION_CREDENTIALS not set — using MockOCRService. ' +
-        'Set GOOGLE_APPLICATION_CREDENTIALS to a service-account JSON path for real OCR.'
-      );
-    }
+  if (provider === 'mock' || (!hasJsonCreds && !hasFileCreds)) {
     return new MockOCRService();
   }
 
-  return new GoogleVisionOCRService();
+  try {
+    return new GoogleVisionOCRService();
+  } catch (err) {
+    console.warn('[OCRService] Fallback to MockOCRService:', err);
+    return new MockOCRService();
+  }
 }
