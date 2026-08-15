@@ -278,14 +278,15 @@ export default function ChartsScreen() {
                   key={`day-${dayNum}`}
                   style={[
                     styles.calendarDayCell,
-                    { borderColor: colors.border.subtle },
-                    hasTransactions && {
-                      backgroundColor: selectedType === 'expense' 
-                        ? `rgba(220, 38, 38, ${0.08 + intensity * 0.2})` 
-                        : `rgba(5, 150, 105, ${0.08 + intensity * 0.2})`,
-                      borderColor: selectedType === 'expense' 
-                        ? `rgba(220, 38, 38, ${0.25 + intensity * 0.4})` 
-                        : `rgba(5, 150, 105, ${0.25 + intensity * 0.4})`,
+                    { 
+                      borderColor: colors.border.subtle,
+                      backgroundColor: hasTransactions && selectedType === 'expense' 
+                        ? colors.bg.secondary 
+                        : 'transparent'
+                    },
+                    hasTransactions && selectedType === 'income' && {
+                      backgroundColor: `rgba(5, 150, 105, ${0.08 + intensity * 0.18})`,
+                      borderColor: `rgba(5, 150, 105, ${0.25 + intensity * 0.35})`,
                     },
                     isSelected && {
                       borderColor: colors.accent.primary,
