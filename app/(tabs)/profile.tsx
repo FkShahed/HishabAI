@@ -315,10 +315,12 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="person-outline" size={20} color={colors.text.primary} />
+              <View style={styles.settingIconWrapper}>
+                <Ionicons name="person-outline" size={20} color={colors.text.primary} />
+              </View>
               <Text variant="base" style={styles.settingText}>Your Name</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={styles.settingRight}>
               <Text variant="sm" weight="semibold" color={colors.text.primary} style={{ marginRight: Spacing.xs }}>
                 {userName}
               </Text>
@@ -333,10 +335,12 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="cash-outline" size={20} color={colors.text.primary} />
+              <View style={styles.settingIconWrapper}>
+                <Ionicons name="cash-outline" size={20} color={colors.text.primary} />
+              </View>
               <Text variant="base" style={styles.settingText}>Currency</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={styles.settingRight}>
               <Text variant="sm" weight="semibold" color={colors.accent.primary} style={{ marginRight: Spacing.xs }}>
                 {currency} ({currentCurrencySymbol})
               </Text>
@@ -347,33 +351,41 @@ export default function ProfileScreen() {
           {/* Theme Toggle */}
           <View style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}>
             <View style={styles.settingLeft}>
-              <Ionicons 
-                name={theme === 'dark' ? "moon-outline" : "sunny-outline"} 
-                size={20} 
-                color={colors.text.primary} 
-              />
+              <View style={styles.settingIconWrapper}>
+                <Ionicons 
+                  name={theme === 'dark' ? "moon-outline" : "sunny-outline"} 
+                  size={20} 
+                  color={colors.text.primary} 
+                />
+              </View>
               <Text variant="base" style={styles.settingText}>Dark Mode</Text>
             </View>
-            <Switch 
-              value={theme === 'dark'} 
-              onValueChange={toggleTheme} 
-              trackColor={{ true: colors.accent.primary, false: colors.border.medium }} 
-              thumbColor="#FFFFFF"
-            />
+            <View style={styles.settingRight}>
+              <Switch 
+                value={theme === 'dark'} 
+                onValueChange={toggleTheme} 
+                trackColor={{ true: colors.accent.primary, false: colors.border.medium }} 
+                thumbColor="#FFFFFF"
+              />
+            </View>
           </View>
           
           {/* Daily Reminders */}
           <View style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}>
             <View style={styles.settingLeft}>
-              <Ionicons name="notifications-outline" size={20} color={colors.text.primary} />
+              <View style={styles.settingIconWrapper}>
+                <Ionicons name="notifications-outline" size={20} color={colors.text.primary} />
+              </View>
               <Text variant="base" style={styles.settingText}>Daily Reminder (8:00 PM)</Text>
             </View>
-            <Switch 
-              value={dailyReminderEnabled} 
-              onValueChange={handleToggleDailyReminder}
-              trackColor={{ true: colors.accent.primary, false: colors.border.medium }} 
-              thumbColor="#FFFFFF"
-            />
+            <View style={styles.settingRight}>
+              <Switch 
+                value={dailyReminderEnabled} 
+                onValueChange={handleToggleDailyReminder}
+                trackColor={{ true: colors.accent.primary, false: colors.border.medium }} 
+                thumbColor="#FFFFFF"
+              />
+            </View>
           </View>
         </View>
 
@@ -445,13 +457,12 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="information-circle-outline" size={20} color={colors.text.primary} />
-              <View style={{ marginLeft: Spacing.md }}>
-                <Text variant="base" style={styles.settingText}>Installed Version</Text>
-                <Text variant="xs" color={colors.text.tertiary} style={{ marginLeft: Spacing.md }}>Tap for release details</Text>
+              <View style={styles.settingIconWrapper}>
+                <Ionicons name="information-circle-outline" size={20} color={colors.text.primary} />
               </View>
+              <Text variant="base" style={styles.settingText}>Installed Version</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={styles.settingRight}>
               <View style={[styles.versionPill, { backgroundColor: colors.bg.elevated, borderColor: colors.border.subtle }]}>
                 <Text variant="xs" weight="bold" color={colors.text.primary}>
                   v{currentAppVersion}
@@ -460,6 +471,7 @@ export default function ProfileScreen() {
               {updateInfo?.hasUpdate && (
                 <View style={[styles.dotIndicator, { backgroundColor: colors.accent.primary }]} />
               )}
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} style={{ marginLeft: 4 }} />
             </View>
           </TouchableOpacity>
 
@@ -471,10 +483,12 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="refresh-circle-outline" size={20} color={colors.accent.primary} />
+              <View style={styles.settingIconWrapper}>
+                <Ionicons name="refresh-circle-outline" size={20} color={colors.accent.primary} />
+              </View>
               <Text variant="base" style={styles.settingText}>Check for Updates</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={styles.settingRight}>
               {isCheckingUpdate ? (
                 <ActivityIndicator size="small" color={colors.accent.primary} />
               ) : (
@@ -495,12 +509,16 @@ export default function ProfileScreen() {
           {currentUser?.email && !currentUser?.isAnonymous ? (
             <View style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}>
               <View style={styles.settingLeft}>
-                <Ionicons name="cloud-done-outline" size={20} color={colors.semantic.safe} />
+                <View style={styles.settingIconWrapper}>
+                  <Ionicons name="cloud-done-outline" size={20} color={colors.semantic.safe} />
+                </View>
                 <Text variant="base" style={styles.settingText}>
-                  Account Synced ({currentUser.email})
+                  Account Synced
                 </Text>
               </View>
-              <Ionicons name="checkmark-circle" size={18} color={colors.semantic.safe} />
+              <View style={styles.settingRight}>
+                <Ionicons name="checkmark-circle" size={18} color={colors.semantic.safe} />
+              </View>
             </View>
           ) : (
             <TouchableOpacity 
@@ -508,21 +526,29 @@ export default function ProfileScreen() {
               onPress={() => router.push('/auth' as any)}
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="cloud-upload-outline" size={20} color={colors.text.primary} />
+                <View style={styles.settingIconWrapper}>
+                  <Ionicons name="cloud-upload-outline" size={20} color={colors.text.primary} />
+                </View>
                 <Text variant="base" style={styles.settingText}>
                   Sign In / Sync Account
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+              <View style={styles.settingRight}>
+                <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+              </View>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}>
             <View style={styles.settingLeft}>
-              <Ionicons name="document-text-outline" size={20} color={colors.text.primary} />
+              <View style={styles.settingIconWrapper}>
+                <Ionicons name="document-text-outline" size={20} color={colors.text.primary} />
+              </View>
               <Text variant="base" style={styles.settingText}>Terms & Privacy</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+            <View style={styles.settingRight}>
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -539,10 +565,14 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="trash-outline" size={20} color={colors.semantic.danger} />
+              <View style={styles.settingIconWrapper}>
+                <Ionicons name="trash-outline" size={20} color={colors.semantic.danger} />
+              </View>
               <Text variant="base" style={[styles.settingText, { color: colors.semantic.danger }]}>Delete All Data</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.semantic.danger} />
+            <View style={styles.settingRight}>
+              <Ionicons name="chevron-forward" size={16} color={colors.semantic.danger} />
+            </View>
           </TouchableOpacity>
 
           {/* Delete Account */}
@@ -552,10 +582,14 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="person-remove-outline" size={20} color={colors.semantic.danger} />
+              <View style={styles.settingIconWrapper}>
+                <Ionicons name="person-remove-outline" size={20} color={colors.semantic.danger} />
+              </View>
               <Text variant="base" style={[styles.settingText, { color: colors.semantic.danger }]}>Delete Account</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.semantic.danger} />
+            <View style={styles.settingRight}>
+              <Ionicons name="chevron-forward" size={16} color={colors.semantic.danger} />
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -845,7 +879,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.sm + 2,
+    height: 50,
     paddingHorizontal: Spacing.md,
     borderBottomWidth: 1,
   },
@@ -857,9 +891,20 @@ const styles = StyleSheet.create({
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  settingIconWrapper: {
+    width: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm + 4,
+  },
+  settingRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   settingText: {
-    marginLeft: Spacing.md,
+    fontSize: 14,
   },
   logoutButton: {
     paddingVertical: Spacing.sm + 2,
