@@ -16,37 +16,47 @@ import { useUIStore } from '../../src/store';
 export default function PreviewScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const { previewTransactions, source, clearPreview, updatePreviewTransaction, removePreviewTransaction } = usePreviewStore();
+  const { 
+    previewTransactions, 
+    source, 
+    clearPreview, 
+    updatePreviewTransaction, 
+    updatePreviewTransactionByIndex, 
+    removePreviewTransaction, 
+    removePreviewTransactionByIndex 
+  } = usePreviewStore();
   const addTransactions = useTransactionStore((s) => s.addTransactions);
   const getCategoriesForType = useCategoryStore((s) => s.getCategoriesForType);
   const currency = useUIStore((s) => s.currency);
 
   const [editingTransaction, setEditingTransaction] = React.useState<PreviewTransaction | null>(null);
+  const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
   const [editForm, setEditForm] = React.useState({ amount: '', comment: '', categoryId: '', transactionDate: '' });
 
   const hasUncertainItems = previewTransactions.some(t => t.uncertain);
 
-  const openEditModal = (item: PreviewTransaction) => {
+  const openEditModal = (item: PreviewTransaction, index: number) => {
     setEditingTransaction(item);
+    setEditingIndex(index);
     setEditForm({
       amount: item.amount.toString(),
-      comment: item.comment,
-      categoryId: item.categoryId,
-      transactionDate: item.transactionDate,
+      comment: item.comment || '',
+      categoryId: item.categoryId || '',
+      transactionDate: item.transactionDate || getTodayString(),
     });
   };
 
   const saveEdit = () => {
-    if (!editingTransaction || !editingTransaction.tempId) return;
+    if (editingIndex === null) return;
     
     // Find selected category to update name, icon, color
     const allCategories = [...getCategoriesForType('expense'), ...getCategoriesForType('income')];
     const selectedCat = allCategories.find(c => c.id === editForm.categoryId);
 
-    updatePreviewTransaction(editingTransaction.tempId, {
+    const updatedData: Partial<PreviewTransaction> = {
       amount: parseFloat(editForm.amount) || 0,
       comment: editForm.comment,
-      transactionDate: editForm.transactionDate,
+      transactionDate: editForm.transactionDate || getTodayString(),
       categoryId: editForm.categoryId,
       ...(selectedCat ? {
         categoryNameSnapshot: selectedCat.name,
@@ -54,15 +64,25 @@ export default function PreviewScreen() {
         categoryColor: selectedCat.color,
       } : {}),
       uncertain: false,
-    });
+    };
+
+    if (editingTransaction?.tempId) {
+      updatePreviewTransaction(editingTransaction.tempId, updatedData);
+    }
+    updatePreviewTransactionByIndex(editingIndex, updatedData);
 
     setEditingTransaction(null);
+    setEditingIndex(null);
   };
 
   const handleDelete = () => {
-    if (!editingTransaction || !editingTransaction.tempId) return;
-    removePreviewTransaction(editingTransaction.tempId);
+    if (editingIndex === null) return;
+    if (editingTransaction?.tempId) {
+      removePreviewTransaction(editingTransaction.tempId);
+    }
+    removePreviewTransactionByIndex(editingIndex);
     setEditingTransaction(null);
+    setEditingIndex(null);
   };
 
   const handleSave = () => {
@@ -73,7 +93,7 @@ export default function PreviewScreen() {
 
       return {
         id: Math.random().toString(36).substr(2, 9),
-        userId: 'mock-user',
+        userId: 'user',
         amount: t.amount,
         type: t.type,
         categoryId: t.categoryId,
@@ -196,7 +216,7 @@ export default function PreviewScreen() {
                   item.uncertain && { borderColor: colors.semantic.warning, backgroundColor: colors.semantic.warningDim }
                 ]}
                 activeOpacity={0.7}
-                onPress={() => openEditModal(item)}
+                onPress={() => openEditModal(item, index)}
               >
                 <View style={styles.itemHeader}>
                   <View style={styles.itemCategory}>

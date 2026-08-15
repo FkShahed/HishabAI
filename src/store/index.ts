@@ -362,7 +362,9 @@ interface PreviewState {
     processingNotes?: string
   ) => void;
   updatePreviewTransaction: (tempId: string, updates: Partial<PreviewTransaction>) => void;
+  updatePreviewTransactionByIndex: (index: number, updates: Partial<PreviewTransaction>) => void;
   removePreviewTransaction: (tempId: string) => void;
+  removePreviewTransactionByIndex: (index: number) => void;
   clearPreview: () => void;
 }
 
@@ -390,9 +392,21 @@ export const usePreviewStore = create<PreviewState>((set) => ({
       ),
     })),
 
+  updatePreviewTransactionByIndex: (index, updates) =>
+    set((state) => ({
+      previewTransactions: state.previewTransactions.map((t, i) =>
+        i === index ? { ...t, ...updates } : t
+      ),
+    })),
+
   removePreviewTransaction: (tempId) =>
     set((state) => ({
       previewTransactions: state.previewTransactions.filter((t) => t.tempId !== tempId),
+    })),
+
+  removePreviewTransactionByIndex: (index) =>
+    set((state) => ({
+      previewTransactions: state.previewTransactions.filter((_, i) => i !== index),
     })),
 
   clearPreview: () =>
