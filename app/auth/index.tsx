@@ -61,12 +61,16 @@ export default function AuthScreen() {
 
   const loadUserData = async (userId: string) => {
     try {
+      useTransactionStore.getState().setLoading(true);
       const cloudTxns = await FirebaseService.fetchTransactions(userId);
       setTransactions(cloudTxns || []);
     } catch (err) {
       console.warn('Load user data error:', err);
+    } finally {
+      useTransactionStore.getState().setLoading(false);
     }
   };
+
 
   useEffect(() => {
     if (response?.type === 'success') {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Image, Platform, ActivityIndicator } from 'react-native';
+
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -129,7 +130,14 @@ export default function HomeScreen() {
         </View>
 
         {/* Daily Grouped Transactions List */}
-        {dailyGroups.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={colors.accent.primary} />
+            <Text variant="sm" color={colors.text.secondary} style={{ marginTop: 12 }}>
+              Loading transactions...
+            </Text>
+          </View>
+        ) : dailyGroups.length === 0 ? (
           <View style={styles.emptyState}>
             <Text variant="lg" weight="semibold" color={colors.text.secondary}>
               No transactions yet
@@ -139,6 +147,7 @@ export default function HomeScreen() {
             </Text>
           </View>
         ) : (
+
           dailyGroups.map((group) => {
             const isDailyOverBudget = dailyBudget > 0 && group.totalExpense > dailyBudget;
             return (

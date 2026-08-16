@@ -20,6 +20,7 @@ export default function Index() {
           console.log('[Auth] Signed in:', user.uid);
           
           // Background fetch existing data and merge with local data
+          useTransactionStore.getState().setLoading(true);
           FirebaseService.fetchTransactions(user.uid)
             .then((cloudTxns) => {
               const localTxns = useTransactionStore.getState().transactions;
@@ -36,7 +37,9 @@ export default function Index() {
               );
               setTransactions(merged);
             })
-            .catch((err) => console.warn('[App Init] Background fetch txns warning:', err));
+            .catch((err) => console.warn('[App Init] Background fetch txns warning:', err))
+            .finally(() => useTransactionStore.getState().setLoading(false));
+
 
         } else {
           setIsAuthenticated(false);
