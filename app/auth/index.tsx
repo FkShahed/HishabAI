@@ -178,7 +178,7 @@ export default function AuthScreen() {
       } else {
         // Native Mobile
         if (promptAsync) {
-          await promptAsync({ useProxy: true });
+          await promptAsync({ useProxy: true, showInRecents: true });
         } else {
           setErrorMessage('Google Sign-In is initializing. Please tap again or use Email & Password.');
         }

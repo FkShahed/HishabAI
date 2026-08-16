@@ -1,6 +1,12 @@
 import { Stack } from 'expo-router';
 import { useThemeColors } from '../src/constants/colors';
 import { StatusBar } from 'expo-status-bar';
+import * as WebBrowser from 'expo-web-browser';
+
+// Must be called at app root so auth.expo.io deep link redirects are intercepted
+// immediately when Expo Go re-opens after Google OAuth.
+WebBrowser.maybeCompleteAuthSession();
+
 
 export default function RootLayout() {
   const colors = useThemeColors();
