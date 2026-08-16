@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
+
+
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -109,66 +111,60 @@ export default function AuthScreen() {
             const pic = user.photoURL || user.providerData?.[0]?.photoURL;
             if (pic) setUserPhotoUrl(pic);
 
+            await loadUserData(user.uid);
+            router.replace('/(tabs)');
+          })
+          .catch((err: any) => {
+            console.error('Google sign-in error:', err);
+            setErrorMessage(err.message || 'Google sign-in failed. Please try again.');
+          })
+          .finally(() => setLoading(false));
+      }
+    }
+  }, [response]);
+
+  // If user is already signed in, prevent viewing sign in / sign up page
+  useEffect(() => {
+    if (auth?.currentUser && !auth.currentUser.isAnonymous && auth.currentUser.email) {
+      router.replace('/(tabs)');
+    }
+  }, []);
+
+  const handleAuthAction = async () => {
+    setErrorMessage('');
+
+    if (mode === 'signup' && !name.trim()) {
+      setErrorMessage('Please enter your full name.');
+      return;
+    }
+
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('Please enter both email and password.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let user;
+      if (mode === 'signup') {
+        user = await AuthService.signUp(email.trim(), password);
+      } else {
+        user = await AuthService.signIn(email.trim(), password);
+      }
+
+      if (user) {
+        const displayName = name.trim() || user.displayName || user.email?.split('@')[0] || 'User';
+        setUserName(displayName);
+
+        // Fetch user data completely while showing loader
+        await loadUserData(user.uid);
         router.replace('/(tabs)');
-        loadUserData(user.uid);
-      })
-      .catch((err: any) => {
-        console.error('Google sign-in error:', err);
-        setErrorMessage(err.message || 'Google sign-in failed. Please try again.');
-      })
-      .finally(() => setLoading(false));
-  }
-}
-}, [response]);
-
-// If user is already signed in, prevent viewing sign in / sign up page
-useEffect(() => {
-if (auth?.currentUser && !auth.currentUser.isAnonymous && auth.currentUser.email) {
-  router.replace('/(tabs)');
-}
-}, []);
-
-const handleAuthAction = async () => {
-setErrorMessage('');
-
-if (mode === 'signup' && !name.trim()) {
-  setErrorMessage('Please enter your full name.');
-  return;
-}
-
-if (!email.trim() || !password.trim()) {
-  setErrorMessage('Please enter both email and password.');
-  return;
-}
-
-if (password.length < 6) {
-  setErrorMessage('Password must be at least 6 characters.');
-  return;
-}
-
-setLoading(true);
-try {
-  let user;
-  if (mode === 'signup') {
-    user = await AuthService.signUp(email.trim(), password);
-  } else {
-    user = await AuthService.signIn(email.trim(), password);
-  }
-
-  if (user) {
-    // Save user's display name or email prefix
-    const displayName = name.trim() || user.displayName || user.email?.split('@')[0] || 'User';
-    setUserName(displayName);
-
-    // 🚀 Navigate IMMEDIATELY for instant zero-lag response
-    router.replace('/(tabs)');
-
-    // Background fetch user's cloud transactions
-    loadUserData(user.uid);
-  }
-
-
-
+      }
     } catch (error: any) {
       console.error('Auth action failed:', error);
       let msg = error.message || 'Authentication failed.';
@@ -195,7 +191,6 @@ try {
           const isNewUser = Math.abs(creationTime - lastSignInTime) < 5000;
 
           if (mode === 'signin' && isNewUser) {
-            // Fast cleanup without running heavy firestore queries
             user.delete().catch(() => AuthService.signOut());
             setErrorMessage('No account found for this Google email. Please tap "Create Account" tab to register.');
             return;
@@ -209,19 +204,13 @@ try {
             setUserPhotoUrl(pic);
           }
 
-          // Navigate immediately to home tab
+          // Fetch user data completely while showing loader
+          await loadUserData(user.uid);
           router.replace('/(tabs)');
-
-          // Background sync transactions without blocking auth UI
-          FirebaseService.fetchTransactions(user.uid)
-            .then((savedTxns) => setTransactions(savedTxns as any[]))
-            .catch((err) => console.warn('Background sync txns warning:', err));
-
         }
       } else {
         // Native Mobile
         if (promptAsync) {
-          // No proxy needed — Desktop OAuth client accepts exp:// and hisabai:// directly
           await promptAsync();
         } else {
           setErrorMessage('Google Sign-In is initializing. Please tap again or use Email & Password.');
@@ -236,6 +225,7 @@ try {
       setLoading(false);
     }
   };
+
 
   return (
     <KeyboardAvoidingView 
@@ -388,12 +378,46 @@ try {
         />
 
       </ScrollView>
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <View style={[styles.loadingCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+            <ActivityIndicator size="large" color={colors.accent.primary} />
+            <Text variant="md" weight="bold" color={colors.text.primary} style={{ marginTop: 16 }}>
+              Signing In...
+            </Text>
+            <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 6 }}>
+              Loading your data...
+            </Text>
+          </View>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  loadingCard: {
+    padding: Spacing.xl,
+    borderRadius: Radii.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    minWidth: 240,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
+  },
   container: {
+
     flex: 1,
   },
   content: {
