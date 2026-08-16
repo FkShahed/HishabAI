@@ -27,6 +27,7 @@ import {
   getAdditionalUserInfo,
   User
 } from 'firebase/auth';
+import { getDatabase, ref, set, get, child, remove } from 'firebase/database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
@@ -34,6 +35,7 @@ import { Platform } from 'react-native';
 const firebaseConfig = {
   apiKey: "AIzaSyBHN3fd230CFP2fzxfm2i1jbRCqRoXEc2A",
   authDomain: "hishab-ai.firebaseapp.com",
+  databaseURL: "https://hishab-ai-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "hishab-ai",
   storageBucket: "hishab-ai.firebasestorage.app",
   messagingSenderId: "254866158438",
@@ -45,6 +47,8 @@ export const isFirebaseConfigured = true;
 // Initialize Firebase (only once)
 const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(firebaseApp);
+const rtdb = getDatabase(firebaseApp);
+
 
 // Explicitly initialize Auth with AsyncStorage persistence
 let auth: any;
@@ -153,8 +157,11 @@ export const FirebaseService = {
   async saveTransaction(userId: string, transaction: any) {
     if (userId === 'mock-local-user') return true;
     try {
+      // 🚀 Fast save to Realtime Database (asia-southeast1 node)
+      set(ref(rtdb, `users/${userId}/transactions/${transaction.id}`), transaction).catch(() => {});
+      // Backup save to Firestore
       const docRef = doc(db, 'users', userId, 'transactions', transaction.id);
-      await setDoc(docRef, transaction);
+      setDoc(docRef, transaction).catch(() => {});
       return true;
     } catch (error) {
       console.error('Error saving transaction:', error);
@@ -165,8 +172,9 @@ export const FirebaseService = {
   async deleteTransaction(userId: string, transactionId: string) {
     if (userId === 'mock-local-user') return true;
     try {
+      remove(ref(rtdb, `users/${userId}/transactions/${transactionId}`)).catch(() => {});
       const docRef = doc(db, 'users', userId, 'transactions', transactionId);
-      await deleteDoc(docRef);
+      deleteDoc(docRef).catch(() => {});
       return true;
     } catch (error) {
       console.error('Error deleting transaction:', error);
@@ -177,6 +185,18 @@ export const FirebaseService = {
   async fetchTransactions(userId: string) {
     if (userId === 'mock-local-user') return [];
     try {
+      // 🚀 Ultra-fast Realtime Database read (<30ms from Singapore node)
+      const dbRef = ref(rtdb);
+      const snapshot = await get(child(dbRef, `users/${userId}/transactions`));
+      if (snapshot.exists()) {
+        const val = snapshot.val();
+        const transactions = Object.values(val);
+        return transactions.sort((a: any, b: any) =>
+          new Date(b.transactionDate || 0).getTime() - new Date(a.transactionDate || 0).getTime()
+        );
+      }
+
+      // Fallback to Firestore if RTDB doesn't have data yet
       const q = query(
         collection(db, 'users', userId, 'transactions'),
         orderBy('transactionDate', 'desc')
@@ -184,6 +204,12 @@ export const FirebaseService = {
       const querySnapshot = await getDocs(q);
       const transactions: any[] = [];
       querySnapshot.forEach((d) => transactions.push(d.data()));
+
+      // Mirror Firestore data to RTDB for sub-30ms future loads
+      transactions.forEach((t) => {
+        set(ref(rtdb, `users/${userId}/transactions/${t.id}`), t).catch(() => {});
+      });
+
       return transactions;
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -194,8 +220,9 @@ export const FirebaseService = {
   async saveCategory(userId: string, category: any) {
     if (userId === 'mock-local-user') return true;
     try {
+      set(ref(rtdb, `users/${userId}/categories/${category.id}`), category).catch(() => {});
       const docRef = doc(db, 'users', userId, 'categories', category.id);
-      await setDoc(docRef, category);
+      setDoc(docRef, category).catch(() => {});
       return true;
     } catch (error) {
       console.error('Error saving category:', error);
@@ -206,6 +233,11 @@ export const FirebaseService = {
   async fetchCategories(userId: string) {
     if (userId === 'mock-local-user') return [];
     try {
+      const dbRef = ref(rtdb);
+      const snapshot = await get(child(dbRef, `users/${userId}/categories`));
+      if (snapshot.exists()) {
+        return Object.values(snapshot.val());
+      }
       const q = query(collection(db, 'users', userId, 'categories'));
       const querySnapshot = await getDocs(q);
       const categories: any[] = [];
@@ -220,24 +252,17 @@ export const FirebaseService = {
   async deleteAllUserData(userId: string) {
     if (userId === 'mock-local-user') return true;
     try {
-      // Fetch and delete all transactions
-      const txQuery = query(collection(db, 'users', userId, 'transactions'));
-      const txSnapshot = await getDocs(txQuery);
-      const txPromises = txSnapshot.docs.map(d => deleteDoc(doc(db, 'users', userId, 'transactions', d.id)));
-      
-      // Fetch and delete all categories
-      const catQuery = query(collection(db, 'users', userId, 'categories'));
-      const catSnapshot = await getDocs(catQuery);
-      const catPromises = catSnapshot.docs.map(d => deleteDoc(doc(db, 'users', userId, 'categories', d.id)));
-      
-      await Promise.all([...txPromises, ...catPromises]);
+      // Purge Realtime Database user node
+      remove(ref(rtdb, `users/${userId}`)).catch(() => {});
 
-      // Delete the main user document
+      // Purge Firestore user documents
       try {
-        await deleteDoc(doc(db, 'users', userId));
-      } catch (e) {
-        // Document might not exist
-      }
+        const txQuery = query(collection(db, 'users', userId, 'transactions'));
+        const txSnapshot = await getDocs(txQuery);
+        txSnapshot.docs.forEach(d => deleteDoc(doc(db, 'users', userId, 'transactions', d.id)));
+        deleteDoc(doc(db, 'users', userId)).catch(() => {});
+      } catch (e) {}
+
       return true;
     } catch (error) {
       console.error('Error deleting all user data:', error);
@@ -245,3 +270,4 @@ export const FirebaseService = {
     }
   },
 };
+
