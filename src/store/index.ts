@@ -190,17 +190,13 @@ export const useCategoryStore = create<CategoryState>()(
       },
       deleteCategory: (id) => {
         set((state) => ({
-          categories: state.categories.map((c) =>
-            c.id === id ? { ...c, isActive: false } : c
-          ),
+          categories: state.categories.filter((c) => c.id !== id),
         }));
         if (auth?.currentUser) {
-          const deleted = get().categories.find(c => c.id === id);
-          if (deleted && !deleted.isDefault) {
-            FirebaseService.saveCategory(auth.currentUser.uid, deleted).catch(console.error);
-          }
+          FirebaseService.deleteCategory(auth.currentUser.uid, id).catch(console.error);
         }
       },
+
       clearAllData: () => set({ categories: ALL_DEFAULT_CATEGORIES }),
       getCategoriesForType: (type) =>
         get().categories.filter((c) => c.type === type && c.isActive).sort((a, b) => a.sortOrder - b.sortOrder),

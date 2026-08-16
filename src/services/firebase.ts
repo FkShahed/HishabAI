@@ -250,6 +250,21 @@ export const FirebaseService = {
     }
   },
 
+  async deleteCategory(userId: string, categoryId: string) {
+
+    if (userId === 'mock-local-user') return true;
+    try {
+      remove(ref(rtdb, `users/${userId}/categories/${categoryId}`)).catch(() => {});
+      const docRef = doc(db, 'users', userId, 'categories', categoryId);
+      deleteDoc(docRef).catch(() => {});
+      return true;
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      return false;
+    }
+  },
+
+
   async saveBudget(userId: string, budget: any) {
     if (userId === 'mock-local-user') return true;
     try {

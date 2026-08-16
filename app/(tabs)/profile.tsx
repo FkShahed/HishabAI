@@ -41,6 +41,57 @@ export default function ProfileScreen() {
   const [isDeleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
+  const getCategoriesForType = useCategoryStore((s) => s.getCategoriesForType);
+
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [categoryTypeTab, setCategoryTypeTab] = useState<'expense' | 'income'>('expense');
+  const [isAddCategoryModalVisible, setAddCategoryModalVisible] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatIcon, setNewCatIcon] = useState('🏷️');
+  const [newCatType, setNewCatType] = useState<'expense' | 'income'>('expense');
+
+  const EMOJI_OPTIONS = ['🍔', '☕', '🛒', '🚗', '🍿', '🎮', '🏋️', '💊', '✈️', '🎁', '🎓', '💼', '💰', '📈', '💻', '💸', '⚡', '📱', '👕', '🐶', '🍕', '🍻', '🎟️', '🏠', '🏷️'];
+
+  const handleCreateCategory = () => {
+    if (!newCatName.trim()) {
+      Alert.alert('Category Name Required', 'Please enter a category name.');
+      return;
+    }
+    const id = `cat_${Date.now()}`;
+    const newCat = {
+      id,
+      name: newCatName.trim(),
+      icon: newCatIcon || '🏷️',
+      type: newCatType,
+      color: newCatType === 'expense' ? '#EF4444' : '#10B981',
+      isActive: true,
+      isDefault: false,
+      sortOrder: Date.now(),
+    };
+    useCategoryStore.getState().addCategory(newCat);
+    setNewCatName('');
+    setAddCategoryModalVisible(false);
+    Alert.alert('Category Added 🎉', `"${newCat.name}" category added successfully.`);
+  };
+
+  const handleDeleteCategoryItem = (cat: any) => {
+    Alert.alert(
+      `Delete Category?`,
+      `Are you sure you want to remove "${cat.name}" category?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            useCategoryStore.getState().deleteCategory(cat.id);
+          },
+        },
+      ]
+    );
+  };
+
+
   // Version Control & Update State
   const currentAppVersion = Constants.expoConfig?.version || '1.0.0';
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
@@ -329,7 +380,28 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
 
+          {/* Manage Categories */}
+          <TouchableOpacity 
+            style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
+            onPress={() => setCategoryModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.settingLeft}>
+              <View style={styles.settingIconWrapper}>
+                <Ionicons name="pricetags-outline" size={20} color={colors.accent.primary} />
+              </View>
+              <Text variant="base" style={styles.settingText}>Manage Categories</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text variant="xs" weight="semibold" color={colors.accent.primary} style={{ marginRight: Spacing.xs }}>
+                Expense & Income
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+            </View>
+          </TouchableOpacity>
+
           {/* Currency Selection */}
+
           <TouchableOpacity 
             style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
             onPress={() => setCurrencyModalVisible(true)}
@@ -838,11 +910,206 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      {/* Category Manager Modal */}
+      <Modal visible={isCategoryModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.categoryModalContent, { backgroundColor: colors.bg.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
+              <Text variant="lg" weight="bold">Manage Categories</Text>
+              <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
+                <Ionicons name="close" size={22} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Type Tab Selector (Expense vs Income) */}
+            <View style={[styles.tabSelectorRow, { backgroundColor: colors.bg.secondary }]}>
+              <TouchableOpacity
+                style={[
+                  styles.tabSelectorBtn,
+                  categoryTypeTab === 'expense' && { backgroundColor: colors.semantic.expenseDim, borderColor: colors.semantic.expense, borderWidth: 1 }
+                ]}
+                onPress={() => setCategoryTypeTab('expense')}
+              >
+                <Text
+                  variant="sm"
+                  weight="bold"
+                  color={categoryTypeTab === 'expense' ? colors.semantic.expense : colors.text.secondary}
+                >
+                  Expense ({getCategoriesForType('expense').length})
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.tabSelectorBtn,
+                  categoryTypeTab === 'income' && { backgroundColor: colors.semantic.incomeDim, borderColor: colors.semantic.income, borderWidth: 1 }
+                ]}
+                onPress={() => setCategoryTypeTab('income')}
+              >
+                <Text
+                  variant="sm"
+                  weight="bold"
+                  color={categoryTypeTab === 'income' ? colors.semantic.income : colors.text.secondary}
+                >
+                  Income ({getCategoriesForType('income').length})
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Category List */}
+            <ScrollView style={{ maxHeight: 320, marginVertical: Spacing.sm }}>
+              {getCategoriesForType(categoryTypeTab).map((cat) => (
+                <View
+                  key={cat.id}
+                  style={[styles.categoryItemRow, { borderBottomColor: colors.border.subtle }]}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <Text style={{ fontSize: 22, marginRight: 10 }}>{cat.icon}</Text>
+                    <Text variant="base" weight="semibold" color={colors.text.primary}>
+                      {cat.name}
+                    </Text>
+                    {cat.isDefault && (
+                      <View style={[styles.defaultBadge, { backgroundColor: colors.bg.elevated }]}>
+                        <Text variant="xs" color={colors.text.tertiary}>Default</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => handleDeleteCategoryItem(cat)}
+                    style={{ padding: 6 }}
+                  >
+                    <Ionicons name="trash-outline" size={18} color={colors.semantic.expense} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+
+            <Button
+              label="+ Add New Category"
+              variant="primary"
+              size="md"
+              onPress={() => {
+                setNewCatType(categoryTypeTab);
+                setAddCategoryModalVisible(true);
+              }}
+              style={{ width: '100%', marginTop: Spacing.xs }}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add New Category Sub-Modal */}
+      <Modal visible={isAddCategoryModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
+              <Text variant="md" weight="bold">Add New {newCatType === 'expense' ? 'Expense' : 'Income'} Category</Text>
+              <TouchableOpacity onPress={() => setAddCategoryModalVisible(false)}>
+                <Ionicons name="close" size={20} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ marginVertical: Spacing.sm }}>
+              <Text variant="xs" color={colors.text.secondary} style={{ marginBottom: 4 }}>
+                Category Name
+              </Text>
+              <TextInput
+                style={[styles.nameInput, { backgroundColor: colors.bg.secondary, borderColor: colors.border.medium, color: colors.text.primary }]}
+                placeholder="e.g. Freelance, Snacks, Gaming"
+                placeholderTextColor={colors.text.tertiary}
+                value={newCatName}
+                onChangeText={setNewCatName}
+                autoFocus
+              />
+
+              <Text variant="xs" color={colors.text.secondary} style={{ marginTop: Spacing.xs, marginBottom: 4 }}>
+                Choose Emoji Icon
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: Spacing.sm }}>
+                {EMOJI_OPTIONS.map((emoji) => (
+                  <TouchableOpacity
+                    key={emoji}
+                    style={[
+                      styles.emojiChip,
+                      { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle },
+                      newCatIcon === emoji && { borderColor: colors.accent.primary, backgroundColor: colors.accent.primaryDim }
+                    ]}
+                    onPress={() => setNewCatIcon(emoji)}
+                  >
+                    <Text style={{ fontSize: 20 }}>{emoji}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+
+            <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+              <Button
+                label="Cancel"
+                variant="secondary"
+                size="md"
+                onPress={() => setAddCategoryModalVisible(false)}
+                style={{ flex: 1 }}
+              />
+              <Button
+                label="Save Category"
+                variant="primary"
+                size="md"
+                onPress={handleCreateCategory}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  categoryModalContent: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: Radii.lg,
+    padding: Spacing.lg,
+    maxHeight: '85%',
+  },
+  tabSelectorRow: {
+    flexDirection: 'row',
+    borderRadius: Radii.md,
+    padding: 4,
+    marginTop: Spacing.sm,
+    gap: 4,
+  },
+  tabSelectorBtn: {
+    flex: 1,
+    paddingVertical: Spacing.xs + 2,
+    alignItems: 'center',
+    borderRadius: Radii.sm,
+  },
+  categoryItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+  },
+  defaultBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radii.sm,
+    marginLeft: 8,
+  },
+  emojiChip: {
+    width: 42,
+    height: 42,
+    borderRadius: Radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+
   container: {
     flex: 1,
   },
