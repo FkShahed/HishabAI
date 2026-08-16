@@ -134,15 +134,11 @@ export const AuthService = {
       } catch (e) {
         console.warn("Cloud data purge warning during account deletion:", e);
       }
-      try {
-        await deleteUser(currentUser);
-      } catch (e: any) {
-        console.warn("Firebase deleteUser exception:", e);
-        // Sign out if token expired or requires-recent-login
-        await firebaseSignOut(auth).catch(() => {});
-      }
+      // Must await deleteUser and allow exceptions to propagate if re-authentication is required
+      await deleteUser(currentUser);
     }
   },
+
 
   async linkAnonymousAccount(email: string, pass: string) {
     if (!auth.currentUser) throw new Error("No active user session.");

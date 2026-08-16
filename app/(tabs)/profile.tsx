@@ -201,38 +201,37 @@ export default function ProfileScreen() {
     try {
       const activeUid = currentUser?.uid || auth?.currentUser?.uid;
       if (activeUid && activeUid !== 'mock-local-user') {
-        await Promise.race([
-          FirebaseService.deleteAllUserData(activeUid),
-          new Promise(r => setTimeout(r, 2000))
-        ]);
+        await FirebaseService.deleteAllUserData(activeUid);
       }
-    } catch (e) {
-      console.warn('Cloud data deletion warning:', e);
-    }
 
-    try {
       if (auth.currentUser) {
-        await Promise.race([
-          AuthService.deleteAccount(),
-          new Promise(r => setTimeout(r, 2000))
-        ]);
+        await AuthService.deleteAccount();
       }
-    } catch (e) {
-      console.warn('Auth deletion warning:', e);
+
+      // Completely purge all local Zustand state and stored data
+      useTransactionStore.getState().clearAllData();
+      useBudgetStore.getState().clearAllData();
+      useCategoryStore.getState().clearAllData();
+      setUserName('Guest User');
+
+      setIsDeletingAccount(false);
+      setDeleteAccountModalVisible(false);
+
+      Alert.alert('Account Deleted 🗑️', 'Your account and all associated data have been deleted successfully.');
+      router.replace('/auth');
+    } catch (e: any) {
+      console.error('Account deletion error:', e);
+      setIsDeletingAccount(false);
+      setDeleteAccountModalVisible(false);
+
+      let msg = e?.message || 'Could not delete your account. Please try again.';
+      if (e?.code === 'auth/requires-recent-login' || msg.includes('requires-recent-login')) {
+        msg = 'For security reasons, please sign out and sign in again before deleting your account.';
+      }
+      Alert.alert('Deletion Error', msg);
     }
-
-    // Completely purge all local Zustand state and stored data
-    useTransactionStore.getState().clearAllData();
-    useBudgetStore.getState().clearAllData();
-    useCategoryStore.getState().clearAllData();
-    setUserName('Guest User');
-
-    setIsDeletingAccount(false);
-    setDeleteAccountModalVisible(false);
-
-    Alert.alert('Account Deleted 🗑️', 'Your account and all associated data have been deleted successfully.');
-    router.replace('/auth');
   };
+
 
   const currentCurrencySymbol = getCurrencySymbol(currency);
 
