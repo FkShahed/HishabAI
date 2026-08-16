@@ -27,7 +27,8 @@ import {
   getAdditionalUserInfo,
   User
 } from 'firebase/auth';
-import { getDatabase, ref, set, get, child, remove } from 'firebase/database';
+import { getDatabase, ref, set, update, get, child, remove } from 'firebase/database';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
@@ -314,15 +315,23 @@ export const FirebaseService = {
   async saveUserProfile(userId: string, profile: { userName?: string; userPhotoUrl?: string | null; currency?: string; theme?: string; dailyReminderEnabled?: boolean }) {
     if (userId === 'mock-local-user') return true;
     try {
-      set(ref(rtdb, `users/${userId}/profile`), profile).catch(() => {});
+      const cleanProfile: any = {};
+      Object.keys(profile).forEach((key) => {
+        const val = (profile as any)[key];
+        if (val !== undefined) {
+          cleanProfile[key] = val;
+        }
+      });
+      update(ref(rtdb, `users/${userId}/profile`), cleanProfile).catch(() => {});
       const docRef = doc(db, 'users', userId, 'profile', 'data');
-      setDoc(docRef, profile, { merge: true }).catch(() => {});
+      setDoc(docRef, cleanProfile, { merge: true }).catch(() => {});
       return true;
     } catch (error) {
       console.error('Error saving user profile:', error);
       return false;
     }
   },
+
 
   async fetchUserProfile(userId: string) {
     if (userId === 'mock-local-user') return null;
