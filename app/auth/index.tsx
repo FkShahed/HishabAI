@@ -40,11 +40,10 @@ export default function AuthScreen() {
   const GOOGLE_DESKTOP_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_DESKTOP_CLIENT_ID || '254866158438-8jacsh0o6e6099tnkvqqk0lhvbg3qlnv.apps.googleusercontent.com';
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // http://localhost loopback is always allowed for Desktop clients — no IP/URI registration needed.
-  // WebBrowser.openAuthSessionAsync intercepts the redirect before the browser actually loads it.
-  const redirectUri = Platform.OS === 'web'
-    ? makeRedirectUri({ scheme: 'hisabai' })
-    : 'http://localhost:8081';
+  // In production APK → hisabai:// (registered Android scheme, intercepted by OS)
+  // In Expo Go → exp://192.168.1.101:8081 (shown info notice, button hidden)
+  // On web → http://localhost:8081
+  const redirectUri = makeRedirectUri({ scheme: 'hisabai' });
 
   const GOOGLE_DISCOVERY = {
     authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
