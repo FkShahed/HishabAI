@@ -30,7 +30,7 @@ export class VersionService {
     try {
       const res = await fetch(`${RTDB_URL}/releases/latest.json`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as AppVersionInfo | null;
         if (data && data.version) {
           cachedLatestVersion = data;
           return data;
@@ -56,7 +56,7 @@ export class VersionService {
     try {
       const res = await fetch(`${RTDB_URL}/releases/history.json`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as Record<string, VersionHistoryItem> | null;
         if (data) {
           const list: VersionHistoryItem[] = Object.values(data);
           list.sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
@@ -69,6 +69,7 @@ export class VersionService {
     }
     return cachedHistory;
   }
+
 
   /**
    * Get single release by ID
