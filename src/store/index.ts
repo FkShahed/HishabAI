@@ -238,7 +238,7 @@ export const useBudgetStore = create<BudgetState>()(
       isLoading: false,
 
       setBudgets: (budgets) => set({ budgets }),
-      setBudget: (budget) =>
+      setBudget: (budget) => {
         set((state) => {
           const existing = state.budgets.findIndex(
             (b) => b.month === budget.month && b.year === budget.year
@@ -249,7 +249,12 @@ export const useBudgetStore = create<BudgetState>()(
             return { budgets: updated };
           }
           return { budgets: [...state.budgets, budget] };
-        }),
+        });
+        if (auth?.currentUser) {
+          FirebaseService.saveBudget(auth.currentUser.uid, budget).catch(console.error);
+        }
+      },
+
       clearAllData: () => set({ budgets: [] }),
 
       getBudgetForMonth: (month, year) =>

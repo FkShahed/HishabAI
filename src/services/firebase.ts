@@ -249,6 +249,45 @@ export const FirebaseService = {
     }
   },
 
+  async saveBudget(userId: string, budget: any) {
+    if (userId === 'mock-local-user') return true;
+    try {
+      const budgetKey = `${budget.year}-${budget.month}`;
+      set(ref(rtdb, `users/${userId}/budgets/${budgetKey}`), budget).catch(() => {});
+      const docRef = doc(db, 'users', userId, 'budgets', budgetKey);
+      setDoc(docRef, budget).catch(() => {});
+      return true;
+    } catch (error) {
+      console.error('Error saving budget:', error);
+      return false;
+    }
+  },
+
+  async fetchBudgets(userId: string) {
+    if (userId === 'mock-local-user') return [];
+    try {
+      const dbRef = ref(rtdb);
+      const snapshot = await get(child(dbRef, `users/${userId}/budgets`));
+      if (snapshot.exists()) {
+        const val = snapshot.val();
+        return Object.values(val) as any[];
+      }
+      const q = query(collection(db, 'users', userId, 'budgets'));
+      const querySnapshot = await getDocs(q);
+      const budgets: any[] = [];
+      querySnapshot.forEach((d) => budgets.push(d.data()));
+      budgets.forEach((b) => {
+        const key = `${b.year}-${b.month}`;
+        set(ref(rtdb, `users/${userId}/budgets/${key}`), b).catch(() => {});
+      });
+      return budgets;
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
+      return [];
+    }
+  },
+
+
   async deleteAllUserData(userId: string) {
     if (userId === 'mock-local-user') return true;
     try {

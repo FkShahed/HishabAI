@@ -40,6 +40,15 @@ export default function Index() {
             })
             .catch((err) => console.warn('[App Init] Silent background sync warning:', err));
 
+          FirebaseService.fetchBudgets(user.uid)
+            .then((cloudBudgets) => {
+              if (cloudBudgets && cloudBudgets.length > 0) {
+                useBudgetStore.getState().setBudgets(cloudBudgets);
+              }
+            })
+            .catch(() => {});
+
+
 
 
         } else {

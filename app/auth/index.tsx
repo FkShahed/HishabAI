@@ -61,14 +61,21 @@ export default function AuthScreen() {
 
   const loadUserData = async (userId: string) => {
     try {
-      const cloudTxns = await FirebaseService.fetchTransactions(userId);
+      const [cloudTxns, cloudBudgets] = await Promise.all([
+        FirebaseService.fetchTransactions(userId),
+        FirebaseService.fetchBudgets(userId),
+      ]);
       if (cloudTxns) {
         setTransactions(cloudTxns);
+      }
+      if (cloudBudgets) {
+        useBudgetStore.getState().setBudgets(cloudBudgets);
       }
     } catch (err) {
       console.warn('Load user data error:', err);
     }
   };
+
 
 
 
