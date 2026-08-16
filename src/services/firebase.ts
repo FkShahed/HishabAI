@@ -153,7 +153,15 @@ export const AuthService = {
   }
 };
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallbackValue: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallbackValue), timeoutMs)),
+  ]);
+}
+
 export const FirebaseService = {
+
   async saveTransaction(userId: string, transaction: any) {
     if (userId === 'mock-local-user') return true;
     try {
@@ -187,8 +195,8 @@ export const FirebaseService = {
     try {
       // 🚀 Ultra-fast Realtime Database read (<30ms from Singapore node)
       const dbRef = ref(rtdb);
-      const snapshot = await get(child(dbRef, `users/${userId}/transactions`));
-      if (snapshot.exists()) {
+      const snapshot = await withTimeout(get(child(dbRef, `users/${userId}/transactions`)), 1500, null);
+      if (snapshot && snapshot.exists()) {
         const val = snapshot.val();
         const transactions = Object.values(val);
         return transactions.sort((a: any, b: any) =>
@@ -196,21 +204,19 @@ export const FirebaseService = {
         );
       }
 
-      // Fallback to Firestore if RTDB doesn't have data yet
-      const q = query(
-        collection(db, 'users', userId, 'transactions'),
-        orderBy('transactionDate', 'desc')
-      );
-      const querySnapshot = await getDocs(q);
-      const transactions: any[] = [];
-      querySnapshot.forEach((d) => transactions.push(d.data()));
+      // Non-blocking background sync from legacy Firestore without delaying RTDB return
+      getDocs(query(collection(db, 'users', userId, 'transactions'), orderBy('transactionDate', 'desc')))
+        .then((querySnapshot) => {
+          if (!querySnapshot.empty) {
+            const txns: any[] = [];
+            querySnapshot.forEach((d) => txns.push(d.data()));
+            txns.forEach((t) => set(ref(rtdb, `users/${userId}/transactions/${t.id}`), t).catch(() => {}));
+            useTransactionStore.getState().setTransactions(txns);
+          }
+        })
+        .catch(() => {});
 
-      // Mirror Firestore data to RTDB for sub-30ms future loads
-      transactions.forEach((t) => {
-        set(ref(rtdb, `users/${userId}/transactions/${t.id}`), t).catch(() => {});
-      });
-
-      return transactions;
+      return [];
     } catch (error) {
       console.error('Error fetching transactions:', error);
       return [];
@@ -234,15 +240,11 @@ export const FirebaseService = {
     if (userId === 'mock-local-user') return [];
     try {
       const dbRef = ref(rtdb);
-      const snapshot = await get(child(dbRef, `users/${userId}/categories`));
-      if (snapshot.exists()) {
+      const snapshot = await withTimeout(get(child(dbRef, `users/${userId}/categories`)), 1500, null);
+      if (snapshot && snapshot.exists()) {
         return Object.values(snapshot.val());
       }
-      const q = query(collection(db, 'users', userId, 'categories'));
-      const querySnapshot = await getDocs(q);
-      const categories: any[] = [];
-      querySnapshot.forEach((d) => categories.push(d.data()));
-      return categories;
+      return [];
     } catch (error) {
       console.error('Error fetching categories:', error);
       return [];
@@ -267,24 +269,28 @@ export const FirebaseService = {
     if (userId === 'mock-local-user') return [];
     try {
       const dbRef = ref(rtdb);
-      const snapshot = await get(child(dbRef, `users/${userId}/budgets`));
-      if (snapshot.exists()) {
+      const snapshot = await withTimeout(get(child(dbRef, `users/${userId}/budgets`)), 1500, null);
+      if (snapshot && snapshot.exists()) {
         const val = snapshot.val();
         return Object.values(val) as any[];
       }
-      const q = query(collection(db, 'users', userId, 'budgets'));
 
-      const querySnapshot = await getDocs(q);
-      const budgets: any[] = [];
-      querySnapshot.forEach((d) => budgets.push(d.data()));
+      // Non-blocking background sync from legacy Firestore
+      getDocs(query(collection(db, 'users', userId, 'budgets')))
+        .then((querySnapshot) => {
+          if (!querySnapshot.empty) {
+            const budgets: any[] = [];
+            querySnapshot.forEach((d) => budgets.push(d.data()));
+            budgets.forEach((b) => {
+              const key = `${b.year}-${b.month}`;
+              set(ref(rtdb, `users/${userId}/budgets/${key}`), b).catch(() => {});
+            });
+            useBudgetStore.getState().setBudgets(budgets);
+          }
+        })
+        .catch(() => {});
 
-      budgets.forEach((b) => {
-        const key = `${b.year}-${b.month}`;
-        set(ref(rtdb, `users/${userId}/budgets/${key}`), b).catch(() => {});
-      });
-      return budgets;
-
-
+      return [];
     } catch (error) {
       console.error('Error fetching budgets:', error);
       return [];
@@ -292,7 +298,6 @@ export const FirebaseService = {
   },
 
   async saveUserProfile(userId: string, profile: { userName?: string; userPhotoUrl?: string | null; currency?: string; theme?: string; dailyReminderEnabled?: boolean }) {
-
     if (userId === 'mock-local-user') return true;
     try {
       set(ref(rtdb, `users/${userId}/profile`), profile).catch(() => {});
@@ -309,8 +314,8 @@ export const FirebaseService = {
     if (userId === 'mock-local-user') return null;
     try {
       const dbRef = ref(rtdb);
-      const snapshot = await get(child(dbRef, `users/${userId}/profile`));
-      if (snapshot.exists()) {
+      const snapshot = await withTimeout(get(child(dbRef, `users/${userId}/profile`)), 1500, null);
+      if (snapshot && snapshot.exists()) {
         return snapshot.val();
       }
       return null;
@@ -319,6 +324,7 @@ export const FirebaseService = {
       return null;
     }
   },
+
 
 
 
