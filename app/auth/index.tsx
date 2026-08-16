@@ -34,15 +34,10 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Desktop OAuth client — PKCE flow with http://localhost loopback redirect.
-  // Google automatically allows http://localhost for Desktop clients (no registration needed).
-  // PKCE lets us exchange the code for tokens without exposing a client secret.
-  const GOOGLE_DESKTOP_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_DESKTOP_CLIENT_ID || '254866158438-8jacsh0o6e6099tnkvqqk0lhvbg3qlnv.apps.googleusercontent.com';
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // Use scheme 'hisabai' (configured in app.json).
-  // In Standalone APK, this generates hisabai:// which Android intercepts upon Google redirect.
-  const redirectUri = makeRedirectUri({ scheme: 'hisabai' });
+  // Exact Expo Auth Proxy URL matching your owner (fazlulkarim2000) and slug (hishabai)
+  const redirectUri = 'https://auth.expo.io/@fazlulkarim2000/hishabai';
 
   const GOOGLE_DISCOVERY = {
     authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -52,7 +47,7 @@ export default function AuthScreen() {
 
   const [request, response, promptAsync] = useAuthRequest(
     {
-      clientId: GOOGLE_DESKTOP_CLIENT_ID,
+      clientId: GOOGLE_WEB_CLIENT_ID,
       redirectUri,
       scopes: ['openid', 'profile', 'email'],
       responseType: ResponseType.IdToken,
@@ -190,8 +185,7 @@ export default function AuthScreen() {
       } else {
         // Native Mobile
         if (promptAsync) {
-          // No proxy needed — Desktop OAuth client accepts exp:// and hisabai:// directly
-          await promptAsync();
+          await promptAsync({ useProxy: true });
         } else {
           setErrorMessage('Google Sign-In is initializing. Please tap again or use Email & Password.');
         }
