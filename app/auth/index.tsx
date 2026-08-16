@@ -82,63 +82,64 @@ export default function AuthScreen() {
             const pic = user.photoURL || user.providerData?.[0]?.photoURL;
             if (pic) setUserPhotoUrl(pic);
 
-            await loadUserData(user.uid);
-            router.replace('/(tabs)');
-          })
-          .catch((err: any) => {
-            console.error('Google sign-in error:', err);
-            setErrorMessage(err.message || 'Google sign-in failed. Please try again.');
-          })
-          .finally(() => setLoading(false));
-      }
-    }
-  }, [response]);
-
-  // If user is already signed in, prevent viewing sign in / sign up page
-  useEffect(() => {
-    if (auth?.currentUser && !auth.currentUser.isAnonymous && auth.currentUser.email) {
-      router.replace('/(tabs)');
-    }
-  }, []);
-
-  const handleAuthAction = async () => {
-    setErrorMessage('');
-    
-    if (mode === 'signup' && !name.trim()) {
-      setErrorMessage('Please enter your full name.');
-      return;
-    }
-
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage('Please enter both email and password.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let user;
-      if (mode === 'signup') {
-        user = await AuthService.signUp(email.trim(), password);
-      } else {
-        user = await AuthService.signIn(email.trim(), password);
-      }
-
-      if (user) {
-        // Save user's display name or email prefix
-        const displayName = name.trim() || user.displayName || user.email?.split('@')[0] || 'User';
-        setUserName(displayName);
-
-        // Fetch user's data while spinner is showing
-        await loadUserData(user.uid);
-
-        // Navigate to home tab after data is loaded
         router.replace('/(tabs)');
-      }
+        loadUserData(user.uid);
+      })
+      .catch((err: any) => {
+        console.error('Google sign-in error:', err);
+        setErrorMessage(err.message || 'Google sign-in failed. Please try again.');
+      })
+      .finally(() => setLoading(false));
+  }
+}
+}, [response]);
+
+// If user is already signed in, prevent viewing sign in / sign up page
+useEffect(() => {
+if (auth?.currentUser && !auth.currentUser.isAnonymous && auth.currentUser.email) {
+  router.replace('/(tabs)');
+}
+}, []);
+
+const handleAuthAction = async () => {
+setErrorMessage('');
+
+if (mode === 'signup' && !name.trim()) {
+  setErrorMessage('Please enter your full name.');
+  return;
+}
+
+if (!email.trim() || !password.trim()) {
+  setErrorMessage('Please enter both email and password.');
+  return;
+}
+
+if (password.length < 6) {
+  setErrorMessage('Password must be at least 6 characters.');
+  return;
+}
+
+setLoading(true);
+try {
+  let user;
+  if (mode === 'signup') {
+    user = await AuthService.signUp(email.trim(), password);
+  } else {
+    user = await AuthService.signIn(email.trim(), password);
+  }
+
+  if (user) {
+    // Save user's display name or email prefix
+    const displayName = name.trim() || user.displayName || user.email?.split('@')[0] || 'User';
+    setUserName(displayName);
+
+    // 🚀 Navigate IMMEDIATELY for instant zero-lag response
+    router.replace('/(tabs)');
+
+    // Background fetch user's cloud transactions
+    loadUserData(user.uid);
+  }
+
 
 
     } catch (error: any) {
