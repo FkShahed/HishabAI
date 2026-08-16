@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 
 import { Text } from '../../src/components/ui/Text';
@@ -33,12 +32,10 @@ export default function AuthScreen() {
 
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // Use Expo Auth Proxy so the redirect URI is always https://auth.expo.io/@fkshahed/hishabai
-  // This is the only redirect URI that works reliably in Expo Go on physical devices.
-  const redirectUri = makeRedirectUri({
-    useProxy: true,
-    projectNameForProxy: '@fkshahed/hishabai',
-  });
+  // Hardcode the Expo Auth Proxy redirect URI.
+  // makeRedirectUri({ useProxy:true }) silently falls back to exp:// in expo-auth-session v5,
+  // which Google rejects for Web-type OAuth clients. Using the literal https URL is guaranteed correct.
+  const redirectUri = 'https://auth.expo.io/@fkshahed/hishabai';
 
   // Mobile Google Auth Hook with configured client IDs
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
