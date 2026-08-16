@@ -19,14 +19,25 @@ export default function Index() {
           setIsAuthenticated(true);
           console.log('[Auth] Signed in:', user.uid);
           
-          // Background fetch existing data without blocking app launch
+          // Background fetch existing data and merge with local data
           FirebaseService.fetchTransactions(user.uid)
-            .then((txns) => {
-              if (txns && txns.length > 0) {
-                setTransactions(txns);
-              }
+            .then((cloudTxns) => {
+              const localTxns = useTransactionStore.getState().transactions;
+              const map = new Map<string, any>();
+              cloudTxns.forEach((t) => map.set(t.id, t));
+              localTxns.forEach((t) => {
+                if (!map.has(t.id)) {
+                  map.set(t.id, t);
+                  FirebaseService.saveTransaction(user.uid, t).catch(() => {});
+                }
+              });
+              const merged = Array.from(map.values()).sort((a, b) =>
+                new Date(b.transactionDate || 0).getTime() - new Date(a.transactionDate || 0).getTime()
+              );
+              setTransactions(merged);
             })
             .catch((err) => console.warn('[App Init] Background fetch txns warning:', err));
+
         } else {
           setIsAuthenticated(false);
           console.log('[Auth] No active session. Redirecting to login.');

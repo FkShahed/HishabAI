@@ -81,7 +81,14 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="terms"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
+
     </>
   );
 }

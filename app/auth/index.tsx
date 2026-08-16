@@ -59,6 +59,29 @@ export default function AuthScreen() {
     GOOGLE_DISCOVERY
   );
 
+  const syncUserTransactions = async (userId: string) => {
+    try {
+      const cloudTxns = await FirebaseService.fetchTransactions(userId);
+      const localTxns = useTransactionStore.getState().transactions;
+      
+      const map = new Map<string, any>();
+      cloudTxns.forEach((t) => map.set(t.id, t));
+      localTxns.forEach((t) => {
+        if (!map.has(t.id)) {
+          map.set(t.id, t);
+          FirebaseService.saveTransaction(userId, t).catch(() => {});
+        }
+      });
+
+      const merged = Array.from(map.values()).sort((a, b) =>
+        new Date(b.transactionDate || 0).getTime() - new Date(a.transactionDate || 0).getTime()
+      );
+      setTransactions(merged);
+    } catch (err) {
+      console.warn('Sync transactions error:', err);
+    }
+  };
+
   useEffect(() => {
     if (response?.type === 'success') {
       const params = response.params as Record<string, any>;
@@ -73,9 +96,7 @@ export default function AuthScreen() {
             const pic = user.photoURL || user.providerData?.[0]?.photoURL;
             if (pic) setUserPhotoUrl(pic);
             router.replace('/(tabs)');
-            FirebaseService.fetchTransactions(user.uid)
-              .then((savedTxns) => setTransactions(savedTxns))
-              .catch(() => {});
+            syncUserTransactions(user.uid);
           })
           .catch((err: any) => {
             console.error('Google sign-in error:', err);
@@ -85,7 +106,6 @@ export default function AuthScreen() {
       }
     }
   }, [response]);
-
 
   // If user is already signed in, prevent viewing sign in / sign up page
   useEffect(() => {
@@ -126,18 +146,13 @@ export default function AuthScreen() {
         const displayName = name.trim() || user.displayName || user.email?.split('@')[0] || 'User';
         setUserName(displayName);
 
-        // 🚀 Navigate IMMEDIATELY to home tab (Zero UI lag!)
+        // Navigate immediately to home tab
         router.replace('/(tabs)');
 
         // Background sync transactions without blocking auth UI
-        FirebaseService.fetchTransactions(user.uid)
-          .then((savedTxns) => {
-            if (savedTxns && savedTxns.length > 0) {
-              setTransactions(savedTxns);
-            }
-          })
-          .catch((err) => console.warn('[Background Sync] Fetch txns warning:', err));
+        syncUserTransactions(user.uid);
       }
+
     } catch (error: any) {
       console.error('Auth action failed:', error);
       let msg = error.message || 'Authentication failed.';

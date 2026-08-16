@@ -140,13 +140,13 @@ export default function ProfileScreen() {
   const handleSignOut = async () => {
     try {
       await AuthService.signOut();
-      setTransactions([]); // Clear local state on sign out
-      Alert.alert('Signed Out', 'You have been signed out.');
+      Alert.alert('Signed Out', 'You have been signed out safely.');
       router.replace('/auth'); // Redirect to login
     } catch (e) {
       Alert.alert('Error', 'Failed to sign out.');
     }
   };
+
 
   const handleSaveName = () => {
     if (nameInput.trim()) {
