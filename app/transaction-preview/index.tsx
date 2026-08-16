@@ -7,11 +7,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../src/components/ui/Text';
 import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
+import { DatePickerModal } from '../../src/components/ui/DatePickerModal';
 import { Colors, Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { usePreviewStore, useTransactionStore, useCategoryStore } from '../../src/store';
 import { PreviewTransaction } from '../../src/types';
-import { formatCurrency, formatSignedAmount, getTodayString } from '../../src/utils/finance';
+import { formatCurrency, formatSignedAmount, getTodayString, formatDateDisplay } from '../../src/utils/finance';
 import { useUIStore } from '../../src/store';
+
 
 export default function PreviewScreen() {
   const insets = useSafeAreaInsets();
@@ -32,6 +34,8 @@ export default function PreviewScreen() {
   const [editingTransaction, setEditingTransaction] = React.useState<PreviewTransaction | null>(null);
   const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
   const [editForm, setEditForm] = React.useState({ amount: '', comment: '', categoryId: '', transactionDate: '' });
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
+
 
   const hasUncertainItems = previewTransactions.some(t => t.uncertain);
 
@@ -311,12 +315,22 @@ export default function PreviewScreen() {
                 onChangeText={val => setEditForm(p => ({ ...p, comment: val }))}
               />
 
-              <Text variant="sm" color={colors.text.secondary} style={styles.inputLabel}>Date (YYYY-MM-DD)</Text>
-              <TextInput
-                style={[styles.textInput, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, color: colors.text.primary }]}
-                value={editForm.transactionDate}
-                onChangeText={val => setEditForm(p => ({ ...p, transactionDate: val }))}
-              />
+              <Text variant="sm" color={colors.text.secondary} style={styles.inputLabel}>Date</Text>
+              <TouchableOpacity
+                style={[
+                  styles.datePickerButton,
+                  { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }
+                ]}
+                onPress={() => setShowDatePicker(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="calendar-outline" size={18} color={colors.accent.primary} style={{ marginRight: 8 }} />
+                <Text variant="md" weight="semibold" color={colors.text.primary} style={{ flex: 1 }}>
+                  {editForm.transactionDate ? formatDateDisplay(editForm.transactionDate) : 'Select Date'}
+                </Text>
+                <Ionicons name="chevron-down" size={16} color={colors.text.tertiary} />
+              </TouchableOpacity>
+
 
               <Text variant="sm" color={colors.text.secondary} style={styles.inputLabel}>Category</Text>
               <View style={styles.categoryGrid}>
@@ -361,6 +375,16 @@ export default function PreviewScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <DatePickerModal
+        visible={showDatePicker}
+        selectedDate={editForm.transactionDate || getTodayString()}
+        onClose={() => setShowDatePicker(false)}
+        onSelectDate={(newDate) => {
+          setEditForm(p => ({ ...p, transactionDate: newDate }));
+          setShowDatePicker(false);
+        }}
+      />
 
     </View>
   );
@@ -488,6 +512,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     fontSize: 15,
   },
+  datePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 48,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.md,
+  },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -513,3 +545,4 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
 });
+
