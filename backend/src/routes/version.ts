@@ -12,9 +12,9 @@ router.get('/icon', (req: Request, res: Response) => {
 });
 
 // ─── 1. Public API Endpoint: Get latest active version ───────────────────────
-router.get('/latest', (req: Request, res: Response) => {
+router.get('/latest', async (req: Request, res: Response) => {
   try {
-    const versionInfo = VersionService.getLatestVersion();
+    const versionInfo = await VersionService.getLatestVersion();
     res.json({
       success: true,
       data: versionInfo,
@@ -25,9 +25,9 @@ router.get('/latest', (req: Request, res: Response) => {
 });
 
 // ─── 2. Public Direct Download Redirect ───────────────────────────────────────
-router.get('/download', (req: Request, res: Response) => {
+router.get('/download', async (req: Request, res: Response) => {
   try {
-    const versionInfo = VersionService.getLatestVersion();
+    const versionInfo = await VersionService.getLatestVersion();
     if (!versionInfo.apkUrl) {
       return res.status(404).send(`
         <!DOCTYPE html>
@@ -47,10 +47,10 @@ router.get('/download', (req: Request, res: Response) => {
 });
 
 // ─── 3. CRUD API: Read All Releases History ───────────────────────────────────
-router.get('/history', (req: Request, res: Response) => {
+router.get('/history', async (req: Request, res: Response) => {
   try {
-    const history = VersionService.getHistory();
-    const active = VersionService.getLatestVersion();
+    const history = await VersionService.getHistory();
+    const active = await VersionService.getLatestVersion();
     res.json({ success: true, data: history, active });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -58,9 +58,9 @@ router.get('/history', (req: Request, res: Response) => {
 });
 
 // ─── 4. CRUD API: Read Single Release by ID ───────────────────────────────────
-router.get('/release/:id', (req: Request, res: Response) => {
+router.get('/release/:id', async (req: Request, res: Response) => {
   try {
-    const release = VersionService.getReleaseById(req.params.id);
+    const release = await VersionService.getReleaseById(req.params.id);
     if (!release) {
       return res.status(404).json({ success: false, error: 'Release not found' });
     }
@@ -71,7 +71,7 @@ router.get('/release/:id', (req: Request, res: Response) => {
 });
 
 // ─── 5. CRUD API: Create New Release ──────────────────────────────────────────
-router.post('/create', (req: Request, res: Response) => {
+router.post('/create', async (req: Request, res: Response) => {
   try {
     const { 
       version, 
@@ -94,7 +94,7 @@ router.post('/create', (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Version string is required (e.g. 1.0.1)' });
     }
 
-    const created = VersionService.createRelease({
+    const created = await VersionService.createRelease({
       version: String(version).trim(),
       buildNumber: Number(buildNumber) || 1,
       apkUrl: apkUrl ? String(apkUrl).trim() : '',
@@ -116,7 +116,7 @@ router.post('/create', (req: Request, res: Response) => {
 });
 
 // ─── 6. CRUD API: Update Active Version or Create ────────────────────────────
-router.post('/update', (req: Request, res: Response) => {
+router.post('/update', async (req: Request, res: Response) => {
   try {
     const { 
       version, 
@@ -138,7 +138,7 @@ router.post('/update', (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Version is required' });
     }
 
-    const updated = VersionService.saveVersion({
+    const updated = await VersionService.saveVersion({
       version: String(version).trim(),
       buildNumber: Number(buildNumber) || 1,
       apkUrl: apkUrl ? String(apkUrl).trim() : '',
@@ -160,7 +160,7 @@ router.post('/update', (req: Request, res: Response) => {
 });
 
 // ─── 7. CRUD API: Update Specific Release in History ─────────────────────────
-router.put('/release/:id', (req: Request, res: Response) => {
+router.put('/release/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { 
@@ -180,7 +180,7 @@ router.put('/release/:id', (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Invalid admin secret key' });
     }
 
-    const updated = VersionService.updateRelease(id, {
+    const updated = await VersionService.updateRelease(id, {
       version: version ? String(version).trim() : undefined,
       buildNumber: buildNumber !== undefined ? Number(buildNumber) : undefined,
       apkUrl: apkUrl !== undefined ? String(apkUrl).trim() : undefined,
@@ -202,7 +202,7 @@ router.put('/release/:id', (req: Request, res: Response) => {
 });
 
 // ─── 8. CRUD API: Delete Release from History ────────────────────────────────
-router.delete('/release/:id', (req: Request, res: Response) => {
+router.delete('/release/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { adminKey } = req.body;
@@ -211,7 +211,7 @@ router.delete('/release/:id', (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Invalid admin secret key' });
     }
 
-    const result = VersionService.deleteRelease(id);
+    const result = await VersionService.deleteRelease(id);
     res.json({
       success: true,
       message: `Release v${result.deleted.version} deleted successfully`,
@@ -223,7 +223,7 @@ router.delete('/release/:id', (req: Request, res: Response) => {
 });
 
 // ─── 9. CRUD API: Activate / Make Live a Release ──────────────────────────────
-router.post('/activate/:id', (req: Request, res: Response) => {
+router.post('/activate/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { adminKey } = req.body;
@@ -232,7 +232,7 @@ router.post('/activate/:id', (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Invalid admin secret key' });
     }
 
-    const activated = VersionService.activateRelease(id);
+    const activated = await VersionService.activateRelease(id);
     res.json({
       success: true,
       message: `Version v${activated.version} is now LIVE for all users!`,
@@ -244,9 +244,10 @@ router.post('/activate/:id', (req: Request, res: Response) => {
 });
 
 // ─── 10. Admin Web Dashboard (/admin) with Full CRUD UI ───────────────────────
-export function renderAdminPage(): string {
-  const current = VersionService.getLatestVersion();
-  const history = VersionService.getHistory();
+export async function renderAdminPage(): Promise<string> {
+  const current = await VersionService.getLatestVersion();
+  const history = await VersionService.getHistory();
+
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -1522,8 +1523,9 @@ export function renderAdminPage(): string {
 }
 
 // ─── 11. Public Download Landing Page (/download & /apk) ───────────────────────
-export function renderDownloadPage(): string {
-  const current = VersionService.getLatestVersion();
+export async function renderDownloadPage(): Promise<string> {
+  const current = await VersionService.getLatestVersion();
+
 
   return `<!DOCTYPE html>
 <html lang="en">

@@ -19,16 +19,17 @@ app.get('/health', (req, res) => {
 });
 
 // Admin Dashboard Webpage for Version Control & APK Updates
-app.get(['/admin', '/admin/version', '/version-admin'], (req, res) => {
+app.get(['/admin', '/admin/version', '/version-admin'], async (req, res) => {
   res.setHeader('Content-Type', 'text/html');
-  res.send(renderAdminPage());
+  res.send(await renderAdminPage());
 });
 
 // Public APK Download Landing Page
-app.get(['/download', '/apk'], (req, res) => {
+app.get(['/download', '/apk'], async (req, res) => {
   res.setHeader('Content-Type', 'text/html');
-  res.send(renderDownloadPage());
+  res.send(await renderDownloadPage());
 });
+
 
 // API Routes
 app.use('/api/ai', aiRoutes);
