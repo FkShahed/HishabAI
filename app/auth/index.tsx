@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 
 import { Text } from '../../src/components/ui/Text';
@@ -31,15 +32,16 @@ export default function AuthScreen() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
-  const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
-  const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+
+  // Use Expo Auth Proxy so the redirect URI is always https://auth.expo.io/@<username>/<slug>
+  // This is the only redirect URI that works reliably in Expo Go on physical devices.
+  const redirectUri = makeRedirectUri({ useProxy: true });
 
   // Mobile Google Auth Hook with configured client IDs
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_WEB_CLIENT_ID,
     webClientId: GOOGLE_WEB_CLIENT_ID,
-    ...(GOOGLE_ANDROID_CLIENT_ID ? { androidClientId: GOOGLE_ANDROID_CLIENT_ID } : {}),
-    ...(GOOGLE_IOS_CLIENT_ID ? { iosClientId: GOOGLE_IOS_CLIENT_ID } : {}),
+    redirectUri,
     scopes: ['profile', 'email'],
   });
 
@@ -176,7 +178,7 @@ export default function AuthScreen() {
       } else {
         // Native Mobile
         if (promptAsync) {
-          await promptAsync();
+          await promptAsync({ useProxy: true });
         } else {
           setErrorMessage('Google Sign-In is initializing. Please tap again or use Email & Password.');
         }
