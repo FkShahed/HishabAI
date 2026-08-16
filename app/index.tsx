@@ -19,26 +19,27 @@ export default function Index() {
           setIsAuthenticated(true);
           console.log('[Auth] Signed in:', user.uid);
           
-          // Background fetch existing data and merge with local data
-          useTransactionStore.getState().setLoading(true);
+          // Silent background sync without triggering UI spinners
           FirebaseService.fetchTransactions(user.uid)
             .then((cloudTxns) => {
-              const localTxns = useTransactionStore.getState().transactions;
-              const map = new Map<string, any>();
-              cloudTxns.forEach((t) => map.set(t.id, t));
-              localTxns.forEach((t) => {
-                if (!map.has(t.id)) {
-                  map.set(t.id, t);
-                  FirebaseService.saveTransaction(user.uid, t).catch(() => {});
-                }
-              });
-              const merged = Array.from(map.values()).sort((a, b) =>
-                new Date(b.transactionDate || 0).getTime() - new Date(a.transactionDate || 0).getTime()
-              );
-              setTransactions(merged);
+              if (cloudTxns && cloudTxns.length > 0) {
+                const localTxns = useTransactionStore.getState().transactions;
+                const map = new Map<string, any>();
+                cloudTxns.forEach((t) => map.set(t.id, t));
+                localTxns.forEach((t) => {
+                  if (!map.has(t.id)) {
+                    map.set(t.id, t);
+                    FirebaseService.saveTransaction(user.uid, t).catch(() => {});
+                  }
+                });
+                const merged = Array.from(map.values()).sort((a, b) =>
+                  new Date(b.transactionDate || 0).getTime() - new Date(a.transactionDate || 0).getTime()
+                );
+                setTransactions(merged);
+              }
             })
-            .catch((err) => console.warn('[App Init] Background fetch txns warning:', err))
-            .finally(() => useTransactionStore.getState().setLoading(false));
+            .catch((err) => console.warn('[App Init] Silent background sync warning:', err));
+
 
 
         } else {

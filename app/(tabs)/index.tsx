@@ -130,14 +130,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Daily Grouped Transactions List */}
-        {isLoading ? (
-          <View style={styles.emptyState}>
-            <ActivityIndicator size="large" color={colors.accent.primary} />
-            <Text variant="sm" color={colors.text.secondary} style={{ marginTop: 12 }}>
-              Loading transactions...
-            </Text>
-          </View>
-        ) : dailyGroups.length === 0 ? (
+        {dailyGroups.length === 0 ? (
           <View style={styles.emptyState}>
             <Text variant="lg" weight="semibold" color={colors.text.secondary}>
               No transactions yet
@@ -147,6 +140,7 @@ export default function HomeScreen() {
             </Text>
           </View>
         ) : (
+
 
           dailyGroups.map((group) => {
             const isDailyOverBudget = dailyBudget > 0 && group.totalExpense > dailyBudget;
