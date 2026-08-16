@@ -1,5 +1,5 @@
-import { Redirect } from 'expo-router';
-import { useUIStore, useTransactionStore } from '../src/store';
+import { useUIStore, useTransactionStore, useBudgetStore } from '../src/store';
+
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Colors } from '../src/constants/colors';
 import { useEffect, useState } from 'react';
