@@ -14,6 +14,8 @@ import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, Typography, useThemeColors } from '../../src/constants/colors';
 import { AuthService, FirebaseService, auth } from '../../src/services/firebase';
 import { useTransactionStore, useUIStore } from '../../src/store';
+import Constants from 'expo-constants';
+
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -22,6 +24,7 @@ export default function AuthScreen() {
   const colors = useThemeColors();
   const setTransactions = useTransactionStore((s) => s.setTransactions);
   const setUserName = useUIStore((s) => s.setUserName);
+  const isExpoGo = Constants.appOwnership === 'expo';
   const setUserPhotoUrl = useUIStore((s) => s.setUserPhotoUrl);
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -300,21 +303,32 @@ export default function AuthScreen() {
           </View>
         ) : null}
 
-        {/* Google Auth Button */}
-        <TouchableOpacity
-          style={[
-            styles.googleButton,
-            { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }
-          ]}
-          onPress={handleGoogleAuth}
-          disabled={loading}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="logo-google" size={20} color="#EA4335" style={{ marginRight: 10 }} />
-          <Text variant="md" weight="bold" color={colors.text.primary}>
-            {mode === 'signin' ? 'Sign In with Google' : 'Sign Up with Google'}
-          </Text>
-        </TouchableOpacity>
+        {/* Google Auth Button — only shown in production builds */}
+        {isExpoGo ? (
+          <View style={[styles.expoGoNotice, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
+            <Ionicons name="logo-google" size={18} color={colors.text.tertiary} style={{ marginRight: 8 }} />
+            <Text variant="xs" color={colors.text.secondary} style={{ flex: 1 }}>
+              Google Sign-In is available in the{' '}
+              <Text variant="xs" weight="bold" color={colors.accent.primary}>production app</Text>.
+              {' '}Use Email & Password below for Expo Go testing.
+            </Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.googleButton,
+              { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }
+            ]}
+            onPress={handleGoogleAuth}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="logo-google" size={20} color="#EA4335" style={{ marginRight: 10 }} />
+            <Text variant="md" weight="bold" color={colors.text.primary}>
+              {mode === 'signin' ? 'Sign In with Google' : 'Sign Up with Google'}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Divider */}
         <View style={styles.dividerRow}>
@@ -442,6 +456,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 48,
     borderRadius: Radii.md,
+    marginBottom: Spacing.lg,
+  },
+  expoGoNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: Radii.md,
+    borderWidth: 1,
     marginBottom: Spacing.lg,
   },
   dividerRow: {
