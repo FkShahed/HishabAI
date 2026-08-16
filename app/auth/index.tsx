@@ -33,9 +33,12 @@ export default function AuthScreen() {
 
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // Use Expo Auth Proxy so the redirect URI is always https://auth.expo.io/@<username>/<slug>
+  // Use Expo Auth Proxy so the redirect URI is always https://auth.expo.io/@fkshahed/hishabai
   // This is the only redirect URI that works reliably in Expo Go on physical devices.
-  const redirectUri = makeRedirectUri({ useProxy: true });
+  const redirectUri = makeRedirectUri({
+    useProxy: true,
+    projectNameForProxy: '@fkshahed/hishabai',
+  });
 
   // Mobile Google Auth Hook with configured client IDs
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
