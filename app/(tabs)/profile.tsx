@@ -199,11 +199,6 @@ export default function ProfileScreen() {
   const handleConfirmDeleteAccount = async () => {
     setIsDeletingAccount(true);
     try {
-      const activeUid = currentUser?.uid || auth?.currentUser?.uid;
-      if (activeUid && activeUid !== 'mock-local-user') {
-        await FirebaseService.deleteAllUserData(activeUid);
-      }
-
       if (auth.currentUser) {
         await AuthService.deleteAccount();
       }
@@ -231,6 +226,7 @@ export default function ProfileScreen() {
       Alert.alert('Deletion Error', msg);
     }
   };
+
 
 
   const currentCurrencySymbol = getCurrencySymbol(currency);

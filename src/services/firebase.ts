@@ -129,15 +129,16 @@ export const AuthService = {
   async deleteAccount() {
     const currentUser = auth.currentUser;
     if (currentUser) {
-      try {
-        await FirebaseService.deleteAllUserData(currentUser.uid);
-      } catch (e) {
-        console.warn("Cloud data purge warning during account deletion:", e);
-      }
-      // Must await deleteUser and allow exceptions to propagate if re-authentication is required
+      const uid = currentUser.uid;
+      // Start background data purge without blocking user deletion
+      FirebaseService.deleteAllUserData(uid).catch((err) =>
+        console.warn('Cloud data purge notice:', err)
+      );
+      // Immediately delete user authentication record in Firebase Auth
       await deleteUser(currentUser);
     }
   },
+
 
 
   async linkAnonymousAccount(email: string, pass: string) {
