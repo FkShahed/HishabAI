@@ -34,10 +34,9 @@ export default function AuthScreen() {
 
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // Generate redirect URI with proxy enabled so auth.expo.io receives the return state
+  // Generate redirect URI for standard mobile app and web
   const redirectUri = makeRedirectUri({
-    useProxy: true,
-    projectNameForProxy: '@fazlulkarim2000/hishabai',
+    scheme: 'hisabai',
   });
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
