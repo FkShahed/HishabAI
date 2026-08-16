@@ -340,24 +340,24 @@ export default function PreviewScreen() {
             </ScrollView>
 
             <View style={[styles.modalFooter, { backgroundColor: colors.bg.modal, borderTopColor: colors.border.subtle }]}>
-              <Button label="Save Changes" size="sm" onPress={saveEdit} style={{ width: '100%', marginBottom: Spacing.xs }} />
-              <View style={{ flexDirection: 'row', gap: Spacing.xs, width: '100%' }}>
+              <View style={{ flexDirection: 'row', gap: Spacing.md, width: '100%' }}>
                 <Button 
-                  label="Cancel" 
-                  variant="secondary" 
-                  size="sm"
-                  onPress={() => setEditingTransaction(null)} 
+                  label="Delete" 
+                  variant="danger" 
+                  size="md"
+                  onPress={handleDelete} 
                   style={{ flex: 1 }} 
                 />
                 <Button 
-                  label="Delete Item" 
-                  variant="danger" 
-                  size="sm"
-                  onPress={handleDelete} 
+                  label="Save" 
+                  variant="primary" 
+                  size="md"
+                  onPress={saveEdit} 
                   style={{ flex: 1 }} 
                 />
               </View>
             </View>
+
           </View>
         </KeyboardAvoidingView>
       </Modal>
