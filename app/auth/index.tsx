@@ -59,26 +59,12 @@ export default function AuthScreen() {
     GOOGLE_DISCOVERY
   );
 
-  const syncUserTransactions = async (userId: string) => {
+  const loadUserData = async (userId: string) => {
     try {
       const cloudTxns = await FirebaseService.fetchTransactions(userId);
-      const localTxns = useTransactionStore.getState().transactions;
-      
-      const map = new Map<string, any>();
-      cloudTxns.forEach((t) => map.set(t.id, t));
-      localTxns.forEach((t) => {
-        if (!map.has(t.id)) {
-          map.set(t.id, t);
-          FirebaseService.saveTransaction(userId, t).catch(() => {});
-        }
-      });
-
-      const merged = Array.from(map.values()).sort((a, b) =>
-        new Date(b.transactionDate || 0).getTime() - new Date(a.transactionDate || 0).getTime()
-      );
-      setTransactions(merged);
+      setTransactions(cloudTxns || []);
     } catch (err) {
-      console.warn('Sync transactions error:', err);
+      console.warn('Load user data error:', err);
     }
   };
 
@@ -90,13 +76,14 @@ export default function AuthScreen() {
         setLoading(true);
         const credential = GoogleAuthProvider.credential(token);
         signInWithCredential(auth, credential)
-          .then((userCred) => {
+          .then(async (userCred) => {
             const user = userCred.user;
             if (user.displayName) setUserName(user.displayName);
             const pic = user.photoURL || user.providerData?.[0]?.photoURL;
             if (pic) setUserPhotoUrl(pic);
+
+            await loadUserData(user.uid);
             router.replace('/(tabs)');
-            syncUserTransactions(user.uid);
           })
           .catch((err: any) => {
             console.error('Google sign-in error:', err);
@@ -146,12 +133,13 @@ export default function AuthScreen() {
         const displayName = name.trim() || user.displayName || user.email?.split('@')[0] || 'User';
         setUserName(displayName);
 
-        // Navigate immediately to home tab
-        router.replace('/(tabs)');
+        // Fetch user's data while spinner is showing
+        await loadUserData(user.uid);
 
-        // Background sync transactions without blocking auth UI
-        syncUserTransactions(user.uid);
+        // Navigate to home tab after data is loaded
+        router.replace('/(tabs)');
       }
+
 
     } catch (error: any) {
       console.error('Auth action failed:', error);

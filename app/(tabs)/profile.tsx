@@ -140,12 +140,18 @@ export default function ProfileScreen() {
   const handleSignOut = async () => {
     try {
       await AuthService.signOut();
+      useTransactionStore.getState().clearAllData();
+      useBudgetStore.getState().clearAllData();
+      useCategoryStore.getState().clearAllData();
+      useUIStore.getState().setUserName('Guest User');
+      useUIStore.getState().setUserPhotoUrl('');
       Alert.alert('Signed Out', 'You have been signed out safely.');
       router.replace('/auth'); // Redirect to login
     } catch (e) {
       Alert.alert('Error', 'Failed to sign out.');
     }
   };
+
 
 
   const handleSaveName = () => {
