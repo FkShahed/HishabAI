@@ -34,10 +34,11 @@ export default function AuthScreen() {
 
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // Stable Proxy Redirect URI for Expo Go and Mobile App
-  const redirectUri = Platform.OS === 'web'
-    ? makeRedirectUri()
-    : 'https://auth.expo.io/@fazlulkarim2000/hishabai';
+  // Generate redirect URI with proxy enabled so auth.expo.io receives the return state
+  const redirectUri = makeRedirectUri({
+    useProxy: true,
+    projectNameForProxy: '@fazlulkarim2000/hishabai',
+  });
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_WEB_CLIENT_ID,
