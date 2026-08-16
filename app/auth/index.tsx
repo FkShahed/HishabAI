@@ -4,8 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
+import { useAuthRequest, ResponseType, makeRedirectUri } from 'expo-auth-session';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 
 
@@ -15,6 +14,8 @@ import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, Typography, useThemeColors } from '../../src/constants/colors';
 import { AuthService, FirebaseService, auth } from '../../src/services/firebase';
 import { useTransactionStore, useUIStore } from '../../src/store';
+import Constants from 'expo-constants';
+
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -23,6 +24,7 @@ export default function AuthScreen() {
   const colors = useThemeColors();
   const setTransactions = useTransactionStore((s) => s.setTransactions);
   const setUserName = useUIStore((s) => s.setUserName);
+  const isExpoGo = Constants.appOwnership === 'expo';
   const setUserPhotoUrl = useUIStore((s) => s.setUserPhotoUrl);
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -32,19 +34,31 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Desktop OAuth client — PKCE flow with http://localhost loopback redirect.
+  // Google automatically allows http://localhost for Desktop clients (no registration needed).
+  // PKCE lets us exchange the code for tokens without exposing a client secret.
+  const GOOGLE_DESKTOP_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_DESKTOP_CLIENT_ID || '254866158438-8jacsh0o6e6099tnkvqqk0lhvbg3qlnv.apps.googleusercontent.com';
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // Generate redirect URI for standard mobile app and web
-  const redirectUri = makeRedirectUri({
-    scheme: 'hisabai',
-  });
+  // Use scheme 'hisabai' (configured in app.json).
+  // In Standalone APK, this generates hisabai:// which Android intercepts upon Google redirect.
+  const redirectUri = makeRedirectUri({ scheme: 'hisabai' });
 
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: GOOGLE_WEB_CLIENT_ID,
-    webClientId: GOOGLE_WEB_CLIENT_ID,
-    redirectUri,
-    scopes: ['profile', 'email'],
-  });
+  const GOOGLE_DISCOVERY = {
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenEndpoint: 'https://oauth2.googleapis.com/token',
+    revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+  };
+
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: GOOGLE_DESKTOP_CLIENT_ID,
+      redirectUri,
+      scopes: ['openid', 'profile', 'email'],
+      responseType: ResponseType.IdToken,
+    },
+    GOOGLE_DISCOVERY
+  );
 
   useEffect(() => {
     if (response?.type === 'success') {
@@ -72,7 +86,6 @@ export default function AuthScreen() {
       }
     }
   }, [response]);
-
 
 
   // If user is already signed in, prevent viewing sign in / sign up page
@@ -177,6 +190,7 @@ export default function AuthScreen() {
       } else {
         // Native Mobile
         if (promptAsync) {
+          // No proxy needed — Desktop OAuth client accepts exp:// and hisabai:// directly
           await promptAsync();
         } else {
           setErrorMessage('Google Sign-In is initializing. Please tap again or use Email & Password.');
@@ -260,21 +274,32 @@ export default function AuthScreen() {
           </View>
         ) : null}
 
-        {/* Google Auth Button */}
-        <TouchableOpacity
-          style={[
-            styles.googleButton,
-            { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }
-          ]}
-          onPress={handleGoogleAuth}
-          disabled={loading}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="logo-google" size={20} color="#EA4335" style={{ marginRight: 10 }} />
-          <Text variant="md" weight="bold" color={colors.text.primary}>
-            {mode === 'signin' ? 'Sign In with Google' : 'Sign Up with Google'}
-          </Text>
-        </TouchableOpacity>
+        {/* Google Auth Button — only shown in production builds */}
+        {isExpoGo ? (
+          <View style={[styles.expoGoNotice, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
+            <Ionicons name="logo-google" size={18} color={colors.text.tertiary} style={{ marginRight: 8 }} />
+            <Text variant="xs" color={colors.text.secondary} style={{ flex: 1 }}>
+              Google Sign-In is available in the{' '}
+              <Text variant="xs" weight="bold" color={colors.accent.primary}>production app</Text>.
+              {' '}Use Email & Password below for Expo Go testing.
+            </Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.googleButton,
+              { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }
+            ]}
+            onPress={handleGoogleAuth}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="logo-google" size={20} color="#EA4335" style={{ marginRight: 10 }} />
+            <Text variant="md" weight="bold" color={colors.text.primary}>
+              {mode === 'signin' ? 'Sign In with Google' : 'Sign Up with Google'}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Divider */}
         <View style={styles.dividerRow}>
