@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
+import { useAuthRequest, ResponseType, makeRedirectUri } from 'expo-auth-session';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+
 
 import { Text } from '../../src/components/ui/Text';
 import { Header } from '../../src/components/ui/Header';
@@ -31,21 +31,38 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
-  // Desktop-type OAuth client supports custom URI schemes (exp://, hisabai://)
-  // which Google Web-type clients reject. No proxy or SHA-1 fingerprint needed.
+  // Desktop OAuth client ID — Desktop-type clients allow any redirect URI scheme
+  // (exp://, hisabai://) unlike Web-type clients which reject custom schemes.
   const GOOGLE_DESKTOP_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_DESKTOP_CLIENT_ID || '254866158438-8jacsh0o6e6099tnkvqqk0lhvbg3qlnv.apps.googleusercontent.com';
+  const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // In Expo Go → generates exp://192.168.1.101:8081
-  // In production build → generates hisabai://
+  // Stable nonce for id_token requests (must not change across re-renders)
+  const nonce = useMemo(() => Math.random().toString(36).substring(2), []);
+
+  // In Expo Go → exp://192.168.1.101:8081
+  // In production build → hisabai://
   const redirectUri = makeRedirectUri({ scheme: 'hisabai' });
 
-  // Use the Desktop client ID (no proxy needed — Desktop clients allow any URI scheme)
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: GOOGLE_DESKTOP_CLIENT_ID,
-    redirectUri,
-    scopes: ['profile', 'email'],
-  });
+  // Use raw useAuthRequest (not Google provider wrapper) so clientId is sent as-is.
+  // The Google provider's useIdTokenAuthRequest ignores clientId on Android and
+  // substitutes the Web client, causing the "custom scheme not allowed" error.
+  const GOOGLE_DISCOVERY = {
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenEndpoint: 'https://oauth2.googleapis.com/token',
+    revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+  };
+
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: GOOGLE_DESKTOP_CLIENT_ID,
+      redirectUri,
+      scopes: ['openid', 'profile', 'email'],
+      responseType: ResponseType.IdToken,
+      extraParams: { nonce },
+    },
+    GOOGLE_DISCOVERY
+  );
+
 
   useEffect(() => {
     if (response?.type === 'success') {
