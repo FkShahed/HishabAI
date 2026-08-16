@@ -31,68 +31,28 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Desktop OAuth client — PKCE flow with http://localhost loopback redirect.
-  // Google automatically allows http://localhost for Desktop clients (no registration needed).
-  // PKCE lets us exchange the code for tokens without exposing a client secret.
-  const GOOGLE_DESKTOP_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_DESKTOP_CLIENT_ID || '254866158438-8jacsh0o6e6099tnkvqqk0lhvbg3qlnv.apps.googleusercontent.com';
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // In production APK → hisabai:// (registered Android scheme, intercepted by OS)
-  // In Expo Go → exp://192.168.1.101:8081 (shown info notice, button hidden)
-  // On web → http://localhost:8081
-  const redirectUri = makeRedirectUri({ scheme: 'hisabai' });
+  // Stable Proxy Redirect URI for Expo Go and Mobile App
+  const redirectUri = Platform.OS === 'web'
+    ? makeRedirectUri()
+    : 'https://auth.expo.io/@fazlulkarim2000/hishabai';
 
-  const GOOGLE_DISCOVERY = {
-    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-    tokenEndpoint: 'https://oauth2.googleapis.com/token',
-    revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-  };
-
-  const [request, response, promptAsync] = useAuthRequest(
-    {
-      clientId: GOOGLE_DESKTOP_CLIENT_ID,
-      redirectUri,
-      scopes: ['openid', 'profile', 'email'],
-      responseType: ResponseType.Code,
-      usePKCE: true,
-    },
-    GOOGLE_DISCOVERY
-  );
-
-  // Exchange authorization code for id_token using PKCE (no client secret needed)
-  const exchangeCodeForIdToken = async (code: string, codeVerifier: string): Promise<string | null> => {
-    try {
-      const res = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: [
-          `code=${encodeURIComponent(code)}`,
-          `client_id=${encodeURIComponent(GOOGLE_DESKTOP_CLIENT_ID)}`,
-          `redirect_uri=${encodeURIComponent(redirectUri)}`,
-          `grant_type=authorization_code`,
-          `code_verifier=${encodeURIComponent(codeVerifier)}`,
-        ].join('&'),
-      });
-      const data = await res.json();
-      return data.id_token || null;
-    } catch (e) {
-      console.error('Token exchange error:', e);
-      return null;
-    }
-  };
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: GOOGLE_WEB_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    redirectUri,
+    scopes: ['profile', 'email'],
+  });
 
   useEffect(() => {
     if (response?.type === 'success') {
-      const code = response.params?.code;
-      const codeVerifier = request?.codeVerifier;
-      if (code && codeVerifier) {
+      const params = response.params as Record<string, any>;
+      const token = params?.id_token || (response as any)?.authentication?.idToken;
+      if (token) {
         setLoading(true);
-        exchangeCodeForIdToken(code, codeVerifier)
-          .then((idToken) => {
-            if (!idToken) throw new Error('No id_token returned from Google.');
-            const credential = GoogleAuthProvider.credential(idToken);
-            return signInWithCredential(auth, credential);
-          })
+        const credential = GoogleAuthProvider.credential(token);
+        signInWithCredential(auth, credential)
           .then((userCred) => {
             const user = userCred.user;
             if (user.displayName) setUserName(user.displayName);
@@ -111,6 +71,7 @@ export default function AuthScreen() {
       }
     }
   }, [response]);
+
 
 
   // If user is already signed in, prevent viewing sign in / sign up page
@@ -215,8 +176,7 @@ export default function AuthScreen() {
       } else {
         // Native Mobile
         if (promptAsync) {
-          // No proxy needed — Desktop OAuth client accepts exp:// and hisabai:// directly
-          await promptAsync();
+          await promptAsync({ useProxy: true });
         } else {
           setErrorMessage('Google Sign-In is initializing. Please tap again or use Email & Password.');
         }
