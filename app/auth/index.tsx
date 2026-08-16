@@ -36,8 +36,8 @@ export default function AuthScreen() {
 
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // Exact Expo Auth Proxy URL based on owner (fazlulkarim2000) and slug (hishabai)
-  const redirectUri = 'https://auth.expo.io/@fazlulkarim2000/hishabai';
+  // Firebase official pre-authorized auth handler (automatically authorized by Firebase in Google Console)
+  const redirectUri = 'https://hishab-ai.firebaseapp.com/__/auth/handler';
 
   const GOOGLE_DISCOVERY = {
     authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
