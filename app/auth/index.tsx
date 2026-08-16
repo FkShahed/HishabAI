@@ -68,8 +68,9 @@ export default function AuthScreen() {
         FirebaseService.fetchUserProfile(userId),
       ]);
       if (cloudTxns) {
-        setTransactions(cloudTxns);
+        setTransactions(cloudTxns as any[]);
       }
+
       if (cloudBudgets) {
         useBudgetStore.getState().setBudgets(cloudBudgets);
       }
@@ -213,8 +214,9 @@ try {
 
           // Background sync transactions without blocking auth UI
           FirebaseService.fetchTransactions(user.uid)
-            .then((savedTxns) => setTransactions(savedTxns))
+            .then((savedTxns) => setTransactions(savedTxns as any[]))
             .catch((err) => console.warn('Background sync txns warning:', err));
+
         }
       } else {
         // Native Mobile

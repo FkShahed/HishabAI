@@ -211,7 +211,6 @@ export const FirebaseService = {
             const txns: any[] = [];
             querySnapshot.forEach((d) => txns.push(d.data()));
             txns.forEach((t) => set(ref(rtdb, `users/${userId}/transactions/${t.id}`), t).catch(() => {}));
-            useTransactionStore.getState().setTransactions(txns);
           }
         })
         .catch(() => {});
@@ -285,10 +284,10 @@ export const FirebaseService = {
               const key = `${b.year}-${b.month}`;
               set(ref(rtdb, `users/${userId}/budgets/${key}`), b).catch(() => {});
             });
-            useBudgetStore.getState().setBudgets(budgets);
           }
         })
         .catch(() => {});
+
 
       return [];
     } catch (error) {

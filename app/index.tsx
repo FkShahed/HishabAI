@@ -27,7 +27,8 @@ export default function Index() {
               if (cloudTxns && cloudTxns.length > 0) {
                 const localTxns = useTransactionStore.getState().transactions;
                 const map = new Map<string, any>();
-                cloudTxns.forEach((t) => map.set(t.id, t));
+                cloudTxns.forEach((t: any) => map.set(t.id, t));
+
                 localTxns.forEach((t) => {
                   if (!map.has(t.id)) {
                     map.set(t.id, t);
