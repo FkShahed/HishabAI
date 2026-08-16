@@ -36,7 +36,7 @@ export default function AuthScreen() {
 
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // Exact Expo Auth Proxy URL matching your owner (fazlulkarim2000) and slug (hishabai)
+  // Exact Expo Auth Proxy URL based on owner (fazlulkarim2000) and slug (hishabai)
   const redirectUri = 'https://auth.expo.io/@fazlulkarim2000/hishabai';
 
   const GOOGLE_DISCOVERY = {
@@ -185,6 +185,7 @@ export default function AuthScreen() {
       } else {
         // Native Mobile
         if (promptAsync) {
+          // No proxy needed — Desktop OAuth client accepts exp:// and hisabai:// directly
           await promptAsync();
         } else {
           setErrorMessage('Google Sign-In is initializing. Please tap again or use Email & Password.');
