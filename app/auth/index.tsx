@@ -14,8 +14,6 @@ import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, Typography, useThemeColors } from '../../src/constants/colors';
 import { AuthService, FirebaseService, auth } from '../../src/services/firebase';
 import { useTransactionStore, useUIStore } from '../../src/store';
-import Constants from 'expo-constants';
-
 
 WebBrowser.maybeCompleteAuthSession();
 
