@@ -327,13 +327,42 @@ export const useUIStore = create<UIState>()(
           set({ selectedMonth: selectedMonth + 1 });
         }
       },
-      setCurrency: (currency) => set({ currency }),
+      setCurrency: (currency) => {
+        set({ currency });
+        if (auth?.currentUser) {
+          FirebaseService.saveUserProfile(auth.currentUser.uid, { currency }).catch(() => {});
+        }
+      },
       setFirstLaunch: (isFirstLaunch) => set({ isFirstLaunch }),
-      setTheme: (theme) => set({ theme }),
-      toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
-      setUserName: (userName) => set({ userName }),
-      setUserPhotoUrl: (userPhotoUrl) => set({ userPhotoUrl }),
-      setDailyReminderEnabled: (dailyReminderEnabled) => set({ dailyReminderEnabled }),
+      setTheme: (theme) => {
+        set({ theme });
+        if (auth?.currentUser) {
+          FirebaseService.saveUserProfile(auth.currentUser.uid, { theme }).catch(() => {});
+        }
+      },
+      toggleTheme: () => {
+        const next = get().theme === 'dark' ? 'light' : 'dark';
+        get().setTheme(next);
+      },
+      setUserName: (userName) => {
+        set({ userName });
+        if (auth?.currentUser) {
+          FirebaseService.saveUserProfile(auth.currentUser.uid, { userName }).catch(() => {});
+        }
+      },
+      setUserPhotoUrl: (userPhotoUrl) => {
+        set({ userPhotoUrl });
+        if (auth?.currentUser) {
+          FirebaseService.saveUserProfile(auth.currentUser.uid, { userPhotoUrl }).catch(() => {});
+        }
+      },
+      setDailyReminderEnabled: (dailyReminderEnabled) => {
+        set({ dailyReminderEnabled });
+        if (auth?.currentUser) {
+          FirebaseService.saveUserProfile(auth.currentUser.uid, { dailyReminderEnabled }).catch(() => {});
+        }
+      },
+
     }),
     {
       name: 'hishabai-ui',

@@ -62,9 +62,10 @@ export default function AuthScreen() {
 
   const loadUserData = async (userId: string) => {
     try {
-      const [cloudTxns, cloudBudgets] = await Promise.all([
+      const [cloudTxns, cloudBudgets, cloudProfile] = await Promise.all([
         FirebaseService.fetchTransactions(userId),
         FirebaseService.fetchBudgets(userId),
+        FirebaseService.fetchUserProfile(userId),
       ]);
       if (cloudTxns) {
         setTransactions(cloudTxns);
@@ -72,10 +73,23 @@ export default function AuthScreen() {
       if (cloudBudgets) {
         useBudgetStore.getState().setBudgets(cloudBudgets);
       }
+      if (cloudProfile) {
+        if (cloudProfile.userName) setUserName(cloudProfile.userName);
+        if (cloudProfile.userPhotoUrl) setUserPhotoUrl(cloudProfile.userPhotoUrl);
+        if (cloudProfile.currency) useUIStore.getState().setCurrency(cloudProfile.currency);
+        if (cloudProfile.theme) useUIStore.getState().setTheme(cloudProfile.theme);
+      } else if (auth.currentUser) {
+        const initialName = auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'User';
+        const initialPhoto = auth.currentUser.photoURL || auth.currentUser.providerData?.[0]?.photoURL || null;
+        setUserName(initialName);
+        if (initialPhoto) setUserPhotoUrl(initialPhoto);
+        FirebaseService.saveUserProfile(userId, { userName: initialName, userPhotoUrl: initialPhoto }).catch(() => {});
+      }
     } catch (err) {
       console.warn('Load user data error:', err);
     }
   };
+
 
 
 

@@ -50,6 +50,19 @@ export default function Index() {
             })
             .catch(() => {});
 
+          FirebaseService.fetchUserProfile(user.uid)
+            .then((cloudProfile) => {
+              if (cloudProfile) {
+                if (cloudProfile.userName) useUIStore.getState().setUserName(cloudProfile.userName);
+                if (cloudProfile.userPhotoUrl) useUIStore.getState().setUserPhotoUrl(cloudProfile.userPhotoUrl);
+                if (cloudProfile.currency) useUIStore.getState().setCurrency(cloudProfile.currency);
+                if (cloudProfile.theme) useUIStore.getState().setTheme(cloudProfile.theme);
+              }
+            })
+            .catch(() => {});
+
+
+
 
 
 

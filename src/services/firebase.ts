@@ -273,19 +273,53 @@ export const FirebaseService = {
         return Object.values(val) as any[];
       }
       const q = query(collection(db, 'users', userId, 'budgets'));
+
       const querySnapshot = await getDocs(q);
       const budgets: any[] = [];
       querySnapshot.forEach((d) => budgets.push(d.data()));
+
       budgets.forEach((b) => {
         const key = `${b.year}-${b.month}`;
         set(ref(rtdb, `users/${userId}/budgets/${key}`), b).catch(() => {});
       });
       return budgets;
+
+
     } catch (error) {
       console.error('Error fetching budgets:', error);
       return [];
     }
   },
+
+  async saveUserProfile(userId: string, profile: { userName?: string; userPhotoUrl?: string | null; currency?: string; theme?: string; dailyReminderEnabled?: boolean }) {
+
+    if (userId === 'mock-local-user') return true;
+    try {
+      set(ref(rtdb, `users/${userId}/profile`), profile).catch(() => {});
+      const docRef = doc(db, 'users', userId, 'profile', 'data');
+      setDoc(docRef, profile, { merge: true }).catch(() => {});
+      return true;
+    } catch (error) {
+      console.error('Error saving user profile:', error);
+      return false;
+    }
+  },
+
+  async fetchUserProfile(userId: string) {
+    if (userId === 'mock-local-user') return null;
+    try {
+      const dbRef = ref(rtdb);
+      const snapshot = await get(child(dbRef, `users/${userId}/profile`));
+      if (snapshot.exists()) {
+        return snapshot.val();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  },
+
 
 
   async deleteAllUserData(userId: string) {
