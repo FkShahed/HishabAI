@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,21 +31,18 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Desktop OAuth client ID — Desktop-type clients allow any redirect URI scheme
-  // (exp://, hisabai://) unlike Web-type clients which reject custom schemes.
+  // Desktop OAuth client — PKCE flow with http://localhost loopback redirect.
+  // Google automatically allows http://localhost for Desktop clients (no registration needed).
+  // PKCE lets us exchange the code for tokens without exposing a client secret.
   const GOOGLE_DESKTOP_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_DESKTOP_CLIENT_ID || '254866158438-8jacsh0o6e6099tnkvqqk0lhvbg3qlnv.apps.googleusercontent.com';
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
 
-  // Stable nonce for id_token requests (must not change across re-renders)
-  const nonce = useMemo(() => Math.random().toString(36).substring(2), []);
+  // http://localhost loopback is always allowed for Desktop clients — no IP/URI registration needed.
+  // WebBrowser.openAuthSessionAsync intercepts the redirect before the browser actually loads it.
+  const redirectUri = Platform.OS === 'web'
+    ? makeRedirectUri({ scheme: 'hisabai' })
+    : 'http://localhost:8081';
 
-  // In Expo Go → exp://192.168.1.101:8081
-  // In production build → hisabai://
-  const redirectUri = makeRedirectUri({ scheme: 'hisabai' });
-
-  // Use raw useAuthRequest (not Google provider wrapper) so clientId is sent as-is.
-  // The Google provider's useIdTokenAuthRequest ignores clientId on Android and
-  // substitutes the Web client, causing the "custom scheme not allowed" error.
   const GOOGLE_DISCOVERY = {
     authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
     tokenEndpoint: 'https://oauth2.googleapis.com/token',
@@ -57,43 +54,65 @@ export default function AuthScreen() {
       clientId: GOOGLE_DESKTOP_CLIENT_ID,
       redirectUri,
       scopes: ['openid', 'profile', 'email'],
-      responseType: ResponseType.IdToken,
-      extraParams: { nonce },
+      responseType: ResponseType.Code,
+      usePKCE: true,
     },
     GOOGLE_DISCOVERY
   );
 
+  // Exchange authorization code for id_token using PKCE (no client secret needed)
+  const exchangeCodeForIdToken = async (code: string, codeVerifier: string): Promise<string | null> => {
+    try {
+      const res = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: [
+          `code=${encodeURIComponent(code)}`,
+          `client_id=${encodeURIComponent(GOOGLE_DESKTOP_CLIENT_ID)}`,
+          `redirect_uri=${encodeURIComponent(redirectUri)}`,
+          `grant_type=authorization_code`,
+          `code_verifier=${encodeURIComponent(codeVerifier)}`,
+        ].join('&'),
+      });
+      const data = await res.json();
+      return data.id_token || null;
+    } catch (e) {
+      console.error('Token exchange error:', e);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (response?.type === 'success') {
-      const params = response.params as Record<string, any>;
-      const token = params?.id_token || (response as any)?.authentication?.idToken;
-      if (token) {
+      const code = response.params?.code;
+      const codeVerifier = request?.codeVerifier;
+      if (code && codeVerifier) {
         setLoading(true);
-        const credential = GoogleAuthProvider.credential(token);
-        signInWithCredential(auth, credential)
+        exchangeCodeForIdToken(code, codeVerifier)
+          .then((idToken) => {
+            if (!idToken) throw new Error('No id_token returned from Google.');
+            const credential = GoogleAuthProvider.credential(idToken);
+            return signInWithCredential(auth, credential);
+          })
           .then((userCred) => {
             const user = userCred.user;
-            if (user.displayName) {
-              setUserName(user.displayName);
-            }
+            if (user.displayName) setUserName(user.displayName);
             const pic = user.photoURL || user.providerData?.[0]?.photoURL;
-            if (pic) {
-              setUserPhotoUrl(pic);
-            }
+            if (pic) setUserPhotoUrl(pic);
             router.replace('/(tabs)');
             FirebaseService.fetchTransactions(user.uid)
               .then((savedTxns) => setTransactions(savedTxns))
               .catch(() => {});
           })
           .catch((err: any) => {
-            console.error('Firebase credential sign-in error:', err);
-            setErrorMessage(err.message || 'Mobile Google sign-in failed.');
+            console.error('Google sign-in error:', err);
+            setErrorMessage(err.message || 'Google sign-in failed. Please try again.');
           })
           .finally(() => setLoading(false));
       }
     }
   }, [response]);
+
 
   // If user is already signed in, prevent viewing sign in / sign up page
   useEffect(() => {
