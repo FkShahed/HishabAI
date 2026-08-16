@@ -35,9 +35,13 @@ export default function AuthScreen() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
+  const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '254866158438-m6c9hglpc030rjemqtchjmtdl2pre70j.apps.googleusercontent.com';
 
-  // Firebase official pre-authorized auth handler (automatically authorized by Firebase in Google Console)
-  const redirectUri = 'https://hishab-ai.firebaseapp.com/__/auth/handler';
+  // Use Native Android Client ID on Android, Web Client ID on Web
+  const clientId = Platform.OS === 'android' ? GOOGLE_ANDROID_CLIENT_ID : GOOGLE_WEB_CLIENT_ID;
+  const redirectUri = Platform.OS === 'web'
+    ? 'https://hishab-ai.firebaseapp.com/__/auth/handler'
+    : makeRedirectUri({ scheme: 'hisabai' });
 
   const GOOGLE_DISCOVERY = {
     authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -47,7 +51,7 @@ export default function AuthScreen() {
 
   const [request, response, promptAsync] = useAuthRequest(
     {
-      clientId: GOOGLE_WEB_CLIENT_ID,
+      clientId,
       redirectUri,
       scopes: ['openid', 'profile', 'email'],
       responseType: ResponseType.IdToken,
