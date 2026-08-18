@@ -93,7 +93,7 @@ export default function ProfileScreen() {
 
 
   // Version Control & Update State
-  const currentAppVersion = Constants.expoConfig?.version || '1.0.0';
+  const currentAppVersion = Constants.expoConfig?.version || '2.0.0';
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<CheckUpdateResult | null>(null);
   const [isUpdateModalVisible, setUpdateModalVisible] = useState(false);

@@ -1,26 +1,71 @@
 import { AppVersionInfo, VersionHistoryItem } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
+import path from 'path';
 
 const RTDB_URL = process.env.FIREBASE_DATABASE_URL || 'https://hishab-ai-default-rtdb.asia-southeast1.firebasedatabase.app';
+const INFO_FILE = path.join(__dirname, '../../data/version-info.json');
+const HISTORY_FILE = path.join(__dirname, '../../data/version-history.json');
 
-// Default initial version
-const DEFAULT_VERSION_INFO: AppVersionInfo = {
-  version: '1.0.0',
-  buildNumber: 1,
-  apkUrl: '',
-  releaseNotes: '• Initial release of HisabAI expense tracker\n• AI Voice transaction parsing with Gemini\n• Smart receipt scanner with Google Vision OCR\n• Interactive charts and dark/light theme\n• Firebase cloud sync & local backup',
-  forceUpdate: false,
-  minVersion: '1.0.0',
-  releaseDate: new Date().toISOString().split('T')[0],
-  fileSize: '32.5 MB',
-  updatedAt: new Date().toISOString(),
-};
+function loadLocalInfo(): AppVersionInfo {
+  try {
+    if (fs.existsSync(INFO_FILE)) {
+      const content = fs.readFileSync(INFO_FILE, 'utf-8');
+      const data = JSON.parse(content);
+      if (data && data.version) return data;
+    }
+  } catch (e) {
+    console.warn('[VersionService] Failed to read local version-info.json:', e);
+  }
+  return {
+    version: '2.0.0',
+    buildNumber: 2,
+    apkUrl: '',
+    releaseNotes: '• Version 2.0.0 release\n• Instant AI Voice processing\n• Performance optimizations',
+    forceUpdate: false,
+    minVersion: '1.0.0',
+    releaseDate: new Date().toISOString().split('T')[0],
+    fileSize: '32.5 MB',
+    updatedAt: new Date().toISOString(),
+  };
+}
 
-// In-memory cache for ultra-fast response
-let cachedLatestVersion: AppVersionInfo = { ...DEFAULT_VERSION_INFO };
-let cachedHistory: VersionHistoryItem[] = [
-  { ...DEFAULT_VERSION_INFO, id: 'initial-v1-release-id' }
-];
+function saveLocalInfo(info: AppVersionInfo) {
+  try {
+    const dir = path.dirname(INFO_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(INFO_FILE, JSON.stringify(info, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('[VersionService] Failed to write local version-info.json:', e);
+  }
+}
+
+function loadLocalHistory(): VersionHistoryItem[] {
+  try {
+    if (fs.existsSync(HISTORY_FILE)) {
+      const content = fs.readFileSync(HISTORY_FILE, 'utf-8');
+      const list = JSON.parse(content);
+      if (Array.isArray(list) && list.length > 0) return list;
+    }
+  } catch (e) {
+    console.warn('[VersionService] Failed to read local version-history.json:', e);
+  }
+  return [{ ...loadLocalInfo(), id: 'initial-v2-release-id' }];
+}
+
+function saveLocalHistory(history: VersionHistoryItem[]) {
+  try {
+    const dir = path.dirname(HISTORY_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('[VersionService] Failed to write local version-history.json:', e);
+  }
+}
+
+// In-memory cache synced with disk & RTDB
+let cachedLatestVersion: AppVersionInfo = loadLocalInfo();
+let cachedHistory: VersionHistoryItem[] = loadLocalHistory();
 
 export class VersionService {
   /**
@@ -33,6 +78,7 @@ export class VersionService {
         const data = (await res.json()) as AppVersionInfo | null;
         if (data && data.version) {
           cachedLatestVersion = data;
+          saveLocalInfo(data);
           return data;
         }
       }
@@ -61,6 +107,7 @@ export class VersionService {
           const list: VersionHistoryItem[] = Object.values(data);
           list.sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
           cachedHistory = list;
+          saveLocalHistory(list);
           return list;
         }
       }
@@ -69,7 +116,6 @@ export class VersionService {
     }
     return cachedHistory;
   }
-
 
   /**
    * Get single release by ID
@@ -91,6 +137,10 @@ export class VersionService {
     };
 
     cachedLatestVersion = updated;
+    saveLocalInfo(updated);
+
+    // Ensure this version exists in history with its apkUrl
+    await this.appendHistory(updated);
 
     try {
       await fetch(`${RTDB_URL}/releases/latest.json`, {
@@ -98,7 +148,6 @@ export class VersionService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
       });
-      await this.appendHistory(updated);
     } catch (e) {
       console.error('[VersionService] Error saving active version to RTDB:', e);
     }
@@ -112,7 +161,7 @@ export class VersionService {
   public static async createRelease(data: Partial<AppVersionInfo>, setAsActive: boolean = true): Promise<VersionHistoryItem> {
     const id = uuidv4();
     const newItem: VersionHistoryItem = {
-      version: String(data.version || '1.0.0').trim(),
+      version: String(data.version || '2.0.0').trim(),
       buildNumber: Number(data.buildNumber) || 1,
       apkUrl: data.apkUrl ? String(data.apkUrl).trim() : '',
       releaseNotes: data.releaseNotes ? String(data.releaseNotes).trim() : '',
@@ -124,6 +173,10 @@ export class VersionService {
       id,
     };
 
+    // Update in-memory history cache & local file immediately
+    cachedHistory = [newItem, ...cachedHistory.filter(h => h.id !== id)];
+    saveLocalHistory(cachedHistory);
+
     try {
       await fetch(`${RTDB_URL}/releases/history/${id}.json`, {
         method: 'PUT',
@@ -134,6 +187,7 @@ export class VersionService {
       if (setAsActive) {
         const { id: _, ...versionInfo } = newItem;
         cachedLatestVersion = versionInfo as AppVersionInfo;
+        saveLocalInfo(cachedLatestVersion);
         await fetch(`${RTDB_URL}/releases/latest.json`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -165,6 +219,10 @@ export class VersionService {
       id: existing.id,
     };
 
+    // Update in-memory history cache & local file
+    cachedHistory = cachedHistory.map(h => h.id === id ? updatedItem : h);
+    saveLocalHistory(cachedHistory);
+
     try {
       await fetch(`${RTDB_URL}/releases/history/${id}.json`, {
         method: 'PUT',
@@ -176,6 +234,7 @@ export class VersionService {
       if (setAsActive || (active.version === existing.version && active.buildNumber === existing.buildNumber)) {
         const { id: _, ...versionInfo } = updatedItem;
         cachedLatestVersion = versionInfo as AppVersionInfo;
+        saveLocalInfo(cachedLatestVersion);
         await fetch(`${RTDB_URL}/releases/latest.json`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -204,6 +263,9 @@ export class VersionService {
       throw new Error('Cannot delete the only release. At least one version must exist.');
     }
 
+    cachedHistory = cachedHistory.filter(h => h.id !== id);
+    saveLocalHistory(cachedHistory);
+
     try {
       await fetch(`${RTDB_URL}/releases/history/${id}.json`, {
         method: 'DELETE',
@@ -216,6 +278,7 @@ export class VersionService {
           const nextActive = remaining[0];
           const { id: _, ...versionInfo } = nextActive;
           cachedLatestVersion = versionInfo as AppVersionInfo;
+          saveLocalInfo(cachedLatestVersion);
           await fetch(`${RTDB_URL}/releases/latest.json`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -248,6 +311,7 @@ export class VersionService {
     };
 
     cachedLatestVersion = updated;
+    saveLocalInfo(updated);
 
     try {
       await fetch(`${RTDB_URL}/releases/latest.json`, {
@@ -274,6 +338,9 @@ export class VersionService {
         ...versionInfo,
         id: targetId,
       };
+
+      cachedHistory = [itemToSave, ...cachedHistory.filter(h => h.id !== targetId)];
+      saveLocalHistory(cachedHistory);
 
       await fetch(`${RTDB_URL}/releases/history/${targetId}.json`, {
         method: 'PUT',

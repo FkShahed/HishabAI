@@ -15,6 +15,52 @@ if (__DEV__) {
   console.log('[API] Connected to live backend:', API_BASE_URL);
 }
 
+/**
+ * Formats low-level network, timeout, quota, or server errors into clean, user-friendly messages.
+ */
+export function getFriendlyErrorMessage(error: any): string {
+  if (!error) return 'An unknown error occurred. Please try again.';
+
+  // 1. Network Disconnection / Offline
+  if (error.message === 'Network Error' || !error.response) {
+    return 'Network connection issue. Please check your internet connection and try again.';
+  }
+
+  // 2. Timeout
+  if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+    return 'Connection timed out. Please check your internet and try again.';
+  }
+
+  const status = error.response?.status;
+  const serverMsg = error.response?.data?.error;
+
+  // 3. Quota / Rate Limit Exceeded
+  if (
+    status === 429 || 
+    error.response?.data?.code === 'RATE_LIMIT_EXCEEDED' ||
+    serverMsg?.toLowerCase().includes('limit') || 
+    serverMsg?.toLowerCase().includes('quota')
+  ) {
+    return 'AI daily usage limit reached. Please try again later.';
+  }
+
+  // 4. Server Busy / 503
+  if (
+    status === 503 || 
+    error.response?.data?.code === 'SERVER_BUSY' ||
+    serverMsg?.toLowerCase().includes('busy')
+  ) {
+    return 'AI service is temporarily busy. Please try again in a few seconds.';
+  }
+
+  // 5. Returned backend error string
+  if (typeof serverMsg === 'string' && serverMsg.length > 0) {
+    return serverMsg;
+  }
+
+  return error.message || 'Something went wrong. Please try again.';
+}
+
 export const AIServiceClient = {
   /**
    * Upload audio blob/file for voice parsing
@@ -57,8 +103,9 @@ export const AIServiceClient = {
       });
       return response.data;
     } catch (error: any) {
-      console.error('[API] parseVoice error:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.error || 'Failed to process voice command');
+      const friendlyMsg = getFriendlyErrorMessage(error);
+      console.error('[API] parseVoice error:', friendlyMsg);
+      throw new Error(friendlyMsg);
     }
   },
 
@@ -80,8 +127,32 @@ export const AIServiceClient = {
       });
       return response.data;
     } catch (error: any) {
-      console.error('[API] parseReceipt error:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.error || 'Failed to process receipt');
+      const friendlyMsg = getFriendlyErrorMessage(error);
+      console.error('[API] parseReceipt error:', friendlyMsg);
+      throw new Error(friendlyMsg);
+    }
+  },
+
+  /**
+   * Fast path: Send extracted OCR text string directly (<1s response time)
+   */
+  async parseReceiptText(ocrText: string, categories: { id: string; name: string; type: string }[]) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
+
+    try {
+      const response = await api.post('/ai/receipt-text', {
+        ocrText,
+        categoryList: categories,
+        currentDate: todayStr,
+        timezone: clientTimezone,
+        currentDateTime: new Date().toISOString(),
+      });
+      return response.data;
+    } catch (error: any) {
+      const friendlyMsg = getFriendlyErrorMessage(error);
+      console.error('[API] parseReceiptText error:', friendlyMsg);
+      throw new Error(friendlyMsg);
     }
   }
 };
@@ -151,7 +222,10 @@ export const VersionServiceClient = {
     const semverDiff = compareSemver(latest.version, currentVersion);
     const hasNewerVersion = semverDiff > 0;
     const hasNewerBuild = semverDiff === 0 && (latest.buildNumber || 1) > currentBuildNumber;
-    const hasUpdate = (hasNewerVersion || hasNewerBuild) && Boolean(latest.apkUrl);
+
+    // Web browsers load live web assets — disable APK update prompt in web view mode
+    const isWeb = Platform.OS === 'web';
+    const hasUpdate = !isWeb && (hasNewerVersion || hasNewerBuild) && Boolean(latest.apkUrl);
 
     // Force update if forceUpdate is true and user version is behind
     const isBelowMin = compareSemver(currentVersion, latest.minVersion || '1.0.0') < 0;

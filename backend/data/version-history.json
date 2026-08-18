@@ -1,13 +1,24 @@
 [
   {
+    "version": "2.0.0",
+    "buildNumber": 2,
+    "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v2.0.0/hisabai-v2.0.0.apk",
+    "releaseNotes": "• Ultra-fast Groq Voice processing (<1s response time)\n• Improved receipt scanning\n• Performance optimizations and bug fixes",
+    "forceUpdate": false,
+    "minVersion": "1.0.0",
+    "fileSize": "32.5 MB",
+    "updatedAt": "2026-08-19T00:38:00.000Z",
+    "id": "v2-0-0-release-id"
+  },
+  {
     "version": "1.0.0",
     "buildNumber": 1,
     "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v1.0.1/hisabai-v1.0.1.apk",
-    "releaseNotes": ". AI Voice recognition accuracy improvements\n. Direct APK in-app update & downloader\n. Custom currency and theme preferences\n. Performance optimizations",
+    "releaseNotes": "• Initial release of HisabAI expense tracker\n• AI Voice transaction parsing with Gemini\n• Smart receipt scanner with Google Vision OCR",
     "forceUpdate": false,
     "minVersion": "1.0.0",
     "fileSize": "28.4 MB",
     "updatedAt": "2026-08-14T19:35:06.853Z",
-    "id": "a29df83e-8b95-424f-8282-ae907cebd81d"
+    "id": "v1-0-0-release-id"
   }
 ]

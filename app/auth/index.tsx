@@ -86,7 +86,7 @@ export default function AuthScreen() {
         const initialPhoto = auth.currentUser.photoURL || auth.currentUser.providerData?.[0]?.photoURL || null;
         setUserName(initialName);
         if (initialPhoto) setUserPhotoUrl(initialPhoto);
-        FirebaseService.saveUserProfile(userId, { userName: initialName, userPhotoUrl: initialPhoto }).catch(() => {});
+        FirebaseService.saveUserProfile(userId, { userName: initialName, userPhotoUrl: initialPhoto }).catch(() => { });
       }
     } catch (err) {
       console.warn('Load user data error:', err);
@@ -228,12 +228,12 @@ export default function AuthScreen() {
 
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.bg.primary }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Header 
-        title={mode === 'signin' ? 'Sign In' : 'Create Account'} 
+      <Header
+        title={mode === 'signin' ? 'Sign In' : 'Create Account'}
         showBack={true}
         onBack={() => {
           if (router.canGoBack()) {
@@ -245,7 +245,7 @@ export default function AuthScreen() {
       />
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
-        
+
         {/* Header Hero */}
         <View style={styles.hero}>
           <View style={[styles.iconCircle, { backgroundColor: colors.bg.secondary }]}>
@@ -370,7 +370,7 @@ export default function AuthScreen() {
         </View>
 
         {/* Submit Button */}
-        <Button 
+        <Button
           label={mode === 'signin' ? 'Sign In' : 'Create Account'}
           onPress={handleAuthAction}
           isLoading={loading}

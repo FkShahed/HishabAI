@@ -16,22 +16,45 @@ import { IOCRService, OCRResult } from '../types/index';
 //   3. Download the JSON key file
 //   4. Set GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 
+import fs from 'fs';
+import path from 'path';
+
 export class GoogleVisionOCRService implements IOCRService {
   private client: ImageAnnotatorClient;
 
   constructor() {
+    // 1. Check direct JSON string env var
     if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
       try {
         const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
         this.client = new ImageAnnotatorClient({ credentials });
-        console.log('[GoogleVisionOCRService] Initialized with GOOGLE_SERVICE_ACCOUNT_JSON');
+        console.log('[GoogleVisionOCRService] Initialized with GOOGLE_SERVICE_ACCOUNT_JSON string');
         return;
       } catch (e) {
         console.warn('[GoogleVisionOCRService] Failed parsing GOOGLE_SERVICE_ACCOUNT_JSON:', e);
       }
     }
+
+    // 2. Resolve credentials file path (handles relative paths like 'service-account.json')
+    const envKeyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || 'service-account.json';
+    const resolvedPath = path.isAbsolute(envKeyPath) 
+      ? envKeyPath 
+      : path.resolve(__dirname, '../../', envKeyPath);
+
+    if (fs.existsSync(resolvedPath)) {
+      try {
+        const content = fs.readFileSync(resolvedPath, 'utf-8');
+        const credentials = JSON.parse(content);
+        this.client = new ImageAnnotatorClient({ credentials });
+        console.log('[GoogleVisionOCRService] Initialized with credentials file:', resolvedPath);
+        return;
+      } catch (e) {
+        console.warn('[GoogleVisionOCRService] Failed loading credentials from:', resolvedPath, e);
+      }
+    }
+
     this.client = new ImageAnnotatorClient();
-    console.log('[GoogleVisionOCRService] Initialized with Application Default Credentials');
+    console.log('[GoogleVisionOCRService] Initialized with default client fallback');
   }
 
   async extractText(imageBase64: string, _mimeType: string): Promise<OCRResult> {

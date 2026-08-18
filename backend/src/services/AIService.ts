@@ -7,6 +7,7 @@ import {
   aiTransactionSchema,
   CategoryForAI,
 } from '../types/index';
+import { getGroqSTTService } from './GroqService';
 
 // ─── Gemini AI Service ────────────────────────────────────────────────────────
 //
@@ -16,9 +17,10 @@ import {
 // Retry strategy:
 //   - Retries up to 4 times with exponential backoff on 503 (high demand) or 429.
 //
-// Voice pipeline: sends raw audio bytes + system prompt to Gemini in a single
-// API call. Gemini handles both transcription and structured JSON extraction.
-// No separate Whisper/STT step is needed.
+// Voice pipeline:
+//   - Fast Path: Groq Whisper (whisper-large-v3-turbo) converts audio to text in ~200ms,
+//     then Gemini parses the transcript text into structured JSON in ~300ms.
+//   - Fallback Path: If Groq key is missing or fails, sends audio to Gemini multimodal model.
 
 function isQuotaError(error: any): boolean {
   if (error?.status === 429) return true;
@@ -134,28 +136,40 @@ export class GeminiAIService implements IAIService {
     throw finalErr;
   }
 
-
-
   // ─── Voice Parsing ─────────────────────────────────────────────────────────
 
   /**
    * Parse voice audio into structured transactions.
    *
-   * Sends raw audio directly to Gemini — single API call handles both
-   * transcription (what was said) and structured JSON extraction.
-   * No separate STT step. The speech-to-text layer is fully internal.
-   *
-   * AI safety rules enforced here:
-   * - categoryId must match an existing ID from context.categoryList
-   * - amount must be clearly stated; if not → transaction is omitted
-   * - date must be resolved from audio; if ambiguous → dateSource: 'inferred_today', uncertain: true
-   * - All output validated by Zod before returning; invalid transactions dropped
+   * Fast Path: Uses Groq Whisper (whisper-large-v3-turbo) to transcribe audio (~200ms),
+   * then parses the transcript text into structured JSON via Gemini text model (~300ms).
+   * Fallback Path: Uses Gemini multimodal direct audio processing if Groq is unavailable.
    */
   async parseVoiceAudio(
     audioBase64: string,
     mimeType: string,
     context: AIContext
   ): Promise<AIParseResponse> {
+    const groq = getGroqSTTService();
+
+    if (groq.isConfigured()) {
+      try {
+        console.log('[GeminiAIService] Attempting Groq Whisper ultra-fast STT...');
+        const audioBuffer = Buffer.from(audioBase64, 'base64');
+        const transcript = await groq.transcribeAudio(audioBuffer, mimeType);
+
+        if (transcript && transcript.trim().length > 0) {
+          console.log('[GeminiAIService] Groq STT successful. Parsing transcript text with Gemini...');
+          return await this.parseVoiceText(transcript, context);
+        }
+      } catch (sttErr: any) {
+        console.warn('[GeminiAIService] Groq STT failed — falling back to Gemini audio parsing:', sttErr.message);
+      }
+    } else {
+      console.log('[GeminiAIService] GROQ_API_KEY not set — using direct Gemini audio parsing');
+    }
+
+    // Fallback path: Direct audio parsing via Gemini Multimodal
     const systemPrompt = this.buildVoiceSystemPrompt(context);
 
     const audioPart = { inlineData: { data: audioBase64, mimeType } };
@@ -167,6 +181,28 @@ export class GeminiAIService implements IAIService {
     );
     const responseText = result.response.text();
     return this.parseAndValidateResponse(responseText, 'voice', context);
+  }
+
+  /**
+   * Fast path: Parse pre-transcribed text transcript into structured transactions.
+   */
+  async parseVoiceText(
+    transcriptText: string,
+    context: AIContext
+  ): Promise<AIParseResponse> {
+    const systemPrompt = this.buildVoiceTextSystemPrompt(transcriptText, context);
+
+    const result = await this.executeWithModelFallback(
+      (m) => m.generateContent(systemPrompt),
+      'parseVoiceText'
+    );
+    const responseText = result.response.text();
+    const parsed = this.parseAndValidateResponse(responseText, 'voice', context);
+
+    return {
+      ...parsed,
+      rawTranscript: parsed.rawTranscript || transcriptText,
+    };
   }
 
   // ─── Receipt Parsing ────────────────────────────────────────────────────────
@@ -268,6 +304,12 @@ MANDATORY RULES — violating any of these causes data corruption:
 8. confidence: a number 0-1 representing how certain you are about this transaction.
 9. uncertain: set to true if any field is ambiguous. List ambiguous fields in uncertainFields.
 10. source must always be "voice".
+11. MISSING DETAILS FEEDBACK: If no valid transaction can be extracted (e.g. amount is missing, item/category is missing, or prompt is incomplete/vague), or if fields are uncertain, you MUST state EXACTLY what details are missing in processingNotes.
+    Examples of clear processingNotes:
+    - "Missing amount: You mentioned buying lunch, but did not state how much you spent."
+    - "Missing item/category: You mentioned spending 500 BDT, but did not state what it was spent on."
+    - "Missing both amount and item name."
+    Be clear, direct, and concise in processingNotes so the user knows what to specify next time.
 
 LANGUAGE: The audio may be in Bangla, English, or Banglish (mixed). Understand all three.
 
@@ -291,7 +333,71 @@ RESPONSE FORMAT — return ONLY valid JSON, no markdown, no explanation:
       "uncertainFields": []
     }
   ],
-  "processingNotes": "<any warnings or notes>"
+  "processingNotes": "<exact description of what details are missing if no transaction extracted or if incomplete>"
+}`;
+  }
+
+  private buildVoiceTextSystemPrompt(transcriptText: string, context: AIContext): string {
+    const categoryListStr = context.categoryList
+      .map((c) => `  { "id": "${c.id}", "name": "${c.name}", "type": "${c.type}" }`)
+      .join(',\n');
+
+    return `You are a financial transaction parser for HisabAI, a personal finance app.
+Extract structured transactions from the following voice transcript text.
+
+VOICE TRANSCRIPT:
+---
+${transcriptText}
+---
+
+TODAY'S DATE: ${context.currentDate}
+USER TIMEZONE: ${context.timezone}
+CURRENT DATETIME: ${context.currentDateTime}
+
+AVAILABLE CATEGORIES (you MUST use IDs from this list exactly — do NOT invent new categories):
+[
+${categoryListStr}
+]
+
+MANDATORY RULES:
+1. Extract ONLY transactions clearly mentioned in the voice transcript. Never invent a transaction.
+2. Extract ONLY amounts clearly stated in the transcript. Never guess or estimate an amount.
+3. categoryId MUST be one of the IDs from the AVAILABLE CATEGORIES list above.
+4. transactionDate MUST be resolved to YYYY-MM-DD using TODAY'S DATE:
+   - "আজকে" / "আজ" / "today" → ${context.currentDate}
+   - "গতকাল" / "yesterday" → one day before ${context.currentDate}
+   - "পরশু" / "two days ago" → two days before ${context.currentDate}
+   - "গত শুক্রবার" / "last Friday" → resolve to the most recent Friday before ${context.currentDate}
+5. If date is not specified, default transactionDate to "${context.currentDate}" and set dateSource to "inferred_today".
+6. If the amount is unclear or ambiguous, OMIT the transaction.
+7. comment must contain the name of the item, store, or person. If there is no specific item, leave it empty.
+8. confidence: a number 0-1 representing certainty.
+9. source must always be "voice".
+10. MISSING DETAILS FEEDBACK: If no valid transaction can be extracted (e.g. amount is missing, item/category is missing, or prompt is incomplete), state EXACTLY what details are missing in processingNotes.
+
+LANGUAGE: The transcript may be in Bangla, English, or Banglish (mixed).
+
+RESPONSE FORMAT — return ONLY valid JSON, no markdown, no explanation:
+{
+  "rawTranscript": "${transcriptText.replace(/"/g, '\\"')}",
+  "transactions": [
+    {
+      "type": "expense" | "income" | "transfer",
+      "categoryId": "<id from AVAILABLE CATEGORIES>",
+      "categoryName": "<matching name>",
+      "amount": <number>,
+      "currency": "BDT",
+      "comment": "<Item or Merchant name>",
+      "transactionDate": "YYYY-MM-DD",
+      "dateSource": "explicit_date" | "relative_date" | "inferred_today",
+      "dateExpression": "<original date text if any>",
+      "confidence": <0-1>,
+      "source": "voice",
+      "uncertain": <boolean>,
+      "uncertainFields": []
+    }
+  ],
+  "processingNotes": "<exact description of what details are missing if no transaction extracted or if incomplete>"
 }`;
   }
 

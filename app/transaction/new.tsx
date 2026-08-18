@@ -10,7 +10,7 @@ import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { Colors, Spacing, Radii, Typography, useThemeColors } from '../../src/constants/colors';
 import { useCategoryStore, useTransactionStore, useUIStore } from '../../src/store';
-import { getTodayString, getYesterdayString, formatDateDisplay } from '../../src/utils/finance';
+import { getTodayString, getYesterdayString, formatDateDisplay, evaluateMathExpression } from '../../src/utils/finance';
 import { Category } from '../../src/types';
 import { CategoryIcon } from '../../src/components/ui/CategoryIcon';
 import { DatePickerModal } from '../../src/components/ui/DatePickerModal';
@@ -22,6 +22,8 @@ type FormData = {
   transactionDate: string;
 };
 
+import { CalculatorKeypadModal } from '../../src/components/ui/CalculatorKeypadModal';
+
 export default function ManualAddScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -31,6 +33,7 @@ export default function ManualAddScreen() {
 
   const [type, setType] = useState<'expense' | 'income'>('expense');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isCalcOpen, setIsCalcOpen] = useState(true);
 
   const categories = getCategoriesForType(type);
 
@@ -44,15 +47,19 @@ export default function ManualAddScreen() {
   });
 
   const selectedDate = watch('transactionDate');
+  const amountValue = watch('amount');
 
   const onSubmit = (data: FormData) => {
     const category = categories.find((c) => c.id === data.categoryId);
     if (!category) return;
 
+    const amountVal = evaluateMathExpression(data.amount) ?? parseFloat(data.amount);
+    if (isNaN(amountVal) || amountVal <= 0) return;
+
     addTransaction({
       id: Math.random().toString(36).substr(2, 9),
       userId: 'mock-user',
-      amount: parseFloat(data.amount),
+      amount: amountVal,
       type,
       categoryId: category.id,
       categoryNameSnapshot: category.name,
@@ -200,27 +207,45 @@ export default function ManualAddScreen() {
         {/* 3. Amount */}
         <View style={styles.inputGroup}>
           <Text variant="sm" color={colors.text.secondary} style={styles.label}>Amount</Text>
-          <View style={[styles.amountContainer, { borderBottomColor: colors.border.medium }]}>
+
+          <TouchableOpacity 
+            style={[styles.amountContainer, { borderBottomColor: colors.border.medium }]}
+            onPress={() => setIsCalcOpen(true)}
+            activeOpacity={0.8}
+          >
             <Text variant="xxxl" weight="bold" color={colors.text.tertiary}>৳</Text>
             <Controller
               control={control}
-              rules={{ required: true, validate: (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0 }}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={[styles.amountInput, { color: colors.text.primary }]}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={colors.text.tertiary}
-                  value={value}
-                  onChangeText={onChange}
-                  autoFocus
-                />
+              rules={{ 
+                required: true, 
+                validate: (val) => {
+                  const num = evaluateMathExpression(val) ?? parseFloat(val);
+                  return !isNaN(num) && num > 0;
+                } 
+              }}
+              render={({ field: { value } }) => (
+                <View style={{ flex: 1, pointerEvents: 'none' }}>
+                  <TextInput
+                    style={[styles.amountInput, { color: colors.text.primary }]}
+                    placeholder="0"
+                    placeholderTextColor={colors.text.tertiary}
+                    value={value}
+                    editable={false}
+                  />
+                </View>
               )}
               name="amount"
             />
-          </View>
-          {errors.amount && <Text variant="xs" color={colors.semantic.danger}>Please enter a valid amount</Text>}
+          </TouchableOpacity>
+          {errors.amount && <Text variant="xs" color={colors.semantic.danger} style={{ marginTop: 4 }}>Please enter a valid amount</Text>}
         </View>
+
+        <CalculatorKeypadModal
+          visible={isCalcOpen}
+          initialValue={amountValue}
+          onClose={() => setIsCalcOpen(false)}
+          onApply={(calcAmount) => setValue('amount', calcAmount)}
+        />
 
         {/* 4. Comment / Note */}
         <View style={styles.inputGroup}>
@@ -255,8 +280,7 @@ export default function ManualAddScreen() {
                     key={cat.id}
                     style={[
                       styles.categoryItem,
-                      { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 },
-                      value === cat.id && { backgroundColor: colors.bg.secondary, borderColor: colors.accent.primary }
+                      value === cat.id && { backgroundColor: colors.accent.primaryDim, borderRadius: Radii.md }
                     ]}
                     onPress={() => onChange(cat.id)}
                   >
@@ -267,7 +291,8 @@ export default function ManualAddScreen() {
                     />
                     <Text 
                       variant="xs" 
-                      color={value === cat.id ? colors.text.primary : colors.text.secondary}
+                      weight={value === cat.id ? "bold" : "normal"}
+                      color={value === cat.id ? colors.accent.primary : colors.text.secondary}
                       style={styles.categoryName}
                       numberOfLines={1}
                     >
@@ -386,6 +411,34 @@ const styles = StyleSheet.create({
   categoryName: {
     marginTop: 2,
     textAlign: 'center',
+  },
+  mathToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+    marginLeft: Spacing.sm,
+  },
+  mathBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  evalBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginLeft: 'auto',
+  },
+  calcPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radii.full,
+    marginLeft: 6,
   },
   footer: {
     position: 'absolute',

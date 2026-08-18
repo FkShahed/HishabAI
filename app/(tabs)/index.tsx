@@ -13,10 +13,13 @@ import { Colors, Spacing, Radii, useThemeColors } from '../../src/constants/colo
 import { formatCurrency } from '../../src/utils/finance';
 import { auth } from '../../src/services/firebase';
 
+import { AddOptionModal } from '../../src/components/ui/AddOptionModal';
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const [imageFailed, setImageFailed] = useState(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   const { selectedMonth, selectedYear, goToPrevMonth, goToNextMonth, currency, userName, userPhotoUrl } = useUIStore();
   const { getMonthlySummary, getDailyGroups, isLoading } = useTransactionStore();
@@ -138,6 +141,16 @@ export default function HomeScreen() {
             <Text variant="sm" color={colors.text.tertiary} align="center" style={styles.emptySubtitle}>
               Tap the (+) icon below or use voice to record your first transaction for this month.
             </Text>
+            <TouchableOpacity 
+              style={[styles.emptyAddBtn, { backgroundColor: colors.accent.primary }]}
+              onPress={() => setIsAddModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
+              <Text variant="sm" weight="bold" color="#FFFFFF" style={{ marginLeft: 6 }}>
+                Add Entry Now
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : (
 
@@ -178,6 +191,11 @@ export default function HomeScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <AddOptionModal 
+        visible={isAddModalVisible}
+        onClose={() => setIsAddModalVisible(false)}
+      />
     </View>
   );
 }
@@ -270,5 +288,18 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     paddingHorizontal: Spacing.xl,
     lineHeight: 20,
+  },
+  emptyAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: Radii.full,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 });

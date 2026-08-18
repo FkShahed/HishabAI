@@ -342,3 +342,26 @@ export function getMonthlyTrendData(
 
   return result;
 }
+
+/**
+ * Safely evaluate math expression string (e.g. "150 + 50 * 2" -> 250, "500 - 120" -> 380)
+ */
+export function evaluateMathExpression(expr: string): number | null {
+  if (!expr || typeof expr !== 'string') return null;
+  const cleaned = expr.trim().replace(/×/g, '*').replace(/÷/g, '/');
+
+  // Allow only numbers, decimals, math operators (+, -, *, /), parentheses, and spaces
+  if (/[^0-9.+\-*/()\s]/.test(cleaned)) {
+    return null;
+  }
+
+  try {
+    const result = new Function(`'use strict'; return (${cleaned})`)();
+    if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
+      return Math.round(result * 100) / 100;
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}

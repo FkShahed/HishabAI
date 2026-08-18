@@ -9,9 +9,10 @@ import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { useTransactionStore, useUIStore, useCategoryStore } from '../../src/store';
-import { formatCurrency, formatDateDisplay, getTodayString } from '../../src/utils/finance';
+import { formatDateDisplay, formatCurrency, getCurrencySymbol, evaluateMathExpression, getTodayString } from '../../src/utils/finance';
 import { CategoryIcon } from '../../src/components/ui/CategoryIcon';
 import { DatePickerModal } from '../../src/components/ui/DatePickerModal';
+import { CalculatorKeypadModal } from '../../src/components/ui/CalculatorKeypadModal';
 
 export default function TransactionDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -19,21 +20,33 @@ export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const currency = useUIStore((s) => s.currency);
   
-  const transactions = useTransactionStore((s) => s.transactions);
+  const getTransaction = useTransactionStore((s) => s.getTransaction);
   const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
   const updateTransaction = useTransactionStore((s) => s.updateTransaction);
   const getCategoriesForType = useCategoryStore((s) => s.getCategoriesForType);
   
-  const transaction = transactions.find((t) => t.id === id);
+  const transaction = getTransaction(id || '');
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    amount: transaction?.amount.toString() || '',
-    comment: transaction?.comment || '',
-    transactionDate: transaction?.transactionDate || getTodayString(),
-    categoryId: transaction?.categoryId || '',
+    amount: '',
+    comment: '',
+    transactionDate: '',
+    categoryId: '',
   });
+
+  useEffect(() => {
+    if (transaction) {
+      setEditForm({
+        amount: String(transaction.amount),
+        comment: transaction.comment || '',
+        transactionDate: transaction.transactionDate,
+        categoryId: transaction.categoryId,
+      });
+    }
+  }, [transaction]);
 
   const openEdit = () => {
     if (!transaction) return;
@@ -48,9 +61,9 @@ export default function TransactionDetailScreen() {
 
   const saveEdit = () => {
     if (!transaction) return;
-    const numAmount = parseFloat(editForm.amount);
+    const numAmount = evaluateMathExpression(editForm.amount) ?? parseFloat(editForm.amount);
     if (isNaN(numAmount) || numAmount <= 0) {
-      alert('Please enter a valid amount');
+      alert('Please enter a valid amount or math expression');
       return;
     }
 
@@ -180,11 +193,28 @@ export default function TransactionDetailScreen() {
 
             <ScrollView style={styles.modalBody}>
               <Text variant="sm" color={colors.text.secondary} style={styles.inputLabel}>Amount ({currency})</Text>
-              <TextInput
-                style={[styles.textInput, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, color: colors.text.primary }]}
-                keyboardType="numeric"
-                value={editForm.amount}
-                onChangeText={(val) => setEditForm(p => ({ ...p, amount: val }))}
+
+              <TouchableOpacity 
+                style={{ marginBottom: 12 }}
+                onPress={() => setIsCalcOpen(true)}
+                activeOpacity={0.8}
+              >
+                <View style={{ pointerEvents: 'none' }}>
+                  <TextInput
+                    style={[styles.textInput, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, color: colors.text.primary }]}
+                    value={editForm.amount}
+                    placeholder="0"
+                    placeholderTextColor={colors.text.tertiary}
+                    editable={false}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              <CalculatorKeypadModal
+                visible={isCalcOpen}
+                initialValue={editForm.amount}
+                onClose={() => setIsCalcOpen(false)}
+                onApply={(calcAmount) => setEditForm(p => ({ ...p, amount: calcAmount }))}
               />
 
               <Text variant="sm" color={colors.text.secondary} style={styles.inputLabel}>Note</Text>
@@ -220,13 +250,12 @@ export default function TransactionDetailScreen() {
                     key={cat.id}
                     style={[
                       styles.catChip,
-                      { backgroundColor: colors.bg.card, borderColor: colors.border.subtle },
-                      editForm.categoryId === cat.id && { backgroundColor: colors.accent.primary, borderColor: colors.accent.primary }
+                      editForm.categoryId === cat.id && { backgroundColor: colors.accent.primaryDim, borderColor: colors.accent.primary, borderWidth: 1 }
                     ]}
                     onPress={() => setEditForm(p => ({ ...p, categoryId: cat.id }))}
                   >
                     <Text>{cat.icon}</Text>
-                    <Text variant="xs" style={{ marginLeft: 4 }} color={editForm.categoryId === cat.id ? '#FFFFFF' : colors.text.primary}>
+                    <Text variant="xs" style={{ marginLeft: 4 }} weight={editForm.categoryId === cat.id ? "bold" : "normal"} color={editForm.categoryId === cat.id ? colors.accent.primary : colors.text.primary}>
                       {cat.name}
                     </Text>
                   </TouchableOpacity>

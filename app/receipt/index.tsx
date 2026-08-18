@@ -10,7 +10,7 @@ import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { Header } from '../../src/components/ui/Header';
 import { usePreviewStore, useCategoryStore } from '../../src/store';
-import { AIServiceClient } from '../../src/services/api';
+import { AIServiceClient, getFriendlyErrorMessage } from '../../src/services/api';
 
 export default function ReceiptAIScreen() {
   const insets = useSafeAreaInsets();
@@ -29,7 +29,8 @@ export default function ReceiptAIScreen() {
         if (!permission.granted) return;
         result = await ImagePicker.launchCameraAsync({
           base64: true,
-          quality: 0.7,
+          quality: 0.4,
+          allowsEditing: false,
         });
       } else {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -37,7 +38,8 @@ export default function ReceiptAIScreen() {
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           base64: true,
-          quality: 0.7,
+          quality: 0.4,
+          allowsEditing: false,
         });
       }
 
@@ -56,7 +58,31 @@ export default function ReceiptAIScreen() {
     setIsProcessing(true);
     try {
       const categories = getAICategoryList();
-      const result = await AIServiceClient.parseReceipt(imageBase64, categories);
+      let result;
+
+      // 1. Try local MLKit text recognition if available natively
+      let localOcrText = '';
+      try {
+        // Dynamic import check for @react-native-ml-kit/text-recognition or native OCR module
+        const TextRecognition = require('@react-native-ml-kit/text-recognition').default;
+        if (TextRecognition && typeof TextRecognition.recognize === 'function') {
+          const ocrRes = await TextRecognition.recognize(image);
+          if (ocrRes && ocrRes.text && ocrRes.text.trim().length > 0) {
+            localOcrText = ocrRes.text;
+            console.log('[ReceiptAI] Local MLKit extracted text:', localOcrText.slice(0, 100));
+          }
+        }
+      } catch (mlKitErr) {
+        // Native MLKit not present in Expo Go — fallback to compressed image upload
+      }
+
+      if (localOcrText.trim().length > 0) {
+        console.log('[ReceiptAI] Using ultra-fast receipt-text endpoint...');
+        result = await AIServiceClient.parseReceiptText(localOcrText, categories);
+      } else {
+        console.log('[ReceiptAI] Using compressed image receipt endpoint...');
+        result = await AIServiceClient.parseReceipt(imageBase64, categories);
+      }
       
       if (result.success && result.transactions) {
         setPreview(result.transactions, 'receipt');
@@ -64,8 +90,9 @@ export default function ReceiptAIScreen() {
       } else {
         alert(result.error || 'Failed to process receipt');
       }
-    } catch (error) {
-      alert('Network or processing error');
+    } catch (error: any) {
+      const msg = getFriendlyErrorMessage(error);
+      alert(msg);
     } finally {
       setIsProcessing(false);
     }

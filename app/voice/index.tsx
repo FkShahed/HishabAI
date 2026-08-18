@@ -72,12 +72,14 @@ export default function VoiceAIScreen() {
 
         const categories = getAICategoryList();
         let transcript = '';
+        let processingNotes = '';
         let parsedSuccessfully = false;
 
         if (audioUri) {
           try {
             const result = await AIServiceClient.parseVoice(audioUri, categories);
             transcript = result.rawTranscript || '';
+            processingNotes = result.processingNotes || '';
             if (result.success && result.transactions && result.transactions.length > 0) {
               setPreview(result.transactions, 'voice', result.rawTranscript);
               parsedSuccessfully = true;
@@ -93,7 +95,10 @@ export default function VoiceAIScreen() {
 
         if (!parsedSuccessfully) {
           if (transcript.trim().length > 0) {
-            alert(`The AI heard: "${transcript}", but couldn't identify transaction details. Please try again.`);
+            const missingMsg = processingNotes 
+              ? `The AI heard: "${transcript}"\n\nMissing details: ${processingNotes}`
+              : `The AI heard: "${transcript}", but couldn't identify transaction details. Please specify both the amount and item/category (e.g. "Spent 500 on groceries").`;
+            alert(missingMsg);
           } else {
             alert('No audio was captured. Please speak clearly into the microphone and try again.');
           }
