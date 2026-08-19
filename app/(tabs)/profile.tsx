@@ -94,6 +94,7 @@ export default function ProfileScreen() {
 
   // Version Control & Update State
   const currentAppVersion = Constants.expoConfig?.version || '2.0.0';
+  const currentBuildNumber = Constants.expoConfig?.android?.versionCode || parseInt(Constants.expoConfig?.ios?.buildNumber || '2', 10) || 2;
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<CheckUpdateResult | null>(null);
   const [isUpdateModalVisible, setUpdateModalVisible] = useState(false);
@@ -124,7 +125,7 @@ export default function ProfileScreen() {
   const handleCheckForUpdates = async (manual = false) => {
     try {
       setIsCheckingUpdate(true);
-      const result = await VersionServiceClient.checkUpdate(currentAppVersion, 1);
+      const result = await VersionServiceClient.checkUpdate(currentAppVersion, currentBuildNumber);
       setUpdateInfo(result);
       if (result.hasUpdate) {
         if (manual) {
@@ -164,7 +165,7 @@ export default function ProfileScreen() {
     if (!updateInfo) {
       try {
         setIsCheckingUpdate(true);
-        const result = await VersionServiceClient.checkUpdate(currentAppVersion, 1);
+        const result = await VersionServiceClient.checkUpdate(currentAppVersion, currentBuildNumber);
         setUpdateInfo(result);
       } catch (e) {
         // ignore

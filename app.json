@@ -17,6 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.hisabai.app",
+      "buildNumber": "2",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "HisabAI uses your microphone to record voice transactions",
         "NSCameraUsageDescription": "HisabAI uses your camera to scan receipts",
@@ -24,6 +25,7 @@
       }
     },
     "android": {
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0A0A0F"
