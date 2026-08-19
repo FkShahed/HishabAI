@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { useThemeColors } from '../src/constants/colors';
 import { StatusBar } from 'expo-status-bar';
@@ -6,6 +7,17 @@ import * as WebBrowser from 'expo-web-browser';
 // Must be called at app root so auth.expo.io deep link redirects are intercepted
 // immediately when Expo Go re-opens after Google OAuth.
 WebBrowser.maybeCompleteAuthSession();
+
+// Suppress react-native-web DOM attribute warning for react-navigation screens
+if (Platform.OS === 'web' && typeof __DEV__ !== 'undefined' && __DEV__) {
+  const originalConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    if (typeof args[0] === 'string' && (args[0].includes('collapsable') || args[0].includes('non-boolean attribute'))) {
+      return;
+    }
+    originalConsoleError(...args);
+  };
+}
 
 
 export default function RootLayout() {
