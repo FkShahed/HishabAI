@@ -93,7 +93,7 @@ export default function ProfileScreen() {
 
 
   // Version Control & Update State
-  const currentAppVersion = Constants.expoConfig?.version || '2.0.0';
+  const currentAppVersion = Constants.expoConfig?.version || Constants.nativeAppVersion || '2.0.0';
   const currentBuildNumber = Constants.expoConfig?.android?.versionCode || parseInt(Constants.expoConfig?.ios?.buildNumber || '2', 10) || 2;
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<CheckUpdateResult | null>(null);
