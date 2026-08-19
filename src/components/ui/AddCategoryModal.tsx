@@ -7,7 +7,7 @@ import { Text } from './Text';
 import { Button } from './Button';
 import { Spacing, Radii, useThemeColors } from '../../constants/colors';
 import { useCategoryStore } from '../../store';
-import { AVAILABLE_CATEGORY_ICONS } from '../../constants/categories';
+import { AVAILABLE_EXPENSE_ICONS, AVAILABLE_INCOME_ICONS } from '../../constants/categories';
 import { CategoryIcon } from './CategoryIcon';
 
 let BlurViewComponent: any = null;
@@ -36,12 +36,15 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
 
   const existingCategories = useCategoryStore((s) => s.categories);
   const existingIconsSet = new Set(existingCategories.map((c) => c.icon));
-  const unassignedIcons = AVAILABLE_CATEGORY_ICONS.filter((ic) => !existingIconsSet.has(ic));
 
   const [name, setName] = useState('');
   const [type, setType] = useState<'expense' | 'income'>(initialType);
-  const [selectedIcon, setSelectedIcon] = useState(unassignedIcons[0] || '🏷️');
-  const [selectedColor, setSelectedColor] = useState('#8B5CF6');
+
+  const sourceIcons = type === 'expense' ? AVAILABLE_EXPENSE_ICONS : AVAILABLE_INCOME_ICONS;
+  const unassignedIcons = sourceIcons.filter((ic) => !existingIconsSet.has(ic));
+
+  const [selectedIcon, setSelectedIcon] = useState(unassignedIcons[0] || (type === 'expense' ? '🏷️' : '💰'));
+  const [selectedColor, setSelectedColor] = useState(type === 'expense' ? '#8B5CF6' : '#10B981');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSave = () => {
@@ -119,7 +122,12 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
                 <View style={[styles.typeToggleContainer, { backgroundColor: colors.bg.secondary }]}>
                   <TouchableOpacity
                     style={[styles.typeToggleBtn, type === 'expense' && { backgroundColor: colors.semantic.expense }]}
-                    onPress={() => setType('expense')}
+                    onPress={() => {
+                      setType('expense');
+                      const unassigned = AVAILABLE_EXPENSE_ICONS.filter((ic) => !existingIconsSet.has(ic));
+                      setSelectedIcon(unassigned[0] || '🏷️');
+                      setSelectedColor('#8B5CF6');
+                    }}
                     activeOpacity={0.8}
                   >
                     <Text variant="xs" weight="bold" color={type === 'expense' ? '#FFFFFF' : colors.text.secondary}>
@@ -128,7 +136,12 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.typeToggleBtn, type === 'income' && { backgroundColor: colors.semantic.income }]}
-                    onPress={() => setType('income')}
+                    onPress={() => {
+                      setType('income');
+                      const unassigned = AVAILABLE_INCOME_ICONS.filter((ic) => !existingIconsSet.has(ic));
+                      setSelectedIcon(unassigned[0] || '💰');
+                      setSelectedColor('#10B981');
+                    }}
                     activeOpacity={0.8}
                   >
                     <Text variant="xs" weight="bold" color={type === 'income' ? '#FFFFFF' : colors.text.secondary}>
