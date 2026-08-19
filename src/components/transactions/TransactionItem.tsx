@@ -39,7 +39,7 @@ export function TransactionItem({ transaction, onPress, showDate = false }: Tran
         <CategoryIcon
           icon={transaction.categoryIcon}
           color={transaction.categoryColor}
-          size="md"
+          size="sm"
         />
         <View style={styles.info}>
           <Text variant="sm" weight="medium" numberOfLines={1}>
