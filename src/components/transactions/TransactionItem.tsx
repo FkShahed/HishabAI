@@ -45,11 +45,6 @@ export function TransactionItem({ transaction, onPress, showDate = false }: Tran
           <Text variant="sm" weight="medium" numberOfLines={1}>
             {transaction.categoryNameSnapshot}
           </Text>
-          {transaction.comment ? (
-            <Text variant="xs" color={colors.text.secondary} numberOfLines={1} style={{ marginTop: 1, fontSize: 11 }}>
-              {transaction.comment}
-            </Text>
-          ) : null}
           {showDate && (
             <Text variant="xs" color={colors.text.tertiary} style={styles.date}>
               {formatDateShort(transaction.transactionDate)}
