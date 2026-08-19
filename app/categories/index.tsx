@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -46,6 +46,7 @@ export default function ManageCategoriesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg.primary, paddingBottom: insets.bottom }]}>
+      <Stack.Screen options={{ headerShown: false }} />
       <Header 
         title="Manage Categories" 
         showBack={true} 
