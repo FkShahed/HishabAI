@@ -34,10 +34,14 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
   const colors = useThemeColors();
   const addCategory = useCategoryStore((s) => s.addCategory);
 
+  const existingCategories = useCategoryStore((s) => s.categories);
+  const existingIconsSet = new Set(existingCategories.map((c) => c.icon));
+  const unassignedIcons = AVAILABLE_CATEGORY_ICONS.filter((ic) => !existingIconsSet.has(ic));
+
   const [name, setName] = useState('');
   const [type, setType] = useState<'expense' | 'income'>(initialType);
-  const [selectedIcon, setSelectedIcon] = useState('🏷️');
-  const [selectedColor, setSelectedColor] = useState('#10B981');
+  const [selectedIcon, setSelectedIcon] = useState(unassignedIcons[0] || '🏷️');
+  const [selectedColor, setSelectedColor] = useState('#8B5CF6');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSave = () => {
@@ -180,12 +184,12 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
                   ))}
                 </View>
 
-                {/* Emoji / Vector Icon Library (80+ Icons) */}
+                {/* Emoji / Vector Icon Library (Unassigned Icons) */}
                 <Text variant="xs" weight="bold" color={colors.text.secondary} style={styles.inputLabel}>
-                  CHOOSE ICON ({AVAILABLE_CATEGORY_ICONS.length}+ Icons)
+                  CHOOSE NEW ICON ({unassignedIcons.length} Unique Available Icons)
                 </Text>
                 <View style={styles.iconGrid}>
-                  {AVAILABLE_CATEGORY_ICONS.map((ic, idx) => {
+                  {unassignedIcons.map((ic, idx) => {
                     const isSelected = selectedIcon === ic;
                     return (
                       <TouchableOpacity
