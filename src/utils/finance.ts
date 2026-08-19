@@ -16,22 +16,50 @@ export function getYesterdayString(): string {
 
 /** Format YYYY-MM-DD for display: "Aug 13, 2026" */
 export function formatDateDisplay(dateStr: string): string {
-  return format(parseISO(dateStr), 'MMM d, yyyy');
+  if (!dateStr || typeof dateStr !== 'string') return '';
+  try {
+    const parsed = parseISO(dateStr);
+    if (isNaN(parsed.getTime())) return dateStr;
+    return format(parsed, 'MMM d, yyyy');
+  } catch (e) {
+    return dateStr;
+  }
 }
 
 /** Format YYYY-MM-DD as short: "Aug 13" */
 export function formatDateShort(dateStr: string): string {
-  return format(parseISO(dateStr), 'MMM d');
+  if (!dateStr || typeof dateStr !== 'string') return '';
+  try {
+    const parsed = parseISO(dateStr);
+    if (isNaN(parsed.getTime())) return dateStr;
+    return format(parsed, 'MMM d');
+  } catch (e) {
+    return dateStr;
+  }
 }
 
 /** Format YYYY-MM-DD as day name: "Thursday" */
 export function formatDayName(dateStr: string): string {
-  return format(parseISO(dateStr), 'EEEE');
+  if (!dateStr || typeof dateStr !== 'string') return '';
+  try {
+    const parsed = parseISO(dateStr);
+    if (isNaN(parsed.getTime())) return dateStr;
+    return format(parsed, 'EEEE');
+  } catch (e) {
+    return dateStr;
+  }
 }
 
 /** Format YYYY-MM-DD as short day: "Thu" */
 export function formatDayShort(dateStr: string): string {
-  return format(parseISO(dateStr), 'EEE');
+  if (!dateStr || typeof dateStr !== 'string') return '';
+  try {
+    const parsed = parseISO(dateStr);
+    if (isNaN(parsed.getTime())) return dateStr;
+    return format(parsed, 'EEE');
+  } catch (e) {
+    return dateStr;
+  }
 }
 
 /** Get month label from month/year: "August 2026" */

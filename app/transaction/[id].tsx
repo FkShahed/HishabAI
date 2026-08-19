@@ -31,10 +31,10 @@ export default function TransactionDetailScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    amount: '',
-    comment: '',
-    transactionDate: '',
-    categoryId: '',
+    amount: transaction?.amount?.toString() || '',
+    comment: transaction?.comment || '',
+    transactionDate: transaction?.transactionDate || getTodayString(),
+    categoryId: transaction?.categoryId || '',
   });
 
   useEffect(() => {
