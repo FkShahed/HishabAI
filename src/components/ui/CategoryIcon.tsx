@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Text } from './Text';
 
 export interface CategoryIconProps {
@@ -8,14 +9,78 @@ export interface CategoryIconProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
+const EMOJI_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
+  '🏠': 'home-outline',
+  '🚌': 'bus-outline',
+  '🎮': 'game-controller-outline',
+  '🍔': 'fast-food-outline',
+  '🛍️': 'bag-handle-outline',
+  '🍽️': 'restaurant-outline',
+  '🎬': 'film-outline',
+  '📱': 'phone-portrait-outline',
+  '💸': 'cash-outline',
+  '🎁': 'gift-outline',
+  '🚬': 'flame-outline',
+  '💻': 'laptop-outline',
+  '📚': 'book-outline',
+  '💇': 'sparkles-outline',
+  '⚽': 'football-outline',
+  '👥': 'people-outline',
+  '👗': 'shirt-outline',
+  '🚗': 'car-sport-outline',
+  '🍺': 'beer-outline',
+  '✈️': 'airplane-outline',
+  '🏥': 'medical-outline',
+  '🐾': 'paw-outline',
+  '🔧': 'construct-outline',
+  '🏘️': 'business-outline',
+  '❤️': 'heart-outline',
+  '🎲': 'trophy-outline',
+  '🍟': 'pizza-outline',
+  '🧒': 'happy-outline',
+  '💰': 'wallet-outline',
+  '🏢': 'briefcase-outline',
+  '📈': 'trending-up-outline',
+  '↩️': 'refresh-outline',
+  '🎉': 'star-outline',
+  '💹': 'stats-chart-outline',
+  '➕': 'add-circle-outline',
+  '☕': 'cafe-outline',
+  '🍕': 'pizza-outline',
+  '🛒': 'cart-outline',
+  '💳': 'card-outline',
+  '💡': 'bulb-outline',
+  '🚕': 'car-outline',
+  '💊': 'fitness-outline',
+  '🎓': 'school-outline',
+  '🎧': 'headset-outline',
+  '🎸': 'musical-notes-outline',
+  '🍿': 'film-outline',
+  '🏋️': 'barbell-outline',
+  '🚲': 'bicycle-outline',
+  '🎨': 'color-palette-outline',
+  '💼': 'briefcase-outline',
+  '📊': 'analytics-outline',
+  '🏧': 'card-outline',
+  '🏦': 'storefront-outline',
+  '💎': 'diamond-outline',
+  '🔑': 'key-outline',
+  '🧾': 'receipt-outline',
+  '🧼': 'water-outline',
+  '👕': 'shirt-outline',
+  '⌚': 'watch-outline',
+  '🎟️': 'ticket-outline',
+  '🏷️': 'pricetag-outline',
+};
+
 export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
   const getDimensions = () => {
     switch (size) {
-      case 'sm': return { container: 30, font: 14, radius: 8 };
-      case 'md': return { container: 36, font: 17, radius: 10 };
-      case 'lg': return { container: 48, font: 23, radius: 14 };
-      case 'xl': return { container: 64, font: 30, radius: 18 };
-      default: return { container: 36, font: 17, radius: 10 };
+      case 'sm': return { container: 30, iconSize: 15, font: 14, radius: 8 };
+      case 'md': return { container: 36, iconSize: 18, font: 17, radius: 10 };
+      case 'lg': return { container: 48, iconSize: 24, font: 23, radius: 14 };
+      case 'xl': return { container: 64, iconSize: 32, font: 30, radius: 18 };
+      default: return { container: 36, iconSize: 18, font: 17, radius: 10 };
     }
   };
 
@@ -37,6 +102,14 @@ export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   };
 
+  // Determine vector icon name
+  let vectorName: keyof typeof Ionicons.glyphMap | null = null;
+  if (icon && (icon in Ionicons.glyphMap)) {
+    vectorName = icon as keyof typeof Ionicons.glyphMap;
+  } else if (icon && EMOJI_TO_IONICON[icon]) {
+    vectorName = EMOJI_TO_IONICON[icon];
+  }
+
   return (
     <View
       style={[
@@ -45,14 +118,14 @@ export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
           width: dim.container,
           height: dim.container,
           borderRadius: dim.radius,
-          backgroundColor: getRgba(color, 0.12),
-          borderColor: getRgba(color, 0.28),
+          backgroundColor: getRgba(color, 0.14),
+          borderColor: getRgba(color, 0.32),
           borderWidth: 1,
           ...Platform.select({
             ios: {
               shadowColor: color,
               shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.14,
+              shadowOpacity: 0.16,
               shadowRadius: 3,
             },
             android: {
@@ -62,7 +135,11 @@ export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
         },
       ]}
     >
-      <Text style={{ fontSize: dim.font, textAlign: 'center', includeFontPadding: false }}>{icon}</Text>
+      {vectorName ? (
+        <Ionicons name={vectorName} size={dim.iconSize} color={color} />
+      ) : (
+        <Text style={{ fontSize: dim.font, textAlign: 'center', includeFontPadding: false }}>{icon}</Text>
+      )}
     </View>
   );
 }
