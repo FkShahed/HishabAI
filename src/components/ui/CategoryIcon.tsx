@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { Text } from './Text';
-import { Radii } from '../../constants/colors';
 
 export interface CategoryIconProps {
   icon: string;
@@ -12,26 +11,30 @@ export interface CategoryIconProps {
 export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
   const getDimensions = () => {
     switch (size) {
-      case 'sm': return { container: 32, font: 16 };
-      case 'md': return { container: 48, font: 24 };
-      case 'lg': return { container: 64, font: 32 };
-      case 'xl': return { container: 80, font: 40 };
-      default: return { container: 48, font: 24 };
+      case 'sm': return { container: 34, font: 16, radius: 10 };
+      case 'md': return { container: 44, font: 22, radius: 14 };
+      case 'lg': return { container: 58, font: 28, radius: 18 };
+      case 'xl': return { container: 72, font: 36, radius: 22 };
+      default: return { container: 44, font: 22, radius: 14 };
     }
   };
 
   const dim = getDimensions();
 
-  // Convert hex color to a transparent background version (20% opacity)
-  const getBgColor = (hex: string) => {
-    // Basic hex to rgba converter
-    let r = 0, g = 0, b = 0;
-    if (hex.length === 7) {
-      r = parseInt(hex.substring(1, 3), 16);
-      g = parseInt(hex.substring(3, 5), 16);
-      b = parseInt(hex.substring(5, 7), 16);
+  const getRgba = (hex: string, opacity: number) => {
+    let r = 59, g = 130, b = 246;
+    if (hex && hex.startsWith('#')) {
+      if (hex.length === 7) {
+        r = parseInt(hex.substring(1, 3), 16);
+        g = parseInt(hex.substring(3, 5), 16);
+        b = parseInt(hex.substring(5, 7), 16);
+      } else if (hex.length === 4) {
+        r = parseInt(hex[1] + hex[1], 16);
+        g = parseInt(hex[2] + hex[2], 16);
+        b = parseInt(hex[3] + hex[3], 16);
+      }
     }
-    return `rgba(${r}, ${g}, ${b}, 0.2)`;
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   };
 
   return (
@@ -41,12 +44,25 @@ export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
         {
           width: dim.container,
           height: dim.container,
-          borderRadius: dim.container / 2,
-          backgroundColor: getBgColor(color),
+          borderRadius: dim.radius,
+          backgroundColor: getRgba(color, 0.16),
+          borderColor: getRgba(color, 0.35),
+          borderWidth: 1,
+          ...Platform.select({
+            ios: {
+              shadowColor: color,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.18,
+              shadowRadius: 4,
+            },
+            android: {
+              elevation: 2,
+            },
+          }),
         },
       ]}
     >
-      <Text style={{ fontSize: dim.font }}>{icon}</Text>
+      <Text style={{ fontSize: dim.font, lineHeight: dim.font + 4 }}>{icon}</Text>
     </View>
   );
 }

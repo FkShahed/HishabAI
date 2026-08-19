@@ -15,11 +15,15 @@ import { useTransactionStore, useBudgetStore, useCategoryStore, useUIStore } fro
 import { SUPPORTED_CURRENCIES, getCurrencySymbol } from '../../src/utils/finance';
 import { NotificationService } from '../../src/services/notifications';
 import { VersionServiceClient, CheckUpdateResult } from '../../src/services/api';
+import { AddCategoryModal } from '../../src/components/ui/AddCategoryModal';
+
+const pkg = require('../../package.json');
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const [imageFailed, setImageFailed] = useState(false);
+  const [isAddCatModalVisible, setIsAddCatModalVisible] = useState(false);
   
   const setTransactions = useTransactionStore((s) => s.setTransactions);
   const currency = useUIStore((s) => s.currency);
@@ -385,7 +389,7 @@ export default function ProfileScreen() {
           {/* Manage Categories */}
           <TouchableOpacity 
             style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
-            onPress={() => setCategoryModalVisible(true)}
+            onPress={() => setIsAddCatModalVisible(true)}
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
@@ -684,6 +688,12 @@ export default function ProfileScreen() {
         {/* Spacer for bottom tab */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Add Custom Category Modal */}
+      <AddCategoryModal 
+        visible={isAddCatModalVisible}
+        onClose={() => setIsAddCatModalVisible(false)}
+      />
 
       {/* Edit Name Modal */}
       <Modal visible={isNameModalVisible} animationType="fade" transparent>

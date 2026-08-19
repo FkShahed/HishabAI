@@ -95,10 +95,10 @@ export default function HomeScreen() {
         <View style={[styles.summaryCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }]}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text variant="xs" color={colors.text.secondary} weight="semibold">
+              <Text variant="xs" color={colors.text.tertiary} weight="bold" style={{ fontSize: 10, letterSpacing: 0.5 }}>
                 EXPENSES
               </Text>
-              <Text variant="md" weight="bold" color={colors.semantic.expense} style={{ marginTop: 2 }}>
+              <Text variant="sm" weight="bold" color={colors.semantic.expense} style={{ marginTop: 2, fontSize: 14 }}>
                 {formatCurrency(summary.totalExpense, currency)}
               </Text>
             </View>
@@ -106,10 +106,10 @@ export default function HomeScreen() {
             <View style={[styles.summaryDivider, { backgroundColor: colors.border.subtle }]} />
 
             <View style={styles.summaryItem}>
-              <Text variant="xs" color={colors.text.secondary} weight="semibold">
+              <Text variant="xs" color={colors.text.tertiary} weight="bold" style={{ fontSize: 10, letterSpacing: 0.5 }}>
                 INCOME
               </Text>
-              <Text variant="md" weight="bold" color={colors.semantic.income} style={{ marginTop: 2 }}>
+              <Text variant="sm" weight="bold" color={colors.semantic.income} style={{ marginTop: 2, fontSize: 14 }}>
                 {formatCurrency(summary.totalIncome, currency)}
               </Text>
             </View>
@@ -117,14 +117,14 @@ export default function HomeScreen() {
             <View style={[styles.summaryDivider, { backgroundColor: colors.border.subtle }]} />
 
             <View style={styles.summaryItem}>
-              <Text variant="xs" color={colors.text.secondary} weight="semibold">
+              <Text variant="xs" color={colors.text.tertiary} weight="bold" style={{ fontSize: 10, letterSpacing: 0.5 }}>
                 BALANCE
               </Text>
               <Text
-                variant="md"
+                variant="sm"
                 weight="bold"
                 color={summary.balance >= 0 ? colors.semantic.income : colors.semantic.expense}
-                style={{ marginTop: 2 }}
+                style={{ marginTop: 2, fontSize: 14 }}
               >
                 {formatCurrency(summary.balance, currency)}
               </Text>
@@ -135,10 +135,10 @@ export default function HomeScreen() {
         {/* Daily Grouped Transactions List */}
         {dailyGroups.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text variant="lg" weight="semibold" color={colors.text.secondary}>
+            <Text variant="md" weight="semibold" color={colors.text.secondary}>
               No transactions yet
             </Text>
-            <Text variant="sm" color={colors.text.tertiary} align="center" style={styles.emptySubtitle}>
+            <Text variant="xs" color={colors.text.tertiary} align="center" style={styles.emptySubtitle}>
               Tap the (+) icon below or use voice to record your first transaction for this month.
             </Text>
             <TouchableOpacity 
@@ -146,8 +146,8 @@ export default function HomeScreen() {
               onPress={() => setIsAddModalVisible(true)}
               activeOpacity={0.8}
             >
-              <Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
-              <Text variant="sm" weight="bold" color="#FFFFFF" style={{ marginLeft: 6 }}>
+              <Ionicons name="add-circle-outline" size={16} color="#FFFFFF" />
+              <Text variant="xs" weight="bold" color="#FFFFFF" style={{ marginLeft: 6 }}>
                 Add Entry Now
               </Text>
             </TouchableOpacity>
@@ -161,7 +161,7 @@ export default function HomeScreen() {
               <View key={group.date} style={styles.dayGroup}>
                 <View style={[styles.dayHeader, { backgroundColor: colors.bg.secondary }]}>
                   <View style={styles.dayHeaderLeft}>
-                    <Text variant="sm" weight="bold">
+                    <Text variant="xs" weight="bold" style={{ fontSize: 12 }}>
                       {group.dayName}
                     </Text>
                   </View>
@@ -169,7 +169,8 @@ export default function HomeScreen() {
                   <Text
                     variant="xs"
                     weight="bold"
-                    color={isDailyOverBudget ? colors.semantic.danger : colors.text.secondary}
+                    style={{ fontSize: 11 }}
+                    color={isDailyOverBudget ? colors.semantic.danger : colors.text.tertiary}
                   >
                     Expenses: {formatCurrency(group.totalExpense, currency)}
                   </Text>

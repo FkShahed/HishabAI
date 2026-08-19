@@ -23,6 +23,7 @@ type FormData = {
 };
 
 import { CalculatorKeypadModal } from '../../src/components/ui/CalculatorKeypadModal';
+import { AddCategoryModal } from '../../src/components/ui/AddCategoryModal';
 
 export default function ManualAddScreen() {
   const insets = useSafeAreaInsets();
@@ -34,6 +35,7 @@ export default function ManualAddScreen() {
   const [type, setType] = useState<'expense' | 'income'>('expense');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isCalcOpen, setIsCalcOpen] = useState(true);
+  const [isAddCatModalVisible, setIsAddCatModalVisible] = useState(false);
 
   const categories = getCategoriesForType(type);
 
@@ -267,7 +269,18 @@ export default function ManualAddScreen() {
 
         {/* 5. Category Selection */}
         <View style={styles.inputGroup}>
-          <Text variant="sm" color={colors.text.secondary} style={styles.label}>Category</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.xs }}>
+            <Text variant="sm" color={colors.text.secondary} style={styles.label}>Category</Text>
+            <TouchableOpacity 
+              onPress={() => setIsAddCatModalVisible(true)}
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+            >
+              <Ionicons name="add-circle" size={14} color={colors.accent.primary} />
+              <Text variant="xs" weight="bold" color={colors.accent.primary} style={{ marginLeft: 4 }}>
+                + Add Custom Icon
+              </Text>
+            </TouchableOpacity>
+          </View>
           {errors.categoryId && <Text variant="xs" color={colors.semantic.danger} style={{ marginBottom: 8 }}>Please select a category</Text>}
           
           <Controller
@@ -300,6 +313,25 @@ export default function ManualAddScreen() {
                     </Text>
                   </TouchableOpacity>
                 ))}
+
+                {/* + Add New Custom Category Button */}
+                <TouchableOpacity
+                  style={[styles.categoryItem]}
+                  onPress={() => setIsAddCatModalVisible(true)}
+                >
+                  <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.accent.primaryDim, alignItems: 'center', justifyContent: 'center', borderColor: colors.accent.primary, borderWidth: 1 }}>
+                    <Ionicons name="add" size={18} color={colors.accent.primary} />
+                  </View>
+                  <Text 
+                    variant="xs" 
+                    weight="bold"
+                    color={colors.accent.primary}
+                    style={styles.categoryName}
+                    numberOfLines={1}
+                  >
+                    + Add New
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
             name="categoryId"
@@ -307,6 +339,13 @@ export default function ManualAddScreen() {
         </View>
 
       </ScrollView>
+
+      <AddCategoryModal
+        visible={isAddCatModalVisible}
+        onClose={() => setIsAddCatModalVisible(false)}
+        initialType={type}
+        onCategoryCreated={(newId) => setValue('categoryId', newId)}
+      />
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Spacing.lg), backgroundColor: colors.bg.primary, borderTopColor: colors.border.subtle, borderTopWidth: 1 }]}>
         <Button 

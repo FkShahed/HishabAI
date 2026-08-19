@@ -42,11 +42,11 @@ export function TransactionItem({ transaction, onPress, showDate = false }: Tran
           size="md"
         />
         <View style={styles.info}>
-          <Text variant="base" weight="semibold" numberOfLines={1}>
+          <Text variant="sm" weight="bold" numberOfLines={1}>
             {transaction.categoryNameSnapshot}
           </Text>
           {transaction.comment ? (
-            <Text variant="xs" color={colors.text.secondary} numberOfLines={1} style={{ marginTop: 1 }}>
+            <Text variant="xs" color={colors.text.secondary} numberOfLines={1} style={{ marginTop: 1, fontSize: 11 }}>
               {transaction.comment}
             </Text>
           ) : null}
@@ -65,7 +65,7 @@ export function TransactionItem({ transaction, onPress, showDate = false }: Tran
           </View>
         )}
         <Text
-          variant="base"
+          variant="sm"
           weight="bold"
           color={
             transaction.type === 'expense'
