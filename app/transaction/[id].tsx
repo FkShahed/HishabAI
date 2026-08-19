@@ -20,12 +20,12 @@ export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const currency = useUIStore((s) => s.currency);
   
-  const getTransaction = useTransactionStore((s) => s.getTransaction);
+  const transactions = useTransactionStore((s) => s.transactions);
   const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
   const updateTransaction = useTransactionStore((s) => s.updateTransaction);
   const getCategoriesForType = useCategoryStore((s) => s.getCategoriesForType);
   
-  const transaction = getTransaction(id || '');
+  const transaction = transactions.find((t) => t.id === id);
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);

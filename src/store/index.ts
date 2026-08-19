@@ -35,6 +35,7 @@ interface TransactionState {
   // Computed getters (always use transactionDate)
   getTransactionsForMonth: (month: number, year: number) => Transaction[];
   getTransactionsForDate: (dateStr: string) => Transaction[];
+  getTransaction: (id: string) => Transaction | undefined;
   getMonthlySummary: (month: number, year: number) => ReturnType<typeof calculateMonthlySummary>;
   getDailyGroups: (month: number, year: number) => ReturnType<typeof groupTransactionsByDate>;
   getFilteredTransactions: () => Transaction[];
@@ -95,6 +96,9 @@ export const useTransactionStore = create<TransactionState>()(
 
   getTransactionsForDate: (dateStr) =>
     get().transactions.filter((t) => t.transactionDate === dateStr),
+
+  getTransaction: (id) =>
+    get().transactions.find((t) => t.id === id),
 
   getMonthlySummary: (month, year) =>
     calculateMonthlySummary(get().transactions, month, year),
