@@ -34,6 +34,7 @@ export default function AuthScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -362,10 +363,22 @@ export default function AuthScreen() {
               style={[styles.textInput, { color: colors.text.primary }]}
               placeholder="Min 6 characters"
               placeholderTextColor={colors.text.tertiary}
-              secureTextEntry
+              secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
             />
+            <TouchableOpacity 
+              onPress={() => setShowPassword(!showPassword)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{ padding: 4 }}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                size={20} 
+                color={colors.text.secondary} 
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
