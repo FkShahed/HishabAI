@@ -3,7 +3,7 @@
     "name": "HisabAI",
     "slug": "hishabai",
     "owner": "fazlulkarim2000",
-    "version": "2.5.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "hisabai",
@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.hisabai.app",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "HisabAI uses your microphone to record voice transactions",
         "NSCameraUsageDescription": "HisabAI uses your camera to scan receipts",
@@ -25,7 +25,7 @@
       }
     },
     "android": {
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0A0A0F"

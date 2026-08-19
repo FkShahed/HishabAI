@@ -1,10 +1,10 @@
 {
-  "version": "2.5.0",
-  "buildNumber": 3,
-  "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v2.5.0/hisabai-v2.5.0.apk",
-  "releaseNotes": "• Smart In-line Calculator Sheet\n• Enhanced receipt scanner stability\n• Modern frosted glass blur popups",
+  "version": "3.0.0",
+  "buildNumber": 4,
+  "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v3.0.0/hisabai-v3.0.0.apk",
+  "releaseNotes": "• Dedicated Category Management Screen\n• Smart high-quality iconography system\n• Performance optimizations and bug fixes",
   "forceUpdate": false,
   "minVersion": "1.0.0",
   "fileSize": "32.5 MB",
-  "updatedAt": "2026-08-20T00:35:00.000Z"
+  "updatedAt": "2026-08-20T00:47:00.000Z"
 }

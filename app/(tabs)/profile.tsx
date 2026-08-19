@@ -389,7 +389,7 @@ export default function ProfileScreen() {
           {/* Manage Categories */}
           <TouchableOpacity 
             style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
-            onPress={() => setIsAddCatModalVisible(true)}
+            onPress={() => router.push('/categories' as any)}
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>

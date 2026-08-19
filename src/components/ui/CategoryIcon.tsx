@@ -11,11 +11,11 @@ export interface CategoryIconProps {
 export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
   const getDimensions = () => {
     switch (size) {
-      case 'sm': return { container: 34, font: 16, radius: 10 };
-      case 'md': return { container: 44, font: 22, radius: 14 };
-      case 'lg': return { container: 58, font: 28, radius: 18 };
-      case 'xl': return { container: 72, font: 36, radius: 22 };
-      default: return { container: 44, font: 22, radius: 14 };
+      case 'sm': return { container: 30, font: 14, radius: 8 };
+      case 'md': return { container: 36, font: 17, radius: 10 };
+      case 'lg': return { container: 48, font: 23, radius: 14 };
+      case 'xl': return { container: 64, font: 30, radius: 18 };
+      default: return { container: 36, font: 17, radius: 10 };
     }
   };
 
@@ -45,24 +45,24 @@ export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
           width: dim.container,
           height: dim.container,
           borderRadius: dim.radius,
-          backgroundColor: getRgba(color, 0.16),
-          borderColor: getRgba(color, 0.35),
+          backgroundColor: getRgba(color, 0.12),
+          borderColor: getRgba(color, 0.28),
           borderWidth: 1,
           ...Platform.select({
             ios: {
               shadowColor: color,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.18,
-              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.14,
+              shadowRadius: 3,
             },
             android: {
-              elevation: 2,
+              elevation: 1,
             },
           }),
         },
       ]}
     >
-      <Text style={{ fontSize: dim.font, lineHeight: dim.font + 4 }}>{icon}</Text>
+      <Text style={{ fontSize: dim.font, textAlign: 'center', includeFontPadding: false }}>{icon}</Text>
     </View>
   );
 }
