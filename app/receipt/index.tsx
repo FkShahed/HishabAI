@@ -58,31 +58,8 @@ export default function ReceiptAIScreen() {
     setIsProcessing(true);
     try {
       const categories = getAICategoryList();
-      let result;
-
-      // 1. Try local MLKit text recognition if available natively
-      let localOcrText = '';
-      try {
-        // Dynamic import check for @react-native-ml-kit/text-recognition or native OCR module
-        const TextRecognition = require('@react-native-ml-kit/text-recognition').default;
-        if (TextRecognition && typeof TextRecognition.recognize === 'function') {
-          const ocrRes = await TextRecognition.recognize(image);
-          if (ocrRes && ocrRes.text && ocrRes.text.trim().length > 0) {
-            localOcrText = ocrRes.text;
-            console.log('[ReceiptAI] Local MLKit extracted text:', localOcrText.slice(0, 100));
-          }
-        }
-      } catch (mlKitErr) {
-        // Native MLKit not present in Expo Go — fallback to compressed image upload
-      }
-
-      if (localOcrText.trim().length > 0) {
-        console.log('[ReceiptAI] Using ultra-fast receipt-text endpoint...');
-        result = await AIServiceClient.parseReceiptText(localOcrText, categories);
-      } else {
-        console.log('[ReceiptAI] Using compressed image receipt endpoint...');
-        result = await AIServiceClient.parseReceipt(imageBase64, categories);
-      }
+      console.log('[ReceiptAI] Sending receipt image to backend AI parser...');
+      const result = await AIServiceClient.parseReceipt(imageBase64, categories);
       
       if (result.success && result.transactions) {
         setPreview(result.transactions, 'receipt');
