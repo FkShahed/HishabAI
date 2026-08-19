@@ -172,7 +172,7 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
                       style={[
                         styles.colorDot,
                         { backgroundColor: c },
-                        selectedColor === c && { borderWidth: 3, borderColor: '#FFFFFF', scale: 1.1 }
+                        selectedColor === c && { borderWidth: 3, borderColor: '#FFFFFF', transform: [{ scale: 1.1 }] }
                       ]}
                       onPress={() => setSelectedColor(c)}
                     />
