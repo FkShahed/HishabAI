@@ -76,11 +76,11 @@ const EMOJI_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
   const getDimensions = () => {
     switch (size) {
-      case 'sm': return { container: 30, iconSize: 15, font: 14, radius: 8 };
-      case 'md': return { container: 36, iconSize: 18, font: 17, radius: 10 };
-      case 'lg': return { container: 48, iconSize: 24, font: 23, radius: 14 };
-      case 'xl': return { container: 64, iconSize: 32, font: 30, radius: 18 };
-      default: return { container: 36, iconSize: 18, font: 17, radius: 10 };
+      case 'sm': return { container: 30, iconSize: 18, font: 16, radius: 15 };
+      case 'md': return { container: 36, iconSize: 21, font: 19, radius: 18 };
+      case 'lg': return { container: 48, iconSize: 28, font: 25, radius: 24 };
+      case 'xl': return { container: 64, iconSize: 37, font: 33, radius: 32 };
+      default: return { container: 36, iconSize: 21, font: 19, radius: 18 };
     }
   };
 

@@ -42,7 +42,7 @@ export function TransactionItem({ transaction, onPress, showDate = false }: Tran
           size="md"
         />
         <View style={styles.info}>
-          <Text variant="sm" weight="bold" numberOfLines={1}>
+          <Text variant="sm" weight="medium" numberOfLines={1}>
             {transaction.categoryNameSnapshot}
           </Text>
           {transaction.comment ? (
