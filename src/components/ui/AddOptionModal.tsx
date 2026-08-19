@@ -151,15 +151,15 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={[
           styles.backdrop,
-          Platform.OS === 'web' && ({ backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' } as any)
+          Platform.OS === 'web' && ({ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as any)
         ]}>
-          {BlurViewComponent && Platform.OS !== 'web' && (
+          {BlurViewComponent && Platform.OS !== 'web' ? (
             <BlurViewComponent 
-              intensity={15} 
+              intensity={Platform.OS === 'ios' ? 40 : 65} 
               tint={theme === 'dark' ? 'dark' : 'light'} 
               style={StyleSheet.absoluteFill} 
             />
-          )}
+          ) : null}
 
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View style={[
@@ -295,7 +295,7 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: Platform.OS === 'web' ? 'rgba(0, 0, 0, 0.15)' : 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'flex-end',
   },
   sheetContainer: {

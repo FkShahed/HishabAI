@@ -8,6 +8,11 @@ import { Spacing, Radii, Shadows, useThemeColors } from '../../constants/colors'
 import { useUIStore } from '../../store';
 import { evaluateMathExpression, formatCurrency } from '../../utils/finance';
 
+let BlurViewComponent: any = null;
+try {
+  BlurViewComponent = require('expo-blur').BlurView;
+} catch (e) {}
+
 interface CalculatorKeypadModalProps {
   visible: boolean;
   initialValue: string;
@@ -89,7 +94,17 @@ export function CalculatorKeypadModal({ visible, initialValue, onClose, onApply 
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.backdrop}>
+        <View style={[
+          styles.backdrop,
+          Platform.OS === 'web' && ({ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as any)
+        ]}>
+          {BlurViewComponent && Platform.OS !== 'web' ? (
+            <BlurViewComponent 
+              intensity={Platform.OS === 'ios' ? 40 : 65} 
+              tint="dark" 
+              style={StyleSheet.absoluteFill} 
+            />
+          ) : null}
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View style={[
               styles.sheetContainer,
