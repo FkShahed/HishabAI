@@ -34,14 +34,14 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
   const colors = useThemeColors();
   const addCategory = useCategoryStore((s) => s.addCategory);
 
-  const existingCategories = useCategoryStore((s) => s.categories);
-  const existingIconsSet = new Set(existingCategories.map((c) => c.icon));
+  const existingCategories = useCategoryStore((s) => s.categories) || [];
+  const existingIconsSet = new Set((existingCategories || []).map((c) => c?.icon).filter(Boolean));
 
   const [name, setName] = useState('');
   const [type, setType] = useState<'expense' | 'income'>(initialType);
 
-  const sourceIcons = type === 'expense' ? AVAILABLE_EXPENSE_ICONS : AVAILABLE_INCOME_ICONS;
-  const unassignedIcons = sourceIcons.filter((ic) => !existingIconsSet.has(ic));
+  const sourceIcons = (type === 'expense' ? AVAILABLE_EXPENSE_ICONS : AVAILABLE_INCOME_ICONS) || [];
+  const unassignedIcons = (sourceIcons || []).filter((ic) => !existingIconsSet.has(ic));
 
   const [selectedIcon, setSelectedIcon] = useState(unassignedIcons[0] || (type === 'expense' ? '🏷️' : '💰'));
   const [selectedColor, setSelectedColor] = useState(type === 'expense' ? '#8B5CF6' : '#10B981');
@@ -124,7 +124,7 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
                     style={[styles.typeToggleBtn, type === 'expense' && { backgroundColor: colors.semantic.expense }]}
                     onPress={() => {
                       setType('expense');
-                      const unassigned = AVAILABLE_EXPENSE_ICONS.filter((ic) => !existingIconsSet.has(ic));
+                      const unassigned = (AVAILABLE_EXPENSE_ICONS || []).filter((ic) => !existingIconsSet.has(ic));
                       setSelectedIcon(unassigned[0] || '🏷️');
                       setSelectedColor('#8B5CF6');
                     }}
@@ -138,7 +138,7 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
                     style={[styles.typeToggleBtn, type === 'income' && { backgroundColor: colors.semantic.income }]}
                     onPress={() => {
                       setType('income');
-                      const unassigned = AVAILABLE_INCOME_ICONS.filter((ic) => !existingIconsSet.has(ic));
+                      const unassigned = (AVAILABLE_INCOME_ICONS || []).filter((ic) => !existingIconsSet.has(ic));
                       setSelectedIcon(unassigned[0] || '💰');
                       setSelectedColor('#10B981');
                     }}
