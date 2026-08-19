@@ -17,8 +17,6 @@ import { NotificationService } from '../../src/services/notifications';
 import { VersionServiceClient, CheckUpdateResult } from '../../src/services/api';
 import { AddCategoryModal } from '../../src/components/ui/AddCategoryModal';
 
-const pkg = require('../../package.json');
-
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
