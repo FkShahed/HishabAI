@@ -295,7 +295,8 @@ export default function AuthScreen() {
           </View>
         ) : null}
 
-        {/* Google Auth Button */}
+        {/* Google Auth Button (Temporarily commented out) */}
+        {/*
         <TouchableOpacity
           style={[
             styles.googleButton,
@@ -311,8 +312,6 @@ export default function AuthScreen() {
           </Text>
         </TouchableOpacity>
 
-
-        {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={[styles.dividerLine, { backgroundColor: colors.border.subtle }]} />
           <Text variant="xs" color={colors.text.tertiary} style={{ marginHorizontal: Spacing.md }}>
@@ -320,6 +319,7 @@ export default function AuthScreen() {
           </Text>
           <View style={[styles.dividerLine, { backgroundColor: colors.border.subtle }]} />
         </View>
+        */}
 
         {/* Form Inputs */}
         {mode === 'signup' && (
