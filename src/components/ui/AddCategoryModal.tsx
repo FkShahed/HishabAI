@@ -23,9 +23,10 @@ interface AddCategoryModalProps {
 }
 
 const CATEGORY_COLORS = [
-  '#10B981', '#3B82F6', '#EF4444', '#F59E0B', 
-  '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', 
-  '#F97316', '#6366F1', '#14B8A6', '#D97706'
+  '#8B5CF6', '#06B6D4', '#F59E0B', '#EC4899', 
+  '#10B981', '#3B82F6', '#EF4444', '#84CC16', 
+  '#F97316', '#6366F1', '#14B8A6', '#D97706',
+  '#A855F7', '#EAB308', '#F472B6', '#22C55E'
 ];
 
 export function AddCategoryModal({ visible, onClose, initialType = 'expense', onCategoryCreated }: AddCategoryModalProps) {
@@ -179,24 +180,31 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
                   ))}
                 </View>
 
-                {/* Emoji Icon Library (80+ Icons) */}
+                {/* Emoji / Vector Icon Library (80+ Icons) */}
                 <Text variant="xs" weight="bold" color={colors.text.secondary} style={styles.inputLabel}>
                   CHOOSE ICON ({AVAILABLE_CATEGORY_ICONS.length}+ Icons)
                 </Text>
                 <View style={styles.iconGrid}>
-                  {AVAILABLE_CATEGORY_ICONS.map((ic, idx) => (
-                    <TouchableOpacity
-                      key={`${ic}_${idx}`}
-                      style={[
-                        styles.iconChip,
-                        { backgroundColor: colors.bg.card, borderColor: colors.border.subtle },
-                        selectedIcon === ic && { backgroundColor: colors.accent.primaryDim, borderColor: colors.accent.primary, borderWidth: 1.5 }
-                      ]}
-                      onPress={() => setSelectedIcon(ic)}
-                    >
-                      <Text style={{ fontSize: 20 }}>{ic}</Text>
-                    </TouchableOpacity>
-                  ))}
+                  {AVAILABLE_CATEGORY_ICONS.map((ic, idx) => {
+                    const isSelected = selectedIcon === ic;
+                    return (
+                      <TouchableOpacity
+                        key={`${ic}_${idx}`}
+                        style={[
+                          styles.iconChip,
+                          isSelected && { transform: [{ scale: 1.1 }] }
+                        ]}
+                        onPress={() => setSelectedIcon(ic)}
+                        activeOpacity={0.8}
+                      >
+                        <CategoryIcon 
+                          icon={ic} 
+                          color={isSelected ? selectedColor : colors.text.tertiary} 
+                          size="sm" 
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </ScrollView>
 
@@ -290,10 +298,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   iconChip: {
-    width: 42,
-    height: 42,
-    borderRadius: Radii.md,
-    borderWidth: 1,
+    padding: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
