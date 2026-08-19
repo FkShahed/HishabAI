@@ -32,7 +32,7 @@ export class GroqSTTService {
 
     const filename = `audio.${ext}`;
 
-    const blob = new Blob([audioBuffer], { type: mimeType });
+    const blob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType });
     const formData = new FormData();
     formData.append('file', blob, filename);
     formData.append('model', 'whisper-large-v3-turbo');

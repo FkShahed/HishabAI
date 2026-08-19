@@ -291,7 +291,7 @@ export default function ManualAddScreen() {
                     />
                     <Text 
                       variant="xs" 
-                      weight={value === cat.id ? "bold" : "normal"}
+                      weight={value === cat.id ? "bold" : "regular"}
                       color={value === cat.id ? colors.accent.primary : colors.text.secondary}
                       style={styles.categoryName}
                       numberOfLines={1}

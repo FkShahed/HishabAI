@@ -255,7 +255,7 @@ export default function TransactionDetailScreen() {
                     onPress={() => setEditForm(p => ({ ...p, categoryId: cat.id }))}
                   >
                     <Text>{cat.icon}</Text>
-                    <Text variant="xs" style={{ marginLeft: 4 }} weight={editForm.categoryId === cat.id ? "bold" : "normal"} color={editForm.categoryId === cat.id ? colors.accent.primary : colors.text.primary}>
+                    <Text variant="xs" style={{ marginLeft: 4 }} weight={editForm.categoryId === cat.id ? "bold" : "regular"} color={editForm.categoryId === cat.id ? colors.accent.primary : colors.text.primary}>
                       {cat.name}
                     </Text>
                   </TouchableOpacity>
