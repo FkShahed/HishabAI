@@ -499,7 +499,7 @@ export default function ChartsScreen() {
                         </Text>
                       </View>
 
-                      <View style={{ alignItems: 'flex-end', flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Text variant="sm" weight="bold" color={activeThemeColor} style={{ marginRight: 6 }}>
                           {formatCurrency(item.value, currency)}
                         </Text>
@@ -853,6 +853,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  legendContainer: {
+    marginTop: Spacing.md,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
   },
   categoryLegendCard: {
     flexDirection: 'row',
