@@ -105,6 +105,12 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="category-detail/[id]"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
 
     </>

@@ -425,22 +425,32 @@ export default function ChartsScreen() {
                 </View>
               </View>
               
-              {/* Category Legend with Top 5 + See More + Inline Date-wise Expansion */}
+              {/* Category Legend with Top 5 + See More + Navigation to Category Details Page */}
               <View style={styles.legendContainer}>
                 {(showAllCategories ? pieData.data : pieData.data.slice(0, 5)).map((item, index) => {
-                  const isExpanded = expandedCategoryId === item.id;
-                  const categoryTxns = typeFilteredTransactions
-                    .filter((t) => t.categoryId === item.id)
-                    .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate));
+                  const categoryTxnsCount = typeFilteredTransactions.filter((t) => t.categoryId === item.id).length;
 
                   return (
                     <View key={item.id || index} style={{ marginBottom: Spacing.xs }}>
                       <TouchableOpacity
                         style={[
                           styles.categoryLegendCard,
-                          { backgroundColor: colors.bg.secondary, borderColor: isExpanded ? colors.accent.primary : colors.border.subtle }
+                          { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }
                         ]}
-                        onPress={() => setExpandedCategoryId(isExpanded ? null : item.id)}
+                        onPress={() => {
+                          router.push({
+                            pathname: '/category-detail/[id]' as any,
+                            params: {
+                              id: item.id,
+                              type: selectedType,
+                              month: String(selectedMonth),
+                              year: String(selectedYear),
+                              name: item.label,
+                              icon: item.icon,
+                              color: item.color,
+                            }
+                          });
+                        }}
                         activeOpacity={0.7}
                       >
                         <CategoryIcon icon={item.icon} color={item.color} size="sm" />
@@ -451,7 +461,7 @@ export default function ChartsScreen() {
                               {item.label}
                             </Text>
                             <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 1 }}>
-                              {item.percentage}% of total {selectedType} ({categoryTxns.length} txns)
+                              {item.percentage}% of total {selectedType} ({categoryTxnsCount} txns)
                             </Text>
                           </View>
 
@@ -460,39 +470,13 @@ export default function ChartsScreen() {
                               {formatCurrency(item.value, currency)}
                             </Text>
                             <Ionicons 
-                              name={isExpanded ? "chevron-up" : "chevron-down"} 
+                              name="chevron-forward" 
                               size={16} 
                               color={colors.text.tertiary} 
                             />
                           </View>
                         </View>
                       </TouchableOpacity>
-
-                      {/* Inline Date-wise Transactions List */}
-                      {isExpanded && (
-                        <View style={[styles.inlineCategoryTxnBox, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
-                          <View style={styles.inlineHeader}>
-                            <Ionicons name="list-outline" size={14} color={colors.accent.primary} style={{ marginRight: 6 }} />
-                            <Text variant="xs" weight="bold" color={colors.text.primary}>
-                              {item.label} Transactions by Date
-                            </Text>
-                          </View>
-                          {categoryTxns.length > 0 ? (
-                            categoryTxns.map((tx) => (
-                              <TransactionItem
-                                key={tx.id}
-                                transaction={tx}
-                                showDate={true}
-                                onPress={() => router.push(`/transaction/${tx.id}` as any)}
-                              />
-                            ))
-                          ) : (
-                            <Text variant="xs" color={colors.text.tertiary} align="center" style={{ paddingVertical: 8 }}>
-                              No transactions in this category.
-                            </Text>
-                          )}
-                        </View>
-                      )}
                     </View>
                   );
                 })}
