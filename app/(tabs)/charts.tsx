@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Modal, TouchableWithoutFeedback, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, G } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,9 +10,15 @@ import { Text } from '../../src/components/ui/Text';
 import { Header } from '../../src/components/ui/Header';
 import { MonthSelector } from '../../src/components/ui/MonthSelector';
 import { TransactionItem } from '../../src/components/transactions/TransactionItem';
+import { CategoryIcon } from '../../src/components/ui/CategoryIcon';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { useUIStore, useTransactionStore } from '../../src/store';
 import { formatCurrency, getCurrencySymbol, formatDateDisplay } from '../../src/utils/finance';
+
+let BlurViewComponent: any = null;
+try {
+  BlurViewComponent = require('expo-blur').BlurView;
+} catch (e) {}
 
 /** Helper to format compact amounts on small calendar cells */
 function formatCompactAmount(amount: number, symbol: string): string {
@@ -46,19 +52,64 @@ export default function ChartsScreen() {
   // State: Selected Calendar Day for detailed inspection
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
+  // State: Selected Category Modal for inspecting all transactions of a category
+  const [selectedCategoryModal, setSelectedCategoryModal] = useState<{
+    categoryId: string;
+    label: string;
+    icon: string;
+    color: string;
+    total: number;
+    percentage: number;
+  } | null>(null);
+
   // Filter transactions by the selected type
   const typeFilteredTransactions = useMemo(() => {
     return transactions.filter((t) => t.type === selectedType);
   }, [transactions, selectedType]);
 
+  // Selected Category Transactions
+  const selectedCategoryTransactions = useMemo(() => {
+    if (!selectedCategoryModal) return [];
+    return typeFilteredTransactions.filter((t) => t.categoryId === selectedCategoryModal.categoryId);
+  }, [typeFilteredTransactions, selectedCategoryModal]);
+
+  // Monthly Cash Flow & Financial Health Metrics
+  const cashFlowMetrics = useMemo(() => {
+    let totalInc = 0;
+    let totalExp = 0;
+    transactions.forEach((t) => {
+      if (t.type === 'income') totalInc += t.amount;
+      else if (t.type === 'expense') totalExp += t.amount;
+    });
+
+    const netSurplus = totalInc - totalExp;
+    const savingsRate = totalInc > 0 ? Math.max(0, Math.round((netSurplus / totalInc) * 100)) : 0;
+    const daysCount = getDaysInMonth(new Date(selectedYear, selectedMonth - 1, 1)) || 30;
+    const avgDailySpend = Math.round(totalExp / daysCount);
+    const flowTotal = (totalInc + totalExp) || 1;
+    const incPercent = Math.round((totalInc / flowTotal) * 100);
+    const expPercent = Math.round((totalExp / flowTotal) * 100);
+
+    return {
+      totalInc,
+      totalExp,
+      netSurplus,
+      savingsRate,
+      avgDailySpend,
+      incPercent,
+      expPercent,
+    };
+  }, [transactions, selectedMonth, selectedYear]);
+
   // 1. Prepare Pie / Donut Chart Data (Category Breakdown)
   const pieData = useMemo(() => {
-    const categoryTotals = new Map<string, { value: number; color: string; label: string; icon: string }>();
+    const categoryTotals = new Map<string, { id: string; value: number; color: string; label: string; icon: string }>();
     let totalAmount = 0;
     
     typeFilteredTransactions.forEach((t) => {
       totalAmount += t.amount;
       const existing = categoryTotals.get(t.categoryId) || {
+        id: t.categoryId,
         value: 0,
         color: t.categoryColor || colors.accent.primary,
         label: t.categoryNameSnapshot,
@@ -70,6 +121,7 @@ export default function ChartsScreen() {
 
     const data = Array.from(categoryTotals.values())
       .map((item) => ({
+        id: item.id,
         value: item.value,
         color: item.color,
         percentage: Math.round((item.value / (totalAmount || 1)) * 100),
@@ -416,20 +468,45 @@ export default function ChartsScreen() {
                 </View>
               </View>
               
-              {/* Category Legend */}
+              {/* Category Legend with CategoryIcon and Interactive Click */}
               <View style={styles.legendContainer}>
                 {pieData.data.map((item, index) => (
-                  <View key={index} style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-                    <View style={styles.legendText}>
-                      <Text variant="sm" color={colors.text.secondary}>
-                        {item.icon} {item.label}
-                      </Text>
-                      <Text variant="sm" weight="semibold">
-                        {formatCurrency(item.value, currency)} ({item.percentage}%)
-                      </Text>
+                  <TouchableOpacity
+                    key={item.id || index}
+                    style={[
+                      styles.categoryLegendCard,
+                      { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }
+                    ]}
+                    onPress={() => setSelectedCategoryModal({
+                      categoryId: item.id,
+                      label: item.label,
+                      icon: item.icon,
+                      color: item.color,
+                      total: item.value,
+                      percentage: item.percentage
+                    })}
+                    activeOpacity={0.7}
+                  >
+                    <CategoryIcon icon={item.icon} color={item.color} size="sm" />
+                    
+                    <View style={styles.categoryLegendDetails}>
+                      <View style={{ flex: 1 }}>
+                        <Text variant="sm" weight="semibold" numberOfLines={1}>
+                          {item.label}
+                        </Text>
+                        <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 1 }}>
+                          {item.percentage}% of total {selectedType}
+                        </Text>
+                      </View>
+
+                      <View style={{ alignItems: 'flex-end', flexDirection: 'row', alignItems: 'center' }}>
+                        <Text variant="sm" weight="bold" color={activeThemeColor} style={{ marginRight: 6 }}>
+                          {formatCurrency(item.value, currency)}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+                      </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             </>
@@ -476,10 +553,190 @@ export default function ChartsScreen() {
             </View>
           </ScrollView>
         </View>
+
+        {/* ── 4. Monthly Cash Flow & Savings Ratio Graph ───────────────────── */}
+        <View style={[styles.card, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+          <View style={styles.cardHeaderRow}>
+            <View>
+              <Text variant="md" weight="bold">
+                Monthly Cash Flow & Health
+              </Text>
+              <Text variant="xs" color={colors.text.secondary}>
+                Income vs Expense Balance Overview
+              </Text>
+            </View>
+            <View style={[
+              styles.typeBadge, 
+              { backgroundColor: cashFlowMetrics.netSurplus >= 0 ? colors.semantic.incomeDim : colors.semantic.expenseDim }
+            ]}>
+              <Text 
+                variant="xs" 
+                weight="bold" 
+                color={cashFlowMetrics.netSurplus >= 0 ? colors.semantic.income : colors.semantic.expense}
+              >
+                {cashFlowMetrics.netSurplus >= 0 ? 'Surplus' : 'Deficit'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Dual Bar Comparison Track */}
+          <View style={styles.cashFlowBarTrack}>
+            <View 
+              style={[
+                styles.cashFlowBarFill, 
+                { width: `${cashFlowMetrics.incPercent}%`, backgroundColor: colors.semantic.income }
+              ]} 
+            />
+            <View 
+              style={[
+                styles.cashFlowBarFill, 
+                { width: `${cashFlowMetrics.expPercent}%`, backgroundColor: colors.semantic.expense }
+              ]} 
+            />
+          </View>
+
+          <View style={styles.cashFlowLegendRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.legendDot, { backgroundColor: colors.semantic.income }]} />
+              <Text variant="xs" color={colors.text.secondary}>
+                Earned: <Text variant="xs" weight="bold" color={colors.semantic.income}>{formatCurrency(cashFlowMetrics.totalInc, currency)}</Text>
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.legendDot, { backgroundColor: colors.semantic.expense }]} />
+              <Text variant="xs" color={colors.text.secondary}>
+                Spent: <Text variant="xs" weight="bold" color={colors.semantic.expense}>{formatCurrency(cashFlowMetrics.totalExp, currency)}</Text>
+              </Text>
+            </View>
+          </View>
+
+          {/* 3 Metric Pills */}
+          <View style={styles.metricsPillRow}>
+            <View style={[styles.metricPillCard, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
+              <Text variant="xs" color={colors.text.tertiary}>Net Balance</Text>
+              <Text 
+                variant="sm" 
+                weight="bold" 
+                color={cashFlowMetrics.netSurplus >= 0 ? colors.semantic.income : colors.semantic.expense}
+                style={{ marginTop: 2 }}
+              >
+                {cashFlowMetrics.netSurplus >= 0 ? '+' : ''}{formatCurrency(cashFlowMetrics.netSurplus, currency)}
+              </Text>
+            </View>
+
+            <View style={[styles.metricPillCard, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
+              <Text variant="xs" color={colors.text.tertiary}>Savings Rate</Text>
+              <Text variant="sm" weight="bold" color={colors.accent.primaryLight} style={{ marginTop: 2 }}>
+                🎯 {cashFlowMetrics.savingsRate}%
+              </Text>
+            </View>
+
+            <View style={[styles.metricPillCard, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
+              <Text variant="xs" color={colors.text.tertiary}>Daily Avg</Text>
+              <Text variant="sm" weight="bold" color={colors.text.primary} style={{ marginTop: 2 }}>
+                ⚡ {formatCurrency(cashFlowMetrics.avgDailySpend, currency)}/d
+              </Text>
+            </View>
+          </View>
+        </View>
         
         {/* Spacer for bottom tab */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* ── Category Transactions Detail Modal Sheet ──────────────────────── */}
+      <Modal
+        visible={selectedCategoryModal !== null}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setSelectedCategoryModal(null)}
+      >
+        <TouchableWithoutFeedback onPress={() => setSelectedCategoryModal(null)}>
+          <View style={[
+            styles.modalBackdrop,
+            Platform.OS === 'web' && ({ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as any)
+          ]}>
+            {BlurViewComponent && Platform.OS !== 'web' ? (
+              <BlurViewComponent 
+                intensity={Platform.OS === 'ios' ? 40 : 65} 
+                tint="dark" 
+                style={StyleSheet.absoluteFill} 
+              />
+            ) : null}
+
+            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+              <View style={[
+                styles.modalSheetContainer,
+                { 
+                  backgroundColor: colors.bg.modal,
+                  borderColor: colors.border.subtle,
+                  paddingBottom: Math.max(insets.bottom, 20) + 12,
+                }
+              ]}>
+                <View style={[styles.modalHandleBar, { backgroundColor: colors.border.medium }]} />
+
+                {selectedCategoryModal && (
+                  <>
+                    <View style={styles.modalSheetHeader}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <CategoryIcon 
+                          icon={selectedCategoryModal.icon} 
+                          color={selectedCategoryModal.color} 
+                          size="md" 
+                        />
+                        <View style={{ marginLeft: Spacing.sm }}>
+                          <Text variant="md" weight="bold">
+                            {selectedCategoryModal.label}
+                          </Text>
+                          <Text variant="xs" color={colors.text.secondary}>
+                            {selectedCategoryTransactions.length} transaction{selectedCategoryTransactions.length === 1 ? '' : 's'} • {selectedCategoryModal.percentage}% of total
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text variant="md" weight="bold" color={activeThemeColor}>
+                          {formatCurrency(selectedCategoryModal.total, currency)}
+                        </Text>
+                        <TouchableOpacity 
+                          onPress={() => setSelectedCategoryModal(null)}
+                          style={[styles.modalCloseBtn, { backgroundColor: colors.bg.secondary }]}
+                        >
+                          <Ionicons name="close" size={16} color={colors.text.primary} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+                      {selectedCategoryTransactions.length > 0 ? (
+                        <View style={{ paddingVertical: Spacing.xs }}>
+                          {selectedCategoryTransactions.map((tx) => (
+                            <TransactionItem
+                              key={tx.id}
+                              transaction={tx}
+                              onPress={() => {
+                                setSelectedCategoryModal(null);
+                                router.push(`/transaction/${tx.id}` as any);
+                              }}
+                            />
+                          ))}
+                        </View>
+                      ) : (
+                        <View style={{ padding: Spacing.xl, alignItems: 'center' }}>
+                          <Ionicons name="receipt-outline" size={32} color={colors.text.tertiary} />
+                          <Text variant="sm" color={colors.text.tertiary} style={{ marginTop: Spacing.xs }}>
+                            No transactions found for this category.
+                          </Text>
+                        </View>
+                      )}
+                    </ScrollView>
+                  </>
+                )}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 }
@@ -597,24 +854,86 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  legendContainer: {
-    marginTop: Spacing.md,
-  },
-  legendItem: {
+  categoryLegendCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: Spacing.xs + 2,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
     marginBottom: Spacing.xs,
   },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: Spacing.sm,
-  },
-  legendText: {
+  categoryLegendDetails: {
     flex: 1,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    marginLeft: Spacing.xs + 2,
+  },
+  cashFlowBarTrack: {
+    height: 14,
+    borderRadius: 7,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    backgroundColor: 'rgba(150, 150, 150, 0.15)',
+    marginVertical: Spacing.sm,
+  },
+  cashFlowBarFill: {
+    height: '100%',
+  },
+  cashFlowLegendRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+  },
+  metricsPillRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    marginTop: 4,
+  },
+  metricPillCard: {
+    flex: 1,
+    padding: Spacing.xs + 2,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'flex-end',
+  },
+  modalSheetContainer: {
+    borderTopLeftRadius: Radii.xl,
+    borderTopRightRadius: Radii.xl,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    padding: Spacing.md,
+    maxHeight: '85%',
+  },
+  modalHandleBar: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: Spacing.sm,
+  },
+  modalSheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(150, 150, 150, 0.12)',
+    marginBottom: Spacing.xs,
+  },
+  modalCloseBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
   },
   emptyState: {
     height: 160,
