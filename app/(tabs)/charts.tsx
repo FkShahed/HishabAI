@@ -63,12 +63,6 @@ export default function ChartsScreen() {
     return transactions.filter((t) => t.type === selectedType);
   }, [transactions, selectedType]);
 
-  // Selected Category Transactions
-  const selectedCategoryTransactions = useMemo(() => {
-    if (!selectedCategoryModal) return [];
-    return typeFilteredTransactions.filter((t) => t.categoryId === selectedCategoryModal.categoryId);
-  }, [typeFilteredTransactions, selectedCategoryModal]);
-
   // Monthly Cash Flow & Financial Health Metrics
   const cashFlowMetrics = useMemo(() => {
     let totalInc = 0;
