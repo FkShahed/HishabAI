@@ -185,6 +185,21 @@ export const useCategoryStore = create<CategoryState>()(
         set((state) => ({
           categories: state.categories.map((c) => (c.id === id ? { ...c, ...updates } : c)),
         }));
+
+        // Cascade category changes (name, icon, color) to all transactions belonging to this category
+        const txStore = useTransactionStore.getState();
+        if (txStore && txStore.transactions) {
+          txStore.transactions.forEach((tx) => {
+            if (tx.categoryId === id) {
+              txStore.updateTransaction(tx.id, {
+                ...(updates.name ? { categoryNameSnapshot: updates.name } : {}),
+                ...(updates.icon ? { categoryIcon: updates.icon } : {}),
+                ...(updates.color ? { categoryColor: updates.color } : {}),
+              });
+            }
+          });
+        }
+
         if (auth?.currentUser) {
           const updated = get().categories.find(c => c.id === id);
           if (updated && !updated.isDefault) {

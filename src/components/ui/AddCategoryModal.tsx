@@ -15,10 +15,13 @@ try {
   BlurViewComponent = require('expo-blur').BlurView;
 } catch (e) {}
 
+import { Category } from '../../types';
+
 interface AddCategoryModalProps {
   visible: boolean;
   onClose: () => void;
   initialType?: 'expense' | 'income';
+  categoryToEdit?: Category | null;
   onCategoryCreated?: (categoryId: string) => void;
 }
 
@@ -29,23 +32,42 @@ const CATEGORY_COLORS = [
   '#A855F7', '#EAB308', '#F472B6', '#22C55E'
 ];
 
-export function AddCategoryModal({ visible, onClose, initialType = 'expense', onCategoryCreated }: AddCategoryModalProps) {
+export function AddCategoryModal({ visible, onClose, initialType = 'expense', categoryToEdit, onCategoryCreated }: AddCategoryModalProps) {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const addCategory = useCategoryStore((s) => s.addCategory);
+  const updateCategory = useCategoryStore((s) => s.updateCategory);
 
   const existingCategories = useCategoryStore((s) => s.categories) || [];
   const existingIconsSet = new Set((existingCategories || []).map((c) => c?.icon).filter(Boolean));
 
   const [name, setName] = useState('');
   const [type, setType] = useState<'expense' | 'income'>(initialType);
+  const [selectedIcon, setSelectedIcon] = useState('🏷️');
+  const [selectedColor, setSelectedColor] = useState('#8B5CF6');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const sourceIcons = (type === 'expense' ? AVAILABLE_EXPENSE_ICONS : AVAILABLE_INCOME_ICONS) || [];
-  const unassignedIcons = (sourceIcons || []).filter((ic) => !existingIconsSet.has(ic));
+  const unassignedIcons = (sourceIcons || []).filter((ic: string) => !existingIconsSet.has(ic) || ic === selectedIcon);
 
-  const [selectedIcon, setSelectedIcon] = useState(unassignedIcons[0] || (type === 'expense' ? '🏷️' : '💰'));
-  const [selectedColor, setSelectedColor] = useState(type === 'expense' ? '#8B5CF6' : '#10B981');
-  const [errorMsg, setErrorMsg] = useState('');
+  React.useEffect(() => {
+    if (visible) {
+      if (categoryToEdit) {
+        setName(categoryToEdit.name);
+        setType(categoryToEdit.type);
+        setSelectedIcon(categoryToEdit.icon);
+        setSelectedColor(categoryToEdit.color);
+      } else {
+        setName('');
+        setType(initialType);
+        const sourceIcons = (initialType === 'expense' ? AVAILABLE_EXPENSE_ICONS : AVAILABLE_INCOME_ICONS) || [];
+        const unassignedIcons = (sourceIcons || []).filter((ic) => !existingIconsSet.has(ic));
+        setSelectedIcon(unassignedIcons[0] || (initialType === 'expense' ? '🏷️' : '💰'));
+        setSelectedColor(initialType === 'expense' ? '#8B5CF6' : '#10B981');
+      }
+      setErrorMsg('');
+    }
+  }, [visible, categoryToEdit, initialType]);
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -53,26 +75,30 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
       return;
     }
 
-    const newCat = {
-      id: `custom_${Date.now()}`,
-      name: name.trim(),
-      icon: selectedIcon,
-      color: selectedColor,
-      type,
-      isActive: true,
-      isDefault: false,
-      sortOrder: 99,
-    };
+    if (categoryToEdit) {
+      updateCategory(categoryToEdit.id, {
+        name: name.trim(),
+        icon: selectedIcon,
+        color: selectedColor,
+      });
+    } else {
+      const newCat = {
+        id: `custom_${Date.now()}`,
+        name: name.trim(),
+        icon: selectedIcon,
+        color: selectedColor,
+        type,
+        isActive: true,
+        isDefault: false,
+        sortOrder: 99,
+      };
 
-    addCategory(newCat);
-    if (onCategoryCreated) {
-      onCategoryCreated(newCat.id);
+      addCategory(newCat);
+      if (onCategoryCreated) {
+        onCategoryCreated(newCat.id);
+      }
     }
-    
-    // Reset form
-    setName('');
-    setSelectedIcon('🏷️');
-    setErrorMsg('');
+
     onClose();
   };
 
@@ -108,7 +134,9 @@ export function AddCategoryModal({ visible, onClose, initialType = 'expense', on
               <View style={[styles.handleBar, { backgroundColor: colors.border.medium }]} />
 
               <View style={styles.sheetHeader}>
-                <Text variant="lg" weight="bold">Create Custom Category</Text>
+                <Text variant="lg" weight="bold">
+                  {categoryToEdit ? 'Edit Category' : 'Create Custom Category'}
+                </Text>
                 <TouchableOpacity 
                   onPress={onClose}
                   style={[styles.closeBtn, { backgroundColor: colors.bg.secondary }]}

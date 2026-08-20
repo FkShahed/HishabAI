@@ -21,6 +21,7 @@ export default function ManageCategoriesScreen() {
 
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const filteredCategories = categories.filter((c) => c.type === activeTab);
 
@@ -126,15 +127,25 @@ export default function ManageCategoriesScreen() {
                 </View>
               </View>
 
-              {!cat.isDefault && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <TouchableOpacity
-                  style={[styles.deleteBtn, { backgroundColor: colors.semantic.dangerDim }]}
-                  onPress={() => handleDeleteCategory(cat)}
+                  style={[styles.actionBtn, { backgroundColor: colors.bg.secondary }]}
+                  onPress={() => setEditingCategory(cat)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="trash-outline" size={16} color={colors.semantic.danger} />
+                  <Ionicons name="pencil-outline" size={16} color={colors.accent.primary} />
                 </TouchableOpacity>
-              )}
+
+                {!cat.isDefault && (
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { backgroundColor: colors.semantic.dangerDim }]}
+                    onPress={() => handleDeleteCategory(cat)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="trash-outline" size={16} color={colors.semantic.danger} />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           ))}
           <View style={{ height: 60 }} />
@@ -142,9 +153,13 @@ export default function ManageCategoriesScreen() {
       </View>
 
       <AddCategoryModal
-        visible={isAddModalVisible}
-        onClose={() => setIsAddModalVisible(false)}
+        visible={isAddModalVisible || editingCategory !== null}
+        onClose={() => {
+          setIsAddModalVisible(false);
+          setEditingCategory(null);
+        }}
         initialType={activeTab}
+        categoryToEdit={editingCategory}
       />
     </View>
   );
@@ -206,7 +221,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
-  deleteBtn: {
+  actionBtn: {
     width: 30,
     height: 30,
     borderRadius: 15,
