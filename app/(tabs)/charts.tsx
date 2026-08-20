@@ -49,18 +49,14 @@ export default function ChartsScreen() {
   // State: Expense vs Income filter
   const [selectedType, setSelectedType] = useState<'expense' | 'income'>('expense');
   
-  // State: Selected Calendar Day for detailed inspection
+  // State: Selected Calendar Day for Popup Modal inspection
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
-  // State: Selected Category Modal for inspecting all transactions of a category
-  const [selectedCategoryModal, setSelectedCategoryModal] = useState<{
-    categoryId: string;
-    label: string;
-    icon: string;
-    color: string;
-    total: number;
-    percentage: number;
-  } | null>(null);
+  // State: Expanded category ID for inline date-wise transaction list
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
+
+  // State: Show Top 5 vs See All categories toggle
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   // Filter transactions by the selected type
   const typeFilteredTransactions = useMemo(() => {
@@ -373,39 +369,6 @@ export default function ChartsScreen() {
               );
             })}
           </View>
-
-          {/* Selected Day Transaction Breakdown Box */}
-          {selectedDay !== null && (
-            <View style={[styles.selectedDayCard, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
-              <View style={styles.selectedDayHeader}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="calendar" size={16} color={colors.accent.primary} style={{ marginRight: 6 }} />
-                  <Text variant="sm" weight="bold">
-                    {formatDateDisplay(`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`)}
-                  </Text>
-                </View>
-                <Text variant="sm" weight="bold" color={activeThemeColor}>
-                  Total: {formatCurrency(selectedDayTotal, currency)}
-                </Text>
-              </View>
-
-              {selectedDayTransactions.length > 0 ? (
-                <View style={styles.selectedDayList}>
-                  {selectedDayTransactions.map((tx) => (
-                    <TransactionItem
-                      key={tx.id}
-                      transaction={tx}
-                      onPress={() => router.push(`/transaction/${tx.id}` as any)}
-                    />
-                  ))}
-                </View>
-              ) : (
-                <Text variant="xs" color={colors.text.tertiary} align="center" style={{ paddingVertical: Spacing.sm }}>
-                  No {selectedType} recorded on this day.
-                </Text>
-              )}
-            </View>
-          )}
         </View>
 
         {/* ── 2. Category Breakdown (SVG Donut Chart) ────────────────────── */}
@@ -468,46 +431,96 @@ export default function ChartsScreen() {
                 </View>
               </View>
               
-              {/* Category Legend with CategoryIcon and Interactive Click */}
+              {/* Category Legend with Top 5 + See More + Inline Date-wise Expansion */}
               <View style={styles.legendContainer}>
-                {pieData.data.map((item, index) => (
+                {(showAllCategories ? pieData.data : pieData.data.slice(0, 5)).map((item, index) => {
+                  const isExpanded = expandedCategoryId === item.id;
+                  const categoryTxns = typeFilteredTransactions
+                    .filter((t) => t.categoryId === item.id)
+                    .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate));
+
+                  return (
+                    <View key={item.id || index} style={{ marginBottom: Spacing.xs }}>
+                      <TouchableOpacity
+                        style={[
+                          styles.categoryLegendCard,
+                          { backgroundColor: colors.bg.secondary, borderColor: isExpanded ? colors.accent.primary : colors.border.subtle }
+                        ]}
+                        onPress={() => setExpandedCategoryId(isExpanded ? null : item.id)}
+                        activeOpacity={0.7}
+                      >
+                        <CategoryIcon icon={item.icon} color={item.color} size="sm" />
+                        
+                        <View style={styles.categoryLegendDetails}>
+                          <View style={{ flex: 1 }}>
+                            <Text variant="sm" weight="semibold" numberOfLines={1}>
+                              {item.label}
+                            </Text>
+                            <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 1 }}>
+                              {item.percentage}% of total {selectedType} ({categoryTxns.length} txns)
+                            </Text>
+                          </View>
+
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Text variant="sm" weight="bold" color={activeThemeColor} style={{ marginRight: 6 }}>
+                              {formatCurrency(item.value, currency)}
+                            </Text>
+                            <Ionicons 
+                              name={isExpanded ? "chevron-up" : "chevron-down"} 
+                              size={16} 
+                              color={colors.text.tertiary} 
+                            />
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+
+                      {/* Inline Date-wise Transactions List */}
+                      {isExpanded && (
+                        <View style={[styles.inlineCategoryTxnBox, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
+                          <View style={styles.inlineHeader}>
+                            <Ionicons name="list-outline" size={14} color={colors.accent.primary} style={{ marginRight: 6 }} />
+                            <Text variant="xs" weight="bold" color={colors.text.primary}>
+                              {item.label} Transactions by Date
+                            </Text>
+                          </View>
+                          {categoryTxns.length > 0 ? (
+                            categoryTxns.map((tx) => (
+                              <TransactionItem
+                                key={tx.id}
+                                transaction={tx}
+                                showDate={true}
+                                onPress={() => router.push(`/transaction/${tx.id}` as any)}
+                              />
+                            ))
+                          ) : (
+                            <Text variant="xs" color={colors.text.tertiary} align="center" style={{ paddingVertical: 8 }}>
+                              No transactions in this category.
+                            </Text>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+
+                {/* Top 5 See More / See Less Toggle */}
+                {pieData.data.length > 5 && (
                   <TouchableOpacity
-                    key={item.id || index}
-                    style={[
-                      styles.categoryLegendCard,
-                      { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }
-                    ]}
-                    onPress={() => setSelectedCategoryModal({
-                      categoryId: item.id,
-                      label: item.label,
-                      icon: item.icon,
-                      color: item.color,
-                      total: item.value,
-                      percentage: item.percentage
-                    })}
+                    style={[styles.seeMoreBtn, { borderColor: colors.border.subtle, backgroundColor: colors.bg.secondary }]}
+                    onPress={() => setShowAllCategories(!showAllCategories)}
                     activeOpacity={0.7}
                   >
-                    <CategoryIcon icon={item.icon} color={item.color} size="sm" />
-                    
-                    <View style={styles.categoryLegendDetails}>
-                      <View style={{ flex: 1 }}>
-                        <Text variant="sm" weight="semibold" numberOfLines={1}>
-                          {item.label}
-                        </Text>
-                        <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 1 }}>
-                          {item.percentage}% of total {selectedType}
-                        </Text>
-                      </View>
-
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Text variant="sm" weight="bold" color={activeThemeColor} style={{ marginRight: 6 }}>
-                          {formatCurrency(item.value, currency)}
-                        </Text>
-                        <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
-                      </View>
-                    </View>
+                    <Text variant="xs" weight="bold" color={colors.accent.primary}>
+                      {showAllCategories ? 'Show Top 5 Only' : `See More (${pieData.data.length - 5} More Categories)`}
+                    </Text>
+                    <Ionicons 
+                      name={showAllCategories ? "chevron-up" : "chevron-down"} 
+                      size={14} 
+                      color={colors.accent.primary} 
+                      style={{ marginLeft: 4 }}
+                    />
                   </TouchableOpacity>
-                ))}
+                )}
               </View>
             </>
           ) : (
@@ -644,14 +657,14 @@ export default function ChartsScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* ── Category Transactions Detail Modal Sheet ──────────────────────── */}
+      {/* ── Expense Calendar Date-Wise Popup Modal ───────────────────────── */}
       <Modal
-        visible={selectedCategoryModal !== null}
+        visible={selectedDay !== null}
         animationType="slide"
         transparent
-        onRequestClose={() => setSelectedCategoryModal(null)}
+        onRequestClose={() => setSelectedDay(null)}
       >
-        <TouchableWithoutFeedback onPress={() => setSelectedCategoryModal(null)}>
+        <TouchableWithoutFeedback onPress={() => setSelectedDay(null)}>
           <View style={[
             styles.modalBackdrop,
             Platform.OS === 'web' && ({ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as any)
@@ -675,31 +688,29 @@ export default function ChartsScreen() {
               ]}>
                 <View style={[styles.modalHandleBar, { backgroundColor: colors.border.medium }]} />
 
-                {selectedCategoryModal && (
+                {selectedDay !== null && (
                   <>
                     <View style={styles.modalSheetHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <CategoryIcon 
-                          icon={selectedCategoryModal.icon} 
-                          color={selectedCategoryModal.color} 
-                          size="md" 
-                        />
+                        <View style={[styles.dateModalIconBadge, { backgroundColor: activeDimColor }]}>
+                          <Ionicons name="calendar" size={18} color={activeThemeColor} />
+                        </View>
                         <View style={{ marginLeft: Spacing.sm }}>
                           <Text variant="md" weight="bold">
-                            {selectedCategoryModal.label}
+                            {formatDateDisplay(`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`)}
                           </Text>
                           <Text variant="xs" color={colors.text.secondary}>
-                            {selectedCategoryTransactions.length} transaction{selectedCategoryTransactions.length === 1 ? '' : 's'} • {selectedCategoryModal.percentage}% of total
+                            {selectedDayTransactions.length} {selectedType === 'expense' ? 'expense' : 'income'} transaction{selectedDayTransactions.length === 1 ? '' : 's'}
                           </Text>
                         </View>
                       </View>
 
-                      <View style={{ alignItems: 'flex-end' }}>
-                        <Text variant="md" weight="bold" color={activeThemeColor}>
-                          {formatCurrency(selectedCategoryModal.total, currency)}
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text variant="md" weight="bold" color={activeThemeColor} style={{ marginRight: Spacing.sm }}>
+                          {formatCurrency(selectedDayTotal, currency)}
                         </Text>
                         <TouchableOpacity 
-                          onPress={() => setSelectedCategoryModal(null)}
+                          onPress={() => setSelectedDay(null)}
                           style={[styles.modalCloseBtn, { backgroundColor: colors.bg.secondary }]}
                         >
                           <Ionicons name="close" size={16} color={colors.text.primary} />
@@ -708,14 +719,15 @@ export default function ChartsScreen() {
                     </View>
 
                     <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
-                      {selectedCategoryTransactions.length > 0 ? (
+                      {selectedDayTransactions.length > 0 ? (
                         <View style={{ paddingVertical: Spacing.xs }}>
-                          {selectedCategoryTransactions.map((tx) => (
+                          {selectedDayTransactions.map((tx) => (
                             <TransactionItem
                               key={tx.id}
                               transaction={tx}
+                              showDate={false}
                               onPress={() => {
-                                setSelectedCategoryModal(null);
+                                setSelectedDay(null);
                                 router.push(`/transaction/${tx.id}` as any);
                               }}
                             />
@@ -723,9 +735,9 @@ export default function ChartsScreen() {
                         </View>
                       ) : (
                         <View style={{ padding: Spacing.xl, alignItems: 'center' }}>
-                          <Ionicons name="receipt-outline" size={32} color={colors.text.tertiary} />
+                          <Ionicons name="calendar-outline" size={32} color={colors.text.tertiary} />
                           <Text variant="sm" color={colors.text.tertiary} style={{ marginTop: Spacing.xs }}>
-                            No transactions found for this category.
+                            No {selectedType} recorded on this date.
                           </Text>
                         </View>
                       )}
@@ -870,7 +882,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     borderRadius: Radii.sm,
     borderWidth: 1,
-    marginBottom: Spacing.xs,
   },
   categoryLegendDetails: {
     flex: 1,
@@ -878,6 +889,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginLeft: Spacing.xs + 2,
+  },
+  inlineCategoryTxnBox: {
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    padding: Spacing.xs,
+    marginTop: 4,
+    marginLeft: 8,
+  },
+  inlineHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(150, 150, 150, 0.12)',
+    marginBottom: 4,
+  },
+  seeMoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  dateModalIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cashFlowBarTrack: {
     height: 14,
