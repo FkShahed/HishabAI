@@ -1,7 +1,7 @@
 {
-  "version": "3.0.0",
-  "buildNumber": 4,
-  "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v3.0.0/hisabai-v3.0.0.apk",
+  "version": "4.0.0",
+  "buildNumber": 5,
+  "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v4.0.0/hisabai-v4.0.0.apk",
   "releaseNotes": "• Dedicated Category Management Screen\n• Smart high-quality iconography system\n• Performance optimizations and bug fixes",
   "forceUpdate": false,
   "minVersion": "1.0.0",

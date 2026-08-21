@@ -1,19 +1,26 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Image, Platform, ActivityIndicator } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { MonthSelector } from '../../src/components/ui/MonthSelector';
 import { TransactionItem } from '../../src/components/transactions/TransactionItem';
 import { useTransactionStore, useUIStore, useBudgetStore } from '../../src/store';
-import { Colors, Spacing, Radii, useThemeColors } from '../../src/constants/colors';
+import { Colors, Spacing, Radii, Gradients, useThemeColors } from '../../src/constants/colors';
 import { formatCurrency } from '../../src/utils/finance';
 import { auth } from '../../src/services/firebase';
 
 import { AddOptionModal } from '../../src/components/ui/AddOptionModal';
+
+let BlurViewComponent: any = null;
+try {
+  BlurViewComponent = require('expo-blur').BlurView;
+} catch (e) {}
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -34,8 +41,11 @@ export default function HomeScreen() {
   const rawPhotoUrl = auth?.currentUser?.photoURL || auth?.currentUser?.providerData?.[0]?.photoURL || userPhotoUrl;
   const photoUrl = !imageFailed && rawPhotoUrl ? rawPhotoUrl : null;
 
+  const isDark = colors.bg.primary === '#080810';
+  const heroGradientColors = isDark ? ['#1A103C', '#0F0F24', '#090914'] : ['#6D28D9', '#7C3AED', '#5B21B6'];
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Topbar Header Banner */}
@@ -76,14 +86,6 @@ export default function HomeScreen() {
             )}
           </TouchableOpacity>
         </View>
-
-        <MonthSelector
-          month={selectedMonth}
-          year={selectedYear}
-          onPrev={goToPrevMonth}
-          onNext={goToNextMonth}
-          variant="topbar"
-        />
       </View>
 
       <ScrollView
@@ -91,46 +93,89 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={() => {}} tintColor={colors.accent.primary} />}
       >
-        {/* Monthly Summary Card */}
-        <View style={[styles.summaryCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }]}>
+        {/* Translucent Blurry Glassmorphic Monthly Summary Card */}
+        <View style={[
+          styles.compactSummaryCard, 
+          { 
+            backgroundColor: colors.bg.glass, 
+            borderColor: colors.bg.glassBorder,
+            ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any) : {})
+          }
+        ]}>
+          {BlurViewComponent && Platform.OS !== 'web' ? (
+            <BlurViewComponent 
+              intensity={isDark ? 45 : 35} 
+              tint={isDark ? 'dark' : 'light'} 
+              style={StyleSheet.absoluteFill} 
+            />
+          ) : null}
+          {/* Integrated Month Selector inside card header */}
+          <View style={styles.cardMonthHeader}>
+            <TouchableOpacity onPress={goToPrevMonth} style={[styles.monthNavBtn, { backgroundColor: 'rgba(255, 255, 255, 0.06)', borderRadius: 10 }]} activeOpacity={0.7}>
+              <Ionicons name="chevron-back" size={18} color={colors.text.secondary} />
+            </TouchableOpacity>
+
+            <Text variant="sm" weight="bold" color={colors.text.primary}>
+              {new Date(selectedYear, selectedMonth - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </Text>
+
+            <TouchableOpacity 
+              onPress={goToNextMonth} 
+              style={[styles.monthNavBtn, { backgroundColor: 'rgba(255, 255, 255, 0.06)', borderRadius: 10 }]} 
+              disabled={selectedMonth === new Date().getMonth() + 1 && selectedYear === new Date().getFullYear()}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name="chevron-forward" 
+                size={18} 
+                color={(selectedMonth === new Date().getMonth() + 1 && selectedYear === new Date().getFullYear()) ? colors.text.tertiary : colors.text.secondary} 
+              />
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.cardDivider, { backgroundColor: colors.bg.glassBorder }]} />
+
+          {/* 3-Column Compact Balance Summary */}
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text variant="xs" color={colors.text.tertiary} weight="bold" style={{ fontSize: 10, letterSpacing: 0.5 }}>
+              <Text variant="xs" color={colors.text.tertiary} weight="medium" style={{ fontSize: 10, letterSpacing: 0.4 }}>
                 EXPENSES
               </Text>
-              <Text variant="sm" weight="bold" color={colors.semantic.expense} style={{ marginTop: 2, fontSize: 14 }}>
+              <Text variant="sm" weight="semibold" color={colors.semantic.expense} style={{ marginTop: 2 }}>
                 {formatCurrency(summary.totalExpense, currency)}
               </Text>
             </View>
 
-            <View style={[styles.summaryDivider, { backgroundColor: colors.border.subtle }]} />
+            <View style={[styles.columnDivider, { backgroundColor: colors.border.subtle }]} />
 
             <View style={styles.summaryItem}>
-              <Text variant="xs" color={colors.text.tertiary} weight="bold" style={{ fontSize: 10, letterSpacing: 0.5 }}>
+              <Text variant="xs" color={colors.text.tertiary} weight="medium" style={{ fontSize: 10, letterSpacing: 0.4 }}>
                 INCOME
               </Text>
-              <Text variant="sm" weight="bold" color={colors.semantic.income} style={{ marginTop: 2, fontSize: 14 }}>
+              <Text variant="sm" weight="semibold" color={colors.semantic.income} style={{ marginTop: 2 }}>
                 {formatCurrency(summary.totalIncome, currency)}
               </Text>
             </View>
 
-            <View style={[styles.summaryDivider, { backgroundColor: colors.border.subtle }]} />
+            <View style={[styles.columnDivider, { backgroundColor: colors.border.subtle }]} />
 
             <View style={styles.summaryItem}>
-              <Text variant="xs" color={colors.text.tertiary} weight="bold" style={{ fontSize: 10, letterSpacing: 0.5 }}>
+              <Text variant="xs" color={colors.text.tertiary} weight="medium" style={{ fontSize: 10, letterSpacing: 0.4 }}>
                 BALANCE
               </Text>
               <Text
                 variant="sm"
-                weight="bold"
+                weight="semibold"
                 color={summary.balance >= 0 ? colors.semantic.income : colors.semantic.expense}
-                style={{ marginTop: 2, fontSize: 14 }}
+                style={{ marginTop: 2 }}
               >
                 {formatCurrency(summary.balance, currency)}
               </Text>
             </View>
           </View>
         </View>
+
+
 
         {/* Daily Grouped Transactions List */}
         {dailyGroups.length === 0 ? (
@@ -161,14 +206,14 @@ export default function HomeScreen() {
               <View key={group.date} style={styles.dayGroup}>
                 <View style={[styles.dayHeader, { backgroundColor: colors.bg.secondary }]}>
                   <View style={styles.dayHeaderLeft}>
-                    <Text variant="xs" weight="bold" style={{ fontSize: 12 }}>
+                    <Text variant="xs" weight="medium" style={{ fontSize: 12 }}>
                       {group.dayName}
                     </Text>
                   </View>
 
                   <Text
                     variant="xs"
-                    weight="bold"
+                    weight="medium"
                     style={{ fontSize: 11 }}
                     color={isDailyOverBudget ? colors.semantic.danger : colors.text.tertiary}
                   >
@@ -176,11 +221,12 @@ export default function HomeScreen() {
                   </Text>
                 </View>
 
-                <View style={[styles.transactionList, { backgroundColor: colors.bg.card }]}>
-                  {group.transactions.map((tx) => (
+                <View style={[styles.transactionList, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, borderWidth: 1, borderRadius: Radii.md, overflow: 'hidden' }]}>
+                  {group.transactions.map((tx, idx) => (
                     <TransactionItem
                       key={tx.id}
                       transaction={tx}
+                      isLast={idx === group.transactions.length - 1}
                       onPress={() => router.push(`/transaction/${tx.id}` as any)}
                     />
                   ))}
@@ -197,14 +243,13 @@ export default function HomeScreen() {
         visible={isAddModalVisible}
         onClose={() => setIsAddModalVisible(false)}
       />
-    </View>
+    </GlassBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bg.primary,
   },
   topbarContainer: {
     borderBottomWidth: 1,
@@ -235,31 +280,47 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: Spacing.sm,
   },
-  summaryCard: {
+  compactSummaryCard: {
     marginHorizontal: Spacing.md,
     borderRadius: Radii.md,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.md,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  cardMonthHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  monthNavBtn: {
+    padding: 4,
+  },
+  cardDivider: {
+    height: 1,
+    marginVertical: Spacing.xs + 2,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 2,
   },
   summaryItem: {
     flex: 1,
     alignItems: 'center',
   },
-  summaryDivider: {
+  columnDivider: {
     width: 1,
-    height: 30,
-    backgroundColor: Colors.border.subtle,
+    height: 24,
   },
   dayGroup: {
     marginBottom: Spacing.lg,
@@ -270,15 +331,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    backgroundColor: Colors.bg.secondary,
   },
   dayHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
-  transactionList: {
-    backgroundColor: Colors.bg.card,
-  },
+  transactionList: {},
   emptyState: {
     padding: Spacing.section,
     alignItems: 'center',

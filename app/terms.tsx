@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../src/components/ui/Text';
+import { GlassBackground } from '../src/components/ui/GlassBackground';
 import { Header } from '../src/components/ui/Header';
 import { Spacing, Radii, useThemeColors } from '../src/constants/colors';
 
@@ -14,7 +15,7 @@ export default function TermsAndPrivacyScreen() {
   const [activeTab, setActiveTab] = useState<'terms' | 'privacy'>('terms');
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={styles.container}>
       <Header 
         title="Terms & Privacy" 
         showBack={true} 
@@ -250,7 +251,7 @@ export default function TermsAndPrivacyScreen() {
           </View>
         )}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 

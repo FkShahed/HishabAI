@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { DatePickerModal } from '../../src/components/ui/DatePickerModal';
@@ -51,42 +52,35 @@ export default function PreviewScreen() {
   };
 
   const saveEdit = () => {
-    if (editingIndex === null) return;
-    
-    // Find selected category to update name, icon, color
-    const allCategories = [...getCategoriesForType('expense'), ...getCategoriesForType('income')];
-    const selectedCat = allCategories.find(c => c.id === editForm.categoryId);
+    if (editingIndex === null || !editingTransaction) return;
 
-    const updatedData: Partial<PreviewTransaction> = {
-      amount: parseFloat(editForm.amount) || 0,
+    const numericAmount = parseFloat(editForm.amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) return;
+
+    const categories = getCategoriesForType(editingTransaction.type);
+    const selectedCategory = categories.find(c => c.id === editForm.categoryId);
+
+    updatePreviewTransactionByIndex(editingIndex, {
+      amount: numericAmount,
       comment: editForm.comment,
-      transactionDate: editForm.transactionDate || getTodayString(),
       categoryId: editForm.categoryId,
-      ...(selectedCat ? {
-        categoryNameSnapshot: selectedCat.name,
-        categoryIcon: selectedCat.icon,
-        categoryColor: selectedCat.color,
-      } : {}),
-      uncertain: false,
-    };
-
-    if (editingTransaction?.tempId) {
-      updatePreviewTransaction(editingTransaction.tempId, updatedData);
-    }
-    updatePreviewTransactionByIndex(editingIndex, updatedData);
+      categoryNameSnapshot: selectedCategory?.name || editingTransaction.categoryNameSnapshot,
+      categoryIcon: selectedCategory?.icon || editingTransaction.categoryIcon,
+      categoryColor: selectedCategory?.color || editingTransaction.categoryColor,
+      transactionDate: editForm.transactionDate || getTodayString(),
+      uncertain: false, // User manually edited, no longer uncertain
+    });
 
     setEditingTransaction(null);
     setEditingIndex(null);
   };
 
   const handleDelete = () => {
-    if (editingIndex === null) return;
-    if (editingTransaction?.tempId) {
-      removePreviewTransaction(editingTransaction.tempId);
+    if (editingIndex !== null) {
+      removePreviewTransactionByIndex(editingIndex);
+      setEditingTransaction(null);
+      setEditingIndex(null);
     }
-    removePreviewTransactionByIndex(editingIndex);
-    setEditingTransaction(null);
-    setEditingIndex(null);
   };
 
   const handleSave = () => {
@@ -96,7 +90,7 @@ export default function PreviewScreen() {
       const cat = allCategories.find(c => c.id === t.categoryId);
 
       return {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
         userId: 'user',
         amount: t.amount,
         type: t.type,
@@ -129,19 +123,19 @@ export default function PreviewScreen() {
 
   if (previewTransactions.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+      <GlassBackground style={styles.container}>
         <Header title="Review Transactions" onBack={handleDiscard} />
         <View style={styles.emptyContainer}>
           <Ionicons name="checkmark-done-circle-outline" size={64} color={colors.accent.primary} />
-          <Text variant="lg" weight="bold" style={{ marginTop: Spacing.md, marginBottom: Spacing.xs }}>
+          <Text variant="lg" weight="bold" color={colors.text.primary} style={{ marginTop: Spacing.md }}>
             No Transactions to Review
           </Text>
-          <Text variant="sm" color={colors.text.secondary} align="center" style={{ marginBottom: Spacing.xl }}>
+          <Text variant="sm" color={colors.text.secondary} align="center" style={{ marginTop: Spacing.xs, marginBottom: Spacing.lg }}>
             All extracted items have been saved or cleared.
           </Text>
           <Button label="Go to Home" onPress={() => router.replace('/(tabs)')} style={{ minWidth: 160 }} />
         </View>
-      </View>
+      </GlassBackground>
     );
   }
 
@@ -150,7 +144,7 @@ export default function PreviewScreen() {
   const totalIncome = items.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={styles.container}>
       <Header 
         title="Review Transactions" 
         showBack={true}
@@ -221,7 +215,7 @@ export default function PreviewScreen() {
                 key={item.tempId || `preview-item-${index}`}
                 style={[
                   styles.itemCard,
-                  { backgroundColor: colors.bg.card, borderColor: colors.border.subtle },
+                  { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder },
                   item.uncertain && { borderColor: colors.semantic.warning, backgroundColor: colors.semantic.warningDim }
                 ]}
                 activeOpacity={0.7}
@@ -386,7 +380,7 @@ export default function PreviewScreen() {
         }}
       />
 
-    </View>
+    </GlassBackground>
   );
 }
 

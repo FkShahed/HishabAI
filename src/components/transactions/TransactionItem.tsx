@@ -12,11 +12,13 @@ export interface TransactionItemProps {
   transaction: Transaction;
   onPress?: () => void;
   showDate?: boolean;
+  isLast?: boolean;
 }
 
-export function TransactionItem({ transaction, onPress, showDate = false }: TransactionItemProps) {
+export function TransactionItem({ transaction, onPress, showDate = false, isLast = false }: TransactionItemProps) {
   const currency = useUIStore((s) => s.currency);
   const colors = useThemeColors();
+  const isDark = colors.bg.primary === '#080810';
 
   const getSourceIcon = () => {
     switch (transaction.source) {
@@ -27,10 +29,18 @@ export function TransactionItem({ transaction, onPress, showDate = false }: Tran
   };
 
   const sourceIcon = getSourceIcon();
+  const rowDividerColor = isDark ? colors.bg.glassBorder : 'rgba(0, 0, 0, 0.04)';
 
   return (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
+      style={[
+        styles.container, 
+        { 
+          backgroundColor: 'transparent', 
+          borderBottomColor: isLast ? 'transparent' : rowDividerColor,
+          borderBottomWidth: isLast ? 0 : 1,
+        }
+      ]}
       onPress={onPress}
       activeOpacity={0.7}
       disabled={!onPress}
@@ -61,7 +71,7 @@ export function TransactionItem({ transaction, onPress, showDate = false }: Tran
         )}
         <Text
           variant="sm"
-          weight="bold"
+          weight="semibold"
           color={
             transaction.type === 'expense'
               ? colors.text.primary

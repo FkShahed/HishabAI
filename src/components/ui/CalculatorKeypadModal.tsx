@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 
 import { Text } from './Text';
 import { Spacing, Radii, Shadows, useThemeColors } from '../../constants/colors';
@@ -35,23 +36,42 @@ export function CalculatorKeypadModal({ visible, initialValue, onClose, onApply 
 
   const evaluatedResult = evaluateMathExpression(expression);
 
+  const triggerHaptic = (type: 'selection' | 'impact' | 'success' = 'selection') => {
+    try {
+      if (type === 'selection') {
+        Haptics.selectionAsync();
+      } else if (type === 'impact') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } else if (type === 'success') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch (e) {
+      // Ignore if haptics aren't supported on web/simulator
+    }
+  };
+
   const handleKeyPress = (key: string) => {
     if (key === 'C') {
+      triggerHaptic('impact');
       setExpression('');
       return;
     }
 
     if (key === 'DEL') {
+      triggerHaptic('impact');
       setExpression((prev) => prev.slice(0, -1).trim());
       return;
     }
 
     if (key === '=') {
+      triggerHaptic('impact');
       if (evaluatedResult !== null) {
         setExpression(String(evaluatedResult));
       }
       return;
     }
+
+    triggerHaptic('selection');
 
     if (key === '%') {
       if (evaluatedResult !== null) {
@@ -81,10 +101,12 @@ export function CalculatorKeypadModal({ visible, initialValue, onClose, onApply 
   };
 
   const handleDone = () => {
+    triggerHaptic('success');
     const finalVal = evaluatedResult !== null ? String(evaluatedResult) : expression.trim();
     onApply(finalVal || '0');
     onClose();
   };
+
 
   return (
     <Modal

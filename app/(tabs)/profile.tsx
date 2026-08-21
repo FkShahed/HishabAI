@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import Constants from 'expo-constants';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
@@ -33,6 +34,7 @@ export default function ProfileScreen() {
   const userPhotoUrl = useUIStore((s) => s.userPhotoUrl);
   const dailyReminderEnabled = useUIStore((s) => s.dailyReminderEnabled);
   const setDailyReminderEnabled = useUIStore((s) => s.setDailyReminderEnabled);
+  const backgroundPreset = useUIStore((s) => s.backgroundPreset) || 'aurora';
 
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
   const [isCurrencyModalVisible, setCurrencyModalVisible] = useState(false);
@@ -59,21 +61,22 @@ export default function ProfileScreen() {
       Alert.alert('Category Name Required', 'Please enter a category name.');
       return;
     }
-    const id = `cat_${Date.now()}`;
-    const newCat = {
-      id,
+
+    useCategoryStore.getState().addCategory({
+      id: `cat_${Date.now()}`,
       name: newCatName.trim(),
       icon: newCatIcon || '🏷️',
       type: newCatType,
-      color: newCatType === 'expense' ? '#EF4444' : '#10B981',
-      isActive: true,
+      color: colors.accent.primary,
       isDefault: false,
+      isActive: true,
       sortOrder: Date.now(),
-    };
-    useCategoryStore.getState().addCategory(newCat);
+    });
+
     setNewCatName('');
+    setNewCatIcon('🏷️');
     setAddCategoryModalVisible(false);
-    Alert.alert('Category Added 🎉', `"${newCat.name}" category added successfully.`);
+    Alert.alert('Category Added 🎉', `Custom category "${newCatName.trim()}" created!`);
   };
 
   const handleDeleteCategoryItem = (cat: any) => {
@@ -95,60 +98,35 @@ export default function ProfileScreen() {
 
 
   // Version Control & Update State
-  const pkg = require('../../package.json');
-  const currentAppVersion = Constants.expoConfig?.version || Constants.nativeAppVersion || pkg.version || '2.5.0';
-  const currentBuildNumber = Constants.expoConfig?.android?.versionCode || parseInt(Constants.expoConfig?.ios?.buildNumber || '3', 10) || 3;
+  const currentAppVersion = Constants.expoConfig?.version || '4.0.0';
+  const currentBuildNumber = Constants.expoConfig?.android?.versionCode?.toString() || Constants.expoConfig?.ios?.buildNumber || '1';
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<CheckUpdateResult | null>(null);
-  const [isUpdateModalVisible, setUpdateModalVisible] = useState(false);
 
   const rawPhotoUrl = currentUser?.photoURL || currentUser?.providerData?.[0]?.photoURL || userPhotoUrl;
   const photoUrl = !imageFailed && rawPhotoUrl ? rawPhotoUrl : null;
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-      setCurrentUser(user);
-      if (user) {
-        const pic = user.photoURL || user.providerData?.[0]?.photoURL;
-        if (pic) {
-          useUIStore.getState().setUserPhotoUrl(pic);
-        }
-        if (user.displayName && (!userName || userName === 'Guest User')) {
-          useUIStore.getState().setUserName(user.displayName);
-        }
-      }
-    });
-    
-    // Check update on screen load
-    handleCheckForUpdates(false);
-
-    return () => unsubscribe();
-  }, []);
-
-  const handleCheckForUpdates = async (manual = false) => {
+  const handleManualCheckUpdate = async (manual = true) => {
     try {
       setIsCheckingUpdate(true);
-      const result = await VersionServiceClient.checkUpdate(currentAppVersion, currentBuildNumber);
+      const buildNum = parseInt(currentBuildNumber, 10) || 1;
+      const result = await VersionServiceClient.checkUpdate(currentAppVersion, buildNum);
       setUpdateInfo(result);
       if (result.hasUpdate) {
         if (manual) {
+          setUpdateModalVisible(true);
+        } else {
           Alert.alert(
-            `🚀 New Update Available! (v${result.latestVersion})`,
-            `A new version of HisabAI is available with latest updates and bug fixes.\n\nWould you like to download and install it now?`,
+            `Update Available (v${result.latestVersion}) 🚀`,
+            result.releaseNotes || 'A new update is available for HisabAI with improvements and bug fixes.',
             [
-              { 
-                text: 'View What\'s New', 
-                onPress: () => setUpdateModalVisible(true) 
-              },
-              { 
-                text: 'Download & Install', 
-                style: 'default',
-                onPress: () => handleDownloadUpdate(result.apkUrl) 
-              },
-              { 
-                text: 'Later', 
-                style: 'cancel' 
-              },
+              { text: 'Later', style: 'cancel' },
+              { text: 'Update Now', onPress: () => {
+                if (result.apkUrl) {
+                  Linking.openURL(result.apkUrl);
+                }
+              }}
             ]
           );
         }
@@ -168,7 +146,8 @@ export default function ProfileScreen() {
     if (!updateInfo) {
       try {
         setIsCheckingUpdate(true);
-        const result = await VersionServiceClient.checkUpdate(currentAppVersion, currentBuildNumber);
+        const buildNum = parseInt(currentBuildNumber, 10) || 1;
+        const result = await VersionServiceClient.checkUpdate(currentAppVersion, buildNum);
         setUpdateInfo(result);
       } catch (e) {
         // ignore
@@ -192,51 +171,64 @@ export default function ProfileScreen() {
     }
   };
 
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setCurrentUser(u);
+      if (u) {
+        useUIStore.getState().fetchAndSyncUserProfile(u.uid);
+      }
+    });
+    return () => unsub();
+  }, []);
+
   const handleSignOut = async () => {
-    try {
-      await AuthService.signOut();
-      useTransactionStore.getState().clearAllData();
-      useBudgetStore.getState().clearAllData();
-      useCategoryStore.getState().clearAllData();
-      useUIStore.getState().setUserName('Guest User');
-      useUIStore.getState().setUserPhotoUrl('');
-      Alert.alert('Signed Out', 'You have been signed out safely.');
-      router.replace('/auth'); // Redirect to login
-    } catch (e) {
-      Alert.alert('Error', 'Failed to sign out.');
-    }
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await AuthService.signOut();
+            useUIStore.getState().setUserName('');
+            useUIStore.getState().setUserPhotoUrl('');
+            router.replace('/auth');
+          },
+        },
+      ]
+    );
   };
 
-
-
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     if (nameInput.trim()) {
       setUserName(nameInput.trim());
-      setNameModalVisible(false);
     }
+    setNameModalVisible(false);
   };
 
-  const handleToggleDailyReminder = async (value: boolean) => {
-    setDailyReminderEnabled(value);
-    if (value) {
-      const success = await NotificationService.scheduleDailyReminder(20, 0); // 8:00 PM
-      if (success) {
-        Alert.alert('Daily Reminder Enabled 🔔', 'You will receive a daily notification at 8:00 PM to record your expenses!');
+  const handleToggleDailyReminder = async (val: boolean) => {
+    setDailyReminderEnabled(val);
+    if (val) {
+      const granted = await NotificationService.requestPermissions();
+      if (granted) {
+        await NotificationService.scheduleDailyReminder(20, 0); // 8:00 PM
+        Alert.alert('Daily Reminder Set ⏰', "You will receive a daily reminder at 8:00 PM to record your expenses.");
       } else {
         setDailyReminderEnabled(false);
-        Alert.alert('Permission Denied', 'Please enable notifications in your device settings to receive daily reminders.');
+        Alert.alert('Permission Denied', 'Notification permissions are required to enable daily reminders.');
       }
     } else {
       await NotificationService.cancelDailyReminder();
-      Alert.alert('Daily Reminder Disabled', 'Daily notifications have been turned off.');
     }
   };
 
-  const handleConfirmDeleteAll = async () => {
+  const handleConfirmDeleteData = async () => {
     setIsDeleting(true);
     try {
-      const activeUid = currentUser?.uid || auth?.currentUser?.uid;
-      if (activeUid && activeUid !== 'mock-local-user') {
+      const activeUid = auth.currentUser?.uid;
+      if (activeUid) {
         await Promise.race([
           FirebaseService.deleteAllUserData(activeUid),
           new Promise(r => setTimeout(r, 2000))
@@ -268,23 +260,20 @@ export default function ProfileScreen() {
       useTransactionStore.getState().clearAllData();
       useBudgetStore.getState().clearAllData();
       useCategoryStore.getState().clearAllData();
-      setUserName('Guest User');
+
+      useUIStore.getState().setUserName('');
+      useUIStore.getState().setUserPhotoUrl('');
+      useUIStore.getState().setCurrency('BDT');
 
       setIsDeletingAccount(false);
       setDeleteAccountModalVisible(false);
 
-      Alert.alert('Account Deleted 🗑️', 'Your account and all associated data have been deleted successfully.');
+      Alert.alert('Account Deleted 🗑️', 'Your account and all associated data have been permanently deleted.');
       router.replace('/auth');
-    } catch (e: any) {
-      console.error('Account deletion error:', e);
+    } catch (error: any) {
       setIsDeletingAccount(false);
       setDeleteAccountModalVisible(false);
-
-      let msg = e?.message || 'Could not delete your account. Please try again.';
-      if (e?.code === 'auth/requires-recent-login' || msg.includes('requires-recent-login')) {
-        msg = 'For security reasons, please sign out and sign in again before deleting your account.';
-      }
-      Alert.alert('Deletion Error', msg);
+      Alert.alert('Delete Account Failed', error.message || 'Could not delete account. Try signing in again first.');
     }
   };
 
@@ -293,13 +282,13 @@ export default function ProfileScreen() {
   const currentCurrencySymbol = getCurrencySymbol(currency);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={styles.container}>
       <Header title="Settings & Account" showBack={false} />
 
       <ScrollView contentContainerStyle={styles.content}>
         
         {/* Profile / Account Card */}
-        <View style={[styles.profileCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+        <View style={[styles.profileCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }, Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)]}>
           <View style={[styles.avatar, { backgroundColor: colors.accent.primary, overflow: 'hidden' }]}>
             {photoUrl ? (
               Platform.OS === 'web' ? (
@@ -359,14 +348,13 @@ export default function ProfileScreen() {
         </View>
 
         {/* Preferences Section */}
-        <View style={styles.settingsGroup}>
-          <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
-            PREFERENCES
-          </Text>
-          
+        <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
+          PREFERENCES
+        </Text>
+        <View style={[styles.settingsGroup, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           {/* User Name */}
           <TouchableOpacity 
-            style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
+            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
             onPress={() => { setNameInput(userName); setNameModalVisible(true); }}
             activeOpacity={0.7}
           >
@@ -386,7 +374,7 @@ export default function ProfileScreen() {
 
           {/* Manage Categories */}
           <TouchableOpacity 
-            style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
+            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
             onPress={() => router.push('/categories' as any)}
             activeOpacity={0.7}
           >
@@ -405,9 +393,8 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {/* Currency Selection */}
-
           <TouchableOpacity 
-            style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
+            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
             onPress={() => setCurrencyModalVisible(true)}
             activeOpacity={0.7}
           >
@@ -425,30 +412,29 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* Theme Toggle */}
-          <View style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}>
+          {/* Theme & Background Appearance */}
+          <TouchableOpacity 
+            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
+            onPress={() => router.push('/theme' as any)}
+            activeOpacity={0.7}
+          >
             <View style={styles.settingLeft}>
               <View style={styles.settingIconWrapper}>
                 <Ionicons 
-                  name={theme === 'dark' ? "moon-outline" : "sunny-outline"} 
+                  name="color-palette-outline" 
                   size={20} 
-                  color={colors.text.primary} 
+                  color={colors.accent.primary} 
                 />
               </View>
-              <Text variant="base" style={styles.settingText}>Dark Mode</Text>
+              <Text variant="base" style={styles.settingText}>Theme & Background</Text>
             </View>
             <View style={styles.settingRight}>
-              <Switch 
-                value={theme === 'dark'} 
-                onValueChange={toggleTheme} 
-                trackColor={{ true: colors.accent.primary, false: colors.border.medium }} 
-                thumbColor="#FFFFFF"
-              />
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
             </View>
-          </View>
+          </TouchableOpacity>
           
           {/* Daily Reminders */}
-          <View style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}>
+          <View style={[styles.settingItem, styles.settingItemLast]}>
             <View style={styles.settingLeft}>
               <View style={styles.settingIconWrapper}>
                 <Ionicons name="notifications-outline" size={20} color={colors.text.primary} />
@@ -467,11 +453,10 @@ export default function ProfileScreen() {
         </View>
 
         {/* App Version & Updates Section */}
-        <View style={styles.settingsGroup}>
-          <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
-            APP UPDATES & VERSION
-          </Text>
-
+        <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
+          APP UPDATES & VERSION
+        </Text>
+        <View style={[styles.settingsGroup, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           {/* Update Available Banner */}
           {updateInfo?.hasUpdate && (
             <View style={[styles.updateBannerCard, { backgroundColor: colors.accent.primaryDim, borderColor: colors.accent.primary }]}>
@@ -515,7 +500,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.bannerActionBtn, { backgroundColor: colors.bg.card, borderColor: colors.border.medium, borderWidth: 1 }]}
+                  style={[styles.bannerActionBtn, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, borderWidth: 1 }]}
                   onPress={() => setUpdateModalVisible(true)}
                   activeOpacity={0.8}
                 >
@@ -529,7 +514,7 @@ export default function ProfileScreen() {
 
           {/* Current Version Item */}
           <TouchableOpacity
-            style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
+            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
             onPress={handleViewVersionInfo}
             activeOpacity={0.7}
           >
@@ -554,8 +539,8 @@ export default function ProfileScreen() {
 
           {/* Check for Updates Button */}
           <TouchableOpacity
-            style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}
-            onPress={() => handleCheckForUpdates(true)}
+            style={[styles.settingItem, styles.settingItemLast]}
+            onPress={() => handleManualCheckUpdate(true)}
             disabled={isCheckingUpdate}
             activeOpacity={0.7}
           >
@@ -578,13 +563,12 @@ export default function ProfileScreen() {
         </View>
 
         {/* Support & Account Section */}
-        <View style={styles.settingsGroup}>
-          <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
-            SUPPORT & ACCOUNT
-          </Text>
-          
+        <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
+          SUPPORT & ACCOUNT
+        </Text>
+        <View style={[styles.settingsGroup, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           {currentUser?.email && !currentUser?.isAnonymous ? (
-            <View style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}>
+            <View style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}>
               <View style={styles.settingLeft}>
                 <View style={styles.settingIconWrapper}>
                   <Ionicons name="cloud-done-outline" size={20} color={colors.semantic.safe} />
@@ -599,7 +583,7 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <TouchableOpacity 
-              style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]}
+              style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
               onPress={() => router.push('/auth' as any)}
             >
               <View style={styles.settingLeft}>
@@ -617,7 +601,7 @@ export default function ProfileScreen() {
           )}
 
           <TouchableOpacity 
-            style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]}
+            style={[styles.settingItem, styles.settingItemLast]}
             onPress={() => router.push('/terms' as any)}
             activeOpacity={0.7}
           >
@@ -633,15 +617,14 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Danger Zone Section */}
-        <View style={styles.settingsGroup}>
-          <Text variant="xs" weight="bold" color={colors.semantic.danger} style={styles.groupTitle}>
-            DANGER ZONE
-          </Text>
-          
+        {/* Account & Data Controls Section */}
+        <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
+          ACCOUNT & DATA CONTROLS
+        </Text>
+        <View style={[styles.settingsGroup, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           {/* Delete All Data */}
           <TouchableOpacity 
-            style={[styles.settingItem, { backgroundColor: colors.bg.card, borderBottomColor: colors.border.subtle }]} 
+            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]} 
             onPress={() => setDeleteModalVisible(true)}
             activeOpacity={0.7}
           >
@@ -658,7 +641,7 @@ export default function ProfileScreen() {
 
           {/* Delete Account */}
           <TouchableOpacity 
-            style={[styles.settingItem, styles.settingItemLast, { backgroundColor: colors.bg.card }]} 
+            style={[styles.settingItem, styles.settingItemLast]} 
             onPress={() => setDeleteAccountModalVisible(true)}
             activeOpacity={0.7}
           >
@@ -676,9 +659,11 @@ export default function ProfileScreen() {
 
         {currentUser?.email || currentUser?.isAnonymous ? (
           <TouchableOpacity 
-            style={[styles.logoutButton, { backgroundColor: colors.semantic.dangerDim }]} 
+            style={[styles.logoutButton, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, borderWidth: 1 }]} 
             onPress={handleSignOut}
+            activeOpacity={0.8}
           >
+            <Ionicons name="log-out-outline" size={18} color={colors.semantic.danger} style={{ marginRight: 6 }} />
             <Text variant="base" weight="bold" color={colors.semantic.danger}>Sign Out</Text>
           </TouchableOpacity>
         ) : null}
@@ -792,7 +777,7 @@ export default function ProfileScreen() {
                 label={isDeleting ? "Deleting..." : "Yes, Delete All"} 
                 variant="danger" 
                 size="sm"
-                onPress={handleConfirmDeleteAll}
+                onPress={handleConfirmDeleteData}
                 style={{ flex: 1 }}
                 disabled={isDeleting}
                 leftIcon={isDeleting ? <ActivityIndicator size="small" color="#FFF" /> : <Ionicons name="trash" size={15} color="#FFF" />}
@@ -842,7 +827,7 @@ export default function ProfileScreen() {
       </Modal>
 
       {/* App Version & Update Details Modal */}
-      <Modal visible={isUpdateModalVisible} animationType="slide" transparent>
+      <Modal visible={updateModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: updateInfo?.hasUpdate ? colors.accent.primary : colors.border.medium, borderWidth: 1, padding: Spacing.md }]}>
             <View style={{ alignItems: 'center', marginBottom: Spacing.sm }}>
@@ -905,7 +890,7 @@ export default function ProfileScreen() {
                   variant="secondary"
                   size="sm"
                   disabled={isCheckingUpdate}
-                  onPress={() => handleCheckForUpdates(true)}
+                  onPress={() => handleManualCheckUpdate(true)}
                   leftIcon={isCheckingUpdate ? <ActivityIndicator size="small" color={colors.text.primary} /> : <Ionicons name="refresh" size={16} color={colors.text.primary} />}
                 />
               )}
@@ -1073,7 +1058,7 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-    </View>
+    </GlassBackground>
   );
 }
 
@@ -1133,6 +1118,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     marginBottom: Spacing.md,
     borderWidth: 1,
+    ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any) : {}),
   },
   avatar: {
     width: 48,
@@ -1152,6 +1138,10 @@ const styles = StyleSheet.create({
   },
   settingsGroup: {
     marginBottom: Spacing.lg,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any) : {}),
   },
   groupTitle: {
     marginBottom: Spacing.xs,

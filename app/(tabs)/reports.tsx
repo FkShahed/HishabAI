@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { MonthSelector } from '../../src/components/ui/MonthSelector';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
@@ -62,7 +63,7 @@ export default function ReportsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={styles.container}>
       <Header title="Reports & Budget" showBack={false} />
       
       <MonthSelector 
@@ -75,7 +76,7 @@ export default function ReportsScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         
         {/* Monthly Budget Card */}
-        <View style={[styles.card, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <View style={styles.cardHeader}>
             <View>
               <Text variant="md" weight="bold">Monthly Budget</Text>
@@ -188,7 +189,7 @@ export default function ReportsScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </GlassBackground>
   );
 }
 

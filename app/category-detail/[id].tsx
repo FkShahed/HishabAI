@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { CategoryIcon } from '../../src/components/ui/CategoryIcon';
 import { TransactionItem } from '../../src/components/transactions/TransactionItem';
@@ -58,15 +59,14 @@ export default function CategoryDetailScreen() {
 
   const percentage = overallTypeTotal > 0 ? Math.round((totalCategoryAmount / overallTypeTotal) * 100) : 0;
 
-  const categoryName = params.name || categoryTxns[0]?.categoryNameSnapshot || 'Category Details';
-  const categoryIcon = params.icon || categoryTxns[0]?.categoryIcon || '💰';
+  const categoryName = params.name || categoryTxns[0]?.categoryNameSnapshot || 'Category';
+  const categoryIcon = params.icon || categoryTxns[0]?.categoryIcon || '📁';
   const categoryColor = params.color || categoryTxns[0]?.categoryColor || colors.accent.primary;
-
   const monthLabel = format(new Date(selectedYear, selectedMonth - 1, 1), 'MMMM yyyy');
   const activeThemeColor = activeType === 'expense' ? colors.semantic.expense : colors.semantic.income;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <Header 
         title={`${categoryName} Details`} 
@@ -80,7 +80,7 @@ export default function CategoryDetailScreen() {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false}>
         
         {/* Category Overview Card */}
-        <View style={[styles.overviewCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+        <View style={[styles.overviewCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <View style={styles.headerRow}>
             <CategoryIcon icon={categoryIcon} color={categoryColor} size="lg" />
             <View style={styles.headerTitleBox}>
@@ -108,38 +108,28 @@ export default function CategoryDetailScreen() {
                   {percentage}% of Total
                 </Text>
               </View>
-              <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 4 }}>
-                {categoryTxns.length} Transaction{categoryTxns.length === 1 ? '' : 's'}
-              </Text>
             </View>
           </View>
         </View>
 
-        {/* Transaction History Header */}
+        {/* Transactions List */}
         <View style={styles.sectionHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="list" size={16} color={colors.accent.primary} style={{ marginRight: 6 }} />
-            <Text variant="md" weight="bold">Date-wise Transactions</Text>
-          </View>
-          <Text variant="xs" color={colors.text.tertiary}>
-            {categoryTxns.length} Items
-          </Text>
+          <Text variant="base" weight="bold">Transactions ({categoryTxns.length})</Text>
         </View>
 
-        {/* Date-Wise Transactions List */}
         {categoryTxns.length > 0 ? (
-          <View style={[styles.listContainer, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
-            {categoryTxns.map((tx) => (
-              <TransactionItem
-                key={tx.id}
-                transaction={tx}
-                showDate={true}
-                onPress={() => router.push(`/transaction/${tx.id}` as any)}
+          <View style={[styles.listContainer, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, borderWidth: 1, borderRadius: Radii.md, overflow: 'hidden' }]}>
+            {categoryTxns.map((item, index) => (
+              <TransactionItem 
+                key={item.id}
+                transaction={item} 
+                isLast={index === categoryTxns.length - 1}
+                onPress={() => router.push(`/transaction/${item.id}` as any)} 
               />
             ))}
           </View>
         ) : (
-          <View style={[styles.emptyCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
             <Ionicons name="receipt-outline" size={38} color={colors.text.tertiary} />
             <Text variant="sm" color={colors.text.secondary} style={{ marginTop: Spacing.xs }}>
               No transactions recorded for {categoryName} in {monthLabel}.
@@ -147,7 +137,7 @@ export default function CategoryDetailScreen() {
           </View>
         )}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
@@ -204,6 +194,9 @@ const styles = StyleSheet.create({
     borderRadius: Radii.md,
     borderWidth: 1,
     overflow: 'hidden',
+  },
+  itemDivider: {
+    height: 1,
   },
   emptyCard: {
     padding: Spacing.xl,

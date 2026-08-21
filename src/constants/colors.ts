@@ -11,6 +11,9 @@ export const DarkColors = {
     elevated: '#1A1A28',    // elevated elements
     overlay: 'rgba(8, 8, 16, 0.85)',
     modal: '#0F0F1A',
+    glass: 'rgba(19, 19, 31, 0.45)',
+    glassBorder: 'rgba(255, 255, 255, 0.14)',
+    glassHeader: '#0F0F1A',
   },
 
   // ── Accent / Brand ────────────────────────────────────────────────────────
@@ -56,10 +59,10 @@ export const DarkColors = {
 
   // ── Topbar / Header ───────────────────────────────────────────────────────
   topbar: {
-    bg: '#080810',
+    bg: 'rgba(8, 8, 16, 0.80)',
     text: '#F0F0FF',
     subtext: '#8888AA',
-    border: '#1E1E30',
+    border: 'rgba(255, 255, 255, 0.10)',
     icon: '#F0F0FF',
     chevron: '#F0F0FF',
     badgeBg: '#7C3AED',
@@ -118,6 +121,9 @@ export const LightColors: typeof DarkColors = {
     elevated: '#FFFFFF',    // elevated elements
     overlay: 'rgba(15, 23, 42, 0.6)',
     modal: '#FFFFFF',
+    glass: 'rgba(255, 255, 255, 0.45)',
+    glassBorder: 'rgba(255, 255, 255, 0.65)',
+    glassHeader: '#FFFFFF',
   },
 
   // ── Accent / Brand ────────────────────────────────────────────────────────
@@ -161,7 +167,7 @@ export const LightColors: typeof DarkColors = {
     strong: '#94A3B8',
   },
 
-  // ── Topbar / Header (Beguni / Violet theme in Light Mode) ───────────────────
+  // ── Topbar / Header (Beguni / Violet brand theme in Light Mode) ───────────
   topbar: {
     bg: '#7C3AED',      // beguni (violet) brand theme color
     text: '#FFFFFF',     // crisp white text
@@ -290,5 +296,15 @@ export const Shadows = {
   },
 } as const;
 
+export const Gradients = {
+  heroDark: ['#1E1B4B', '#0F172A', '#020617'] as const,
+  heroLight: ['#7C3AED', '#6D28D9', '#4C1D95'] as const,
+  income: ['#065F46', '#047857', '#10B981'] as const,
+  expense: ['#991B1B', '#B91C1C', '#EF4444'] as const,
+  glassDark: ['rgba(30, 27, 75, 0.6)', 'rgba(15, 23, 42, 0.6)'] as const,
+  glassLight: ['rgba(255, 255, 255, 0.9)', 'rgba(248, 250, 252, 0.9)'] as const,
+} as const;
+
 export const TAB_BAR_HEIGHT = 72;
 export const HEADER_HEIGHT = 60;
+

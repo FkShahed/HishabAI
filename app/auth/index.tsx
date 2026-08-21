@@ -11,6 +11,7 @@ import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, Typography, useThemeColors } from '../../src/constants/colors';
@@ -77,18 +78,7 @@ export default function AuthScreen() {
       if (cloudBudgets) {
         useBudgetStore.getState().setBudgets(cloudBudgets);
       }
-      if (cloudProfile) {
-        if (cloudProfile.userName) setUserName(cloudProfile.userName);
-        if (cloudProfile.userPhotoUrl) setUserPhotoUrl(cloudProfile.userPhotoUrl);
-        if (cloudProfile.currency) useUIStore.getState().setCurrency(cloudProfile.currency);
-        if (cloudProfile.theme) useUIStore.getState().setTheme(cloudProfile.theme);
-      } else if (auth.currentUser) {
-        const initialName = auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'User';
-        const initialPhoto = auth.currentUser.photoURL || auth.currentUser.providerData?.[0]?.photoURL || null;
-        setUserName(initialName);
-        if (initialPhoto) setUserPhotoUrl(initialPhoto);
-        FirebaseService.saveUserProfile(userId, { userName: initialName, userPhotoUrl: initialPhoto }).catch(() => { });
-      }
+      await useUIStore.getState().fetchAndSyncUserProfile(userId);
     } catch (err) {
       console.warn('Load user data error:', err);
     }
@@ -229,10 +219,11 @@ export default function AuthScreen() {
 
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.bg.primary }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <GlassBackground style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <Header
         title={mode === 'signin' ? 'Sign In' : 'Create Account'}
         showBack={true}
@@ -406,6 +397,7 @@ export default function AuthScreen() {
         </View>
       )}
     </KeyboardAvoidingView>
+  </GlassBackground>
   );
 }
 

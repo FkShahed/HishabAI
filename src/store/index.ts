@@ -291,12 +291,15 @@ export const useBudgetStore = create<BudgetState>()(
 
 // ─── UI Store ─────────────────────────────────────────────────────────────────
 
+export type BackgroundPreset = 'aurora' | 'nebula' | 'emerald' | 'sunset' | 'cyberpunk' | 'midnight';
+
 interface UIState {
   selectedMonth: number;
   selectedYear: number;
   currency: string;
   isFirstLaunch: boolean;
   theme: 'dark' | 'light';
+  backgroundPreset: BackgroundPreset;
   userName: string;
   userPhotoUrl: string | null;
   dailyReminderEnabled: boolean;
@@ -307,10 +310,12 @@ interface UIState {
   setCurrency: (currency: string) => void;
   setFirstLaunch: (value: boolean) => void;
   setTheme: (theme: 'dark' | 'light') => void;
+  setBackgroundPreset: (preset: BackgroundPreset) => void;
   toggleTheme: () => void;
   setUserName: (name: string) => void;
   setUserPhotoUrl: (url: string | null) => void;
   setDailyReminderEnabled: (enabled: boolean) => void;
+  fetchAndSyncUserProfile: (userId: string) => Promise<void>;
 }
 
 export const useUIStore = create<UIState>()(
@@ -321,6 +326,7 @@ export const useUIStore = create<UIState>()(
       currency: 'BDT',
       isFirstLaunch: true,
       theme: 'light',
+      backgroundPreset: 'aurora',
       userName: 'Guest User',
       userPhotoUrl: null,
       dailyReminderEnabled: false,
@@ -355,6 +361,12 @@ export const useUIStore = create<UIState>()(
           FirebaseService.saveUserProfile(auth.currentUser.uid, { theme }).catch(() => {});
         }
       },
+      setBackgroundPreset: (backgroundPreset) => {
+        set({ backgroundPreset });
+        if (auth?.currentUser) {
+          FirebaseService.saveUserProfile(auth.currentUser.uid, { backgroundPreset }).catch(() => {});
+        }
+      },
       toggleTheme: () => {
         const next = get().theme === 'dark' ? 'light' : 'dark';
         get().setTheme(next);
@@ -377,7 +389,27 @@ export const useUIStore = create<UIState>()(
           FirebaseService.saveUserProfile(auth.currentUser.uid, { dailyReminderEnabled }).catch(() => {});
         }
       },
-
+      fetchAndSyncUserProfile: async (userId: string) => {
+        if (!userId || userId === 'mock-local-user') return;
+        try {
+          const profile = await FirebaseService.fetchUserProfile(userId);
+          if (profile) {
+            if (profile.userName) set({ userName: profile.userName });
+            if (profile.userPhotoUrl) set({ userPhotoUrl: profile.userPhotoUrl });
+            if (profile.currency) set({ currency: profile.currency });
+            if (profile.theme) set({ theme: profile.theme as 'dark' | 'light' });
+            if (profile.backgroundPreset) set({ backgroundPreset: profile.backgroundPreset as BackgroundPreset });
+            if (profile.dailyReminderEnabled !== undefined) set({ dailyReminderEnabled: profile.dailyReminderEnabled });
+          } else if (auth.currentUser) {
+            const initialName = auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'User';
+            const initialPhoto = auth.currentUser.photoURL || auth.currentUser.providerData?.[0]?.photoURL || null;
+            set({ userName: initialName, userPhotoUrl: initialPhoto });
+            FirebaseService.saveUserProfile(userId, { userName: initialName, userPhotoUrl: initialPhoto }).catch(() => {});
+          }
+        } catch (err) {
+          console.warn('[Store] Sync user profile warning:', err);
+        }
+      },
     }),
     {
       name: 'hishabai-ui',
@@ -386,6 +418,7 @@ export const useUIStore = create<UIState>()(
         currency: state.currency, 
         isFirstLaunch: state.isFirstLaunch,
         theme: state.theme,
+        backgroundPreset: state.backgroundPreset,
         userName: state.userName,
         userPhotoUrl: state.userPhotoUrl,
         dailyReminderEnabled: state.dailyReminderEnabled,

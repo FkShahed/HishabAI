@@ -5,8 +5,10 @@ import Svg, { Circle, G } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { startOfMonth, getDaysInMonth, format } from 'date-fns';
+import * as Haptics from 'expo-haptics';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { MonthSelector } from '../../src/components/ui/MonthSelector';
 import { TransactionItem } from '../../src/components/transactions/TransactionItem';
@@ -35,6 +37,12 @@ function formatCompactAmount(amount: number, symbol: string): string {
 export default function ChartsScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+
+  const triggerHaptic = () => {
+    try {
+      Haptics.selectionAsync();
+    } catch (e) {}
+  };
   
   const selectedMonth = useUIStore((s) => s.selectedMonth);
   const selectedYear = useUIStore((s) => s.selectedYear);
@@ -197,7 +205,7 @@ export default function ChartsScreen() {
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={styles.container}>
       <Header title="Analytics & Trends" showBack={false} />
       
       <MonthSelector 
@@ -210,13 +218,14 @@ export default function ChartsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         
         {/* ── Type Switcher (Expenses vs Income) ───────────────────────────── */}
-        <View style={[styles.toggleContainer, { backgroundColor: colors.bg.secondary }]}>
+        <View style={[styles.toggleContainer, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, borderWidth: 1 }]}>
           <TouchableOpacity
             style={[
               styles.toggleButton,
               selectedType === 'expense' && { backgroundColor: colors.semantic.expense }
             ]}
             onPress={() => {
+              triggerHaptic();
               setSelectedType('expense');
               setSelectedDay(null);
             }}
@@ -243,6 +252,7 @@ export default function ChartsScreen() {
               selectedType === 'income' && { backgroundColor: colors.semantic.income }
             ]}
             onPress={() => {
+              triggerHaptic();
               setSelectedType('income');
               setSelectedDay(null);
             }}
@@ -264,8 +274,9 @@ export default function ChartsScreen() {
           </TouchableOpacity>
         </View>
 
+
         {/* ── 1. Monthly Calendar Grid with Daily Totals ───────────────────── */}
-        <View style={[styles.card, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <View style={styles.cardHeaderRow}>
             <View>
               <Text variant="md" weight="bold">
@@ -366,7 +377,7 @@ export default function ChartsScreen() {
         </View>
 
         {/* ── 2. Category Breakdown (SVG Donut Chart) ────────────────────── */}
-        <View style={[styles.card, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <Text variant="md" weight="bold" style={styles.cardTitle}>
             {selectedType === 'expense' ? 'Spending by Category' : 'Income by Category'}
           </Text>
@@ -435,7 +446,7 @@ export default function ChartsScreen() {
                       <TouchableOpacity
                         style={[
                           styles.categoryLegendCard,
-                          { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }
+                          { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }
                         ]}
                         onPress={() => {
                           router.push({
@@ -484,7 +495,7 @@ export default function ChartsScreen() {
                 {/* Top 5 See More / See Less Toggle */}
                 {pieData.data.length > 5 && (
                   <TouchableOpacity
-                    style={[styles.seeMoreBtn, { borderColor: colors.border.subtle, backgroundColor: colors.bg.secondary }]}
+                    style={[styles.seeMoreBtn, { borderColor: colors.bg.glassBorder, backgroundColor: colors.bg.glass }]}
                     onPress={() => setShowAllCategories(!showAllCategories)}
                     activeOpacity={0.7}
                   >
@@ -512,7 +523,7 @@ export default function ChartsScreen() {
         </View>
 
         {/* ── 3. Daily Trend Bar Chart ────────────────────────────────────── */}
-        <View style={[styles.card, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <Text variant="md" weight="bold" style={styles.cardTitle}>
             {selectedType === 'expense' ? 'Daily Spending Trend' : 'Daily Income Trend'}
           </Text>
@@ -546,7 +557,7 @@ export default function ChartsScreen() {
         </View>
 
         {/* ── 4. Monthly Cash Flow & Savings Ratio Graph ───────────────────── */}
-        <View style={[styles.card, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <View style={styles.cardHeaderRow}>
             <View>
               <Text variant="md" weight="bold">
@@ -603,7 +614,7 @@ export default function ChartsScreen() {
 
           {/* 3 Metric Pills */}
           <View style={styles.metricsPillRow}>
-            <View style={[styles.metricPillCard, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
+            <View style={[styles.metricPillCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
               <Text variant="xs" color={colors.text.tertiary}>Net Balance</Text>
               <Text 
                 variant="sm" 
@@ -615,14 +626,14 @@ export default function ChartsScreen() {
               </Text>
             </View>
 
-            <View style={[styles.metricPillCard, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
+            <View style={[styles.metricPillCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
               <Text variant="xs" color={colors.text.tertiary}>Savings Rate</Text>
               <Text variant="sm" weight="bold" color={colors.accent.primaryLight} style={{ marginTop: 2 }}>
                 🎯 {cashFlowMetrics.savingsRate}%
               </Text>
             </View>
 
-            <View style={[styles.metricPillCard, { backgroundColor: colors.bg.secondary, borderColor: colors.border.subtle }]}>
+            <View style={[styles.metricPillCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
               <Text variant="xs" color={colors.text.tertiary}>Daily Avg</Text>
               <Text variant="sm" weight="bold" color={colors.text.primary} style={{ marginTop: 2 }}>
                 ⚡ {formatCurrency(cashFlowMetrics.avgDailySpend, currency)}/d
@@ -699,11 +710,12 @@ export default function ChartsScreen() {
                     <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
                       {selectedDayTransactions.length > 0 ? (
                         <View style={{ paddingVertical: Spacing.xs }}>
-                          {selectedDayTransactions.map((tx) => (
+                          {selectedDayTransactions.map((tx, idx) => (
                             <TransactionItem
                               key={tx.id}
                               transaction={tx}
                               showDate={false}
+                              isLast={idx === selectedDayTransactions.length - 1}
                               onPress={() => {
                                 setSelectedDay(null);
                                 router.push(`/transaction/${tx.id}` as any);
@@ -727,7 +739,7 @@ export default function ChartsScreen() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </View>
+    </GlassBackground>
   );
 }
 

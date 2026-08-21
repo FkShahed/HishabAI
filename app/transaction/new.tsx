@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { Colors, Spacing, Radii, Typography, useThemeColors } from '../../src/constants/colors';
@@ -83,20 +84,20 @@ export default function ManualAddScreen() {
   const isCustomDate = selectedDate !== getTodayString() && selectedDate !== getYesterdayString();
 
   return (
-    <KeyboardAvoidingView 
-      style={[styles.container, { backgroundColor: colors.bg.primary }]} 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <Header 
-        title="Add Transaction" 
-        showBack 
-        onBack={() => router.back()} 
-      />
-
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}>
+    <GlassBackground style={styles.container}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <Header 
+          title="Add Transaction" 
+          showBack 
+          onBack={() => router.back()} 
+        />
         
-        {/* 1. Type Toggle (Top Tab) */}
-        <View style={[styles.toggleContainer, { backgroundColor: colors.bg.secondary }]}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}>
+          {/* 1. Type Toggle (Top Tab) */}
+          <View style={[styles.toggleContainer, { backgroundColor: colors.bg.secondary }]}>
           <TouchableOpacity
             style={[styles.toggleButton, type === 'expense' && styles.toggleActiveExpense]}
             onPress={() => { setType('expense'); setValue('categoryId', ''); }}
@@ -347,7 +348,7 @@ export default function ManualAddScreen() {
         onCategoryCreated={(newId) => setValue('categoryId', newId)}
       />
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Spacing.lg), backgroundColor: colors.bg.primary, borderTopColor: colors.border.subtle, borderTopWidth: 1 }]}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Spacing.lg), backgroundColor: colors.bg.glassHeader, borderTopColor: colors.bg.glassBorder, borderTopWidth: 1 }]}>
         <Button 
           label="Save Transaction" 
           onPress={handleSubmit(onSubmit)}
@@ -355,20 +356,19 @@ export default function ManualAddScreen() {
         />
       </View>
     </KeyboardAvoidingView>
+  </GlassBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bg.primary,
   },
   content: {
     padding: Spacing.lg,
   },
   toggleContainer: {
     flexDirection: 'row',
-    backgroundColor: Colors.bg.elevated,
     borderRadius: Radii.lg,
     padding: 4,
     marginBottom: Spacing.lg,
@@ -444,7 +444,6 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   categoryItemActive: {
-    backgroundColor: Colors.bg.elevated,
     borderColor: Colors.border.strong,
   },
   categoryName: {

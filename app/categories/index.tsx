@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { CategoryIcon } from '../../src/components/ui/CategoryIcon';
@@ -46,7 +47,7 @@ export default function ManageCategoriesScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg.primary, paddingBottom: insets.bottom }]}>
+    <GlassBackground style={[styles.container, { paddingBottom: insets.bottom }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <Header 
         title="Manage Categories" 
@@ -111,7 +112,7 @@ export default function ManageCategoriesScreen() {
           {filteredCategories.map((cat) => (
             <View 
               key={cat.id} 
-              style={[styles.categoryRow, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}
+              style={[styles.categoryRow, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}
             >
               <CategoryIcon icon={cat.icon} color={cat.color} size="md" />
 
@@ -161,7 +162,7 @@ export default function ManageCategoriesScreen() {
         initialType={activeTab}
         categoryToEdit={editingCategory}
       />
-    </View>
+    </GlassBackground>
   );
 }
 

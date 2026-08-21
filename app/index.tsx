@@ -3,11 +3,12 @@ import { useUIStore, useTransactionStore, useBudgetStore } from '../src/store';
 
 
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { Colors } from '../src/constants/colors';
+import { Colors, useThemeColors } from '../src/constants/colors';
 import { useEffect, useState } from 'react';
 import { ensureAuthenticated, FirebaseService } from '../src/services/firebase';
 
 export default function Index() {
+  const colors = useThemeColors();
   const isFirstLaunch = useUIStore((state) => state.isFirstLaunch);
   const setTransactions = useTransactionStore((state) => state.setTransactions);
   const [isReady, setIsReady] = useState(false);
@@ -51,16 +52,9 @@ export default function Index() {
             })
             .catch(() => {});
 
-          FirebaseService.fetchUserProfile(user.uid)
-            .then((cloudProfile) => {
-              if (cloudProfile) {
-                if (cloudProfile.userName) useUIStore.getState().setUserName(cloudProfile.userName);
-                if (cloudProfile.userPhotoUrl) useUIStore.getState().setUserPhotoUrl(cloudProfile.userPhotoUrl);
-                if (cloudProfile.currency) useUIStore.getState().setCurrency(cloudProfile.currency);
-                if (cloudProfile.theme) useUIStore.getState().setTheme(cloudProfile.theme);
-              }
-            })
-            .catch(() => {});
+          useUIStore.getState().fetchAndSyncUserProfile(user.uid).catch((err) => {
+            console.warn('[App Init] Sync user profile warning:', err);
+          });
 
 
 
@@ -83,8 +77,8 @@ export default function Index() {
 
   if (!isReady) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color={Colors.accent.primary} />
+      <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+        <ActivityIndicator size="large" color={colors.accent.primary} />
       </View>
     );
   }

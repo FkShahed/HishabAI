@@ -6,6 +6,7 @@ import { Audio } from 'expo-av';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { Header } from '../../src/components/ui/Header';
 import { usePreviewStore, useCategoryStore } from '../../src/store';
@@ -161,13 +162,13 @@ export default function VoiceAIScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom, backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={[styles.container, { paddingBottom: insets.bottom }]}>
       <Header 
         title="Voice Input" 
         showBack={false}
         rightElement={
           <TouchableOpacity onPress={handleCancel} style={styles.cancelBtn}>
-            <Ionicons name="close" size={28} color={colors.text.primary} />
+            <Ionicons name="close" size={28} color={colors.topbar.icon} />
           </TouchableOpacity>
         }
       />
@@ -179,7 +180,7 @@ export default function VoiceAIScreen() {
           ) : (
             <Animated.View style={[
               styles.pulseCircle, 
-              { backgroundColor: colors.bg.secondary },
+              { backgroundColor: colors.bg.glass },
               isRecording && styles.pulseActive,
               { transform: [{ scale: pulseAnim }] }
             ]}>
@@ -192,21 +193,13 @@ export default function VoiceAIScreen() {
           )}
         </View>
         
-        <View style={styles.textContainer}>
-          <Text variant="xl" weight="bold" align="center" style={styles.statusText}>
-            {isProcessing ? 'Analyzing audio...' : isRecording ? 'Listening...' : 'Tap to speak'}
-          </Text>
-          <Text variant="md" color={colors.text.secondary} align="center">
-            {isProcessing 
-              ? 'Extracting transactions using AI'
-              : isRecording 
-                ? 'Say things like "I spent 500 on food today"'
-                : 'HisabAI will automatically categorize it'}
-          </Text>
-        </View>
-      </View>
-      
-      <View style={styles.controls}>
+        <Text variant="lg" weight="bold" align="center" style={styles.statusText}>
+          {isProcessing ? 'AI Analyzing Voice...' : isRecording ? 'Listening... Speak now' : 'Tap to start speaking'}
+        </Text>
+        <Text variant="sm" color={colors.text.secondary} align="center" style={styles.hintText}>
+          {isRecording ? 'Say things like: "Spent 500 taka on groceries today"' : 'Record your income or expense using your voice'}
+        </Text>
+        
         <TouchableOpacity 
           style={[
             styles.recordButton, 
@@ -223,7 +216,7 @@ export default function VoiceAIScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </GlassBackground>
   );
 }
 
@@ -261,6 +254,10 @@ const styles = StyleSheet.create({
   },
   statusText: {
     marginBottom: Spacing.sm,
+  },
+  hintText: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   controls: {
     alignItems: 'center',

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
@@ -40,41 +41,41 @@ export default function TransactionDetailScreen() {
   useEffect(() => {
     if (transaction) {
       setEditForm({
-        amount: String(transaction.amount),
+        amount: transaction.amount.toString(),
         comment: transaction.comment || '',
-        transactionDate: transaction.transactionDate,
-        categoryId: transaction.categoryId,
+        transactionDate: transaction.transactionDate || getTodayString(),
+        categoryId: transaction.categoryId || '',
       });
     }
   }, [transaction]);
 
   const openEdit = () => {
-    if (!transaction) return;
-    setEditForm({
-      amount: transaction.amount.toString(),
-      comment: transaction.comment || '',
-      transactionDate: transaction.transactionDate,
-      categoryId: transaction.categoryId,
-    });
-    setIsEditing(true);
+    if (transaction) {
+      setEditForm({
+        amount: transaction.amount.toString(),
+        comment: transaction.comment || '',
+        transactionDate: transaction.transactionDate || getTodayString(),
+        categoryId: transaction.categoryId || '',
+      });
+      setIsEditing(true);
+    }
   };
 
   const saveEdit = () => {
-    if (!transaction) return;
-    const numAmount = evaluateMathExpression(editForm.amount) ?? parseFloat(editForm.amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
+    if (!transaction || !id) return;
+    const num = evaluateMathExpression(editForm.amount) || parseFloat(editForm.amount);
+    if (isNaN(num) || num <= 0) {
       alert('Please enter a valid amount or math expression');
       return;
     }
 
-    const categories = getCategoriesForType(transaction.type);
-    const cat = categories.find(c => c.id === editForm.categoryId);
+    const cat = getCategoriesForType(transaction.type).find(c => c.id === editForm.categoryId);
 
-    updateTransaction(transaction.id, {
-      amount: numAmount,
+    updateTransaction(id, {
+      amount: num,
       comment: editForm.comment,
       transactionDate: editForm.transactionDate,
-      categoryId: editForm.categoryId,
+      categoryId: editForm.categoryId || transaction.categoryId,
       categoryNameSnapshot: cat?.name || transaction.categoryNameSnapshot,
       categoryIcon: cat?.icon || transaction.categoryIcon,
       categoryColor: cat?.color || transaction.categoryColor,
@@ -91,17 +92,17 @@ export default function TransactionDetailScreen() {
 
   if (!transaction) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+      <GlassBackground style={styles.container}>
         <Header title="Transaction Details" showBack onBack={() => router.back()} />
         <View style={styles.notFound}>
           <Text variant="lg" color={colors.text.secondary}>Transaction not found.</Text>
         </View>
-      </View>
+      </GlassBackground>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom, backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={[styles.container, { paddingBottom: insets.bottom }]}>
       <Header 
         title="Transaction Details" 
         showBack 
@@ -116,7 +117,7 @@ export default function TransactionDetailScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         
         {/* Category Header */}
-        <View style={[styles.heroCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+        <View style={[styles.heroCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <CategoryIcon 
             icon={transaction.categoryIcon} 
             color={transaction.categoryColor} 
@@ -136,7 +137,7 @@ export default function TransactionDetailScreen() {
         </View>
 
         {/* Details Grid */}
-        <View style={[styles.detailsCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+        <View style={[styles.detailsCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <View style={[styles.detailRow, { borderBottomColor: colors.border.subtle }]}>
             <Text variant="xs" color={colors.text.secondary}>Date</Text>
             <Text variant="sm" weight="semibold">{transaction.transactionDate}</Text>
@@ -269,7 +270,7 @@ export default function TransactionDetailScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </GlassBackground>
   );
 }
 

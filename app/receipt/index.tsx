@@ -6,6 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '../../src/components/ui/Text';
+import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { Header } from '../../src/components/ui/Header';
@@ -43,19 +44,22 @@ export default function ReceiptAIScreen() {
         });
       }
 
-      if (!result.canceled && result.assets && result.assets[0]) {
-        setImage(result.assets[0].uri);
-        setImageBase64(result.assets[0].base64 ?? null);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setImage(asset.uri);
+        if (asset.base64) {
+          setImageBase64(asset.base64);
+        }
       }
-    } catch (error) {
-      console.error(error);
+    } catch (e: any) {
+      alert('Error picking image: ' + e.message);
     }
   };
 
   const handleProcessReceipt = async () => {
     if (!image || !imageBase64) return;
-    
     setIsProcessing(true);
+
     try {
       const categories = getAICategoryList();
       console.log('[ReceiptAI] Sending receipt image to backend AI parser...');
@@ -76,7 +80,7 @@ export default function ReceiptAIScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom, backgroundColor: colors.bg.primary }]}>
+    <GlassBackground style={[styles.container, { paddingBottom: insets.bottom }]}>
       <Header 
         title="Scan Receipt" 
         showBack={true}
@@ -86,7 +90,7 @@ export default function ReceiptAIScreen() {
       <View style={styles.content}>
         {!image ? (
           <View style={styles.emptyState}>
-            <View style={[styles.iconCircle, { backgroundColor: colors.bg.secondary }]}>
+            <View style={[styles.iconCircle, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, borderWidth: 1 }]}>
               <Ionicons name="receipt-outline" size={60} color={colors.accent.primary} />
             </View>
             <Text variant="xl" weight="bold" style={{ marginTop: Spacing.xl, marginBottom: Spacing.xs }}>
@@ -97,7 +101,7 @@ export default function ReceiptAIScreen() {
             </Text>
           </View>
         ) : (
-          <View style={[styles.imagePreviewContainer, { backgroundColor: colors.bg.secondary }]}>
+          <View style={[styles.imagePreviewContainer, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, borderWidth: 1 }]}>
             <Image source={{ uri: image }} style={styles.imagePreview} resizeMode="contain" />
             
             {isProcessing && (
@@ -146,7 +150,7 @@ export default function ReceiptAIScreen() {
           </View>
         )}
       </View>
-    </View>
+    </GlassBackground>
   );
 }
 
