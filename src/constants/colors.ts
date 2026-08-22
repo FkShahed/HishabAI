@@ -13,7 +13,7 @@ export const DarkColors = {
     modal: '#0F0F1A',
     glass: 'rgba(19, 19, 31, 0.45)',
     glassBorder: 'rgba(255, 255, 255, 0.14)',
-    glassHeader: '#0F0F1A',
+    glassHeader: 'rgba(15, 15, 26, 0.85)',
   },
 
   // ── Accent / Brand ────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ export const LightColors: typeof DarkColors = {
     modal: '#FFFFFF',
     glass: 'rgba(255, 255, 255, 0.45)',
     glassBorder: 'rgba(255, 255, 255, 0.65)',
-    glassHeader: '#FFFFFF',
+    glassHeader: 'rgba(255, 255, 255, 0.85)',
   },
 
   // ── Accent / Brand ────────────────────────────────────────────────────────
@@ -167,16 +167,16 @@ export const LightColors: typeof DarkColors = {
     strong: '#94A3B8',
   },
 
-  // ── Topbar / Header (Beguni / Violet brand theme in Light Mode) ───────────
+  // ── Topbar / Header (Slightly transparent white, not beguni/purple) ───────
   topbar: {
-    bg: '#7C3AED',      // beguni (violet) brand theme color
-    text: '#FFFFFF',     // crisp white text
-    subtext: 'rgba(255, 255, 255, 0.85)',
-    border: '#6D28D9',   // slightly deeper violet border
-    icon: '#FFFFFF',
-    chevron: '#FFFFFF',
-    badgeBg: 'rgba(255, 255, 255, 0.25)',
-    badgeText: '#FFFFFF',
+    bg: 'rgba(255, 255, 255, 0.82)',      // slightly transparent white topbar
+    text: '#0F172A',     // crisp slate text
+    subtext: '#475569',
+    border: 'rgba(203, 213, 225, 0.6)',   // soft border
+    icon: '#0F172A',
+    chevron: '#0F172A',
+    badgeBg: 'rgba(124, 58, 237, 0.12)',
+    badgeText: '#7C3AED',
   },
 
   // ── Category Colors ───────────────────────────────────────────────────────

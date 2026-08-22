@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, useThemeColors, TAB_BAR_HEIGHT } from '../../src/constants/colors';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { AddOptionModal } from '../../src/components/ui/AddOptionModal';
 
 export default function TabLayout() {
@@ -26,6 +26,7 @@ export default function TabLayout() {
             height: TAB_BAR_HEIGHT,
             paddingBottom: 12,
             paddingTop: 12,
+            ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any) : {}),
           },
           tabBarActiveTintColor: colors.accent.primary,
           tabBarInactiveTintColor: colors.text.tertiary,

@@ -49,7 +49,11 @@ export default function HomeScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Topbar Header Banner */}
-      <View style={[styles.topbarContainer, { paddingTop: insets.top, backgroundColor: colors.topbar.bg, borderBottomColor: colors.topbar.border }]}>
+      <View style={[
+        styles.topbarContainer, 
+        { paddingTop: insets.top, backgroundColor: colors.topbar.bg, borderBottomColor: colors.topbar.border },
+        Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
+      ]}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text variant="lg" weight="bold" color={colors.topbar.text}>

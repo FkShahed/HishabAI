@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from './Text';
 import { Spacing, HEADER_HEIGHT, useThemeColors } from '../../constants/colors';
@@ -17,7 +17,11 @@ export function Header({ title, showBack = false, onBack, rightElement }: Header
   const colors = useThemeColors();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.topbar.bg, borderBottomColor: colors.topbar.border }]}>
+    <View style={[
+      styles.container, 
+      { paddingTop: insets.top, backgroundColor: colors.topbar.bg, borderBottomColor: colors.topbar.border },
+      Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
+    ]}>
       <View style={styles.content}>
         {/* Left Side */}
         <View style={styles.side}>
