@@ -597,69 +597,7 @@ export default function ChartsScreen() {
           )}
         </View>
 
-        {/* ── 3. Daily Trend Bar Chart ────────────────────────────────────── */}
-        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
-          <View style={styles.cardHeaderRow}>
-            <Text variant="md" weight="bold">
-              {selectedType === 'expense' ? 'Daily Spending Trend' : 'Daily Income Trend'}
-            </Text>
-            {isCurrentMonth && (
-              <View style={[styles.typeBadge, { backgroundColor: colors.accent.primaryDim }]}>
-                <Text variant="xs" weight="bold" color={colors.accent.primary}>
-                  Today: Day {todayDayNum}
-                </Text>
-              </View>
-            )}
-          </View>
-          
-          <ScrollView 
-            ref={barScrollViewRef}
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={{ marginTop: Spacing.xs }}
-            onLayout={(e) => {
-              const width = e.nativeEvent.layout.width;
-              if (width > 0) setBarContainerWidth(width);
-            }}
-          >
-            <View style={styles.barChartContainer}>
-              {barData.data.map((item) => {
-                const heightPercent = Math.max((item.value / barData.maxVal) * 110, item.value > 0 ? 6 : 2);
-                const isToday = isCurrentMonth && item.day === todayDayNum;
-
-                return (
-                  <View key={item.day} style={styles.barColumn}>
-                    <View style={styles.barTrack}>
-                      <View 
-                        style={[
-                          styles.barFill, 
-                          { 
-                            height: heightPercent, 
-                            backgroundColor: isToday 
-                              ? colors.accent.primary 
-                              : item.value > 0 
-                              ? activeThemeColor 
-                              : colors.border.subtle 
-                          }
-                        ]} 
-                      />
-                    </View>
-                    <Text 
-                      variant="xs" 
-                      weight={isToday ? "bold" : "regular"}
-                      color={isToday ? colors.accent.primary : colors.text.tertiary} 
-                      style={{ marginTop: 4, fontSize: isToday ? 11 : 10 }}
-                    >
-                      {item.day}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </ScrollView>
-        </View>
-
-        {/* ── 4. Day-of-Week Pattern Analysis Chart ────────────────────────────────────── */}
+        {/* ── 3. Day-of-Week Pattern Analysis Chart ────────────────────────────────────── */}
         <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <View style={styles.cardHeaderRow}>
             <View>
@@ -744,6 +682,68 @@ export default function ChartsScreen() {
               </Text>
             </View>
           )}
+        </View>
+
+        {/* ── 4. Daily Trend Bar Chart ────────────────────────────────────── */}
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
+          <View style={styles.cardHeaderRow}>
+            <Text variant="md" weight="bold">
+              {selectedType === 'expense' ? 'Daily Spending Trend' : 'Daily Income Trend'}
+            </Text>
+            {isCurrentMonth && (
+              <View style={[styles.typeBadge, { backgroundColor: colors.accent.primaryDim }]}>
+                <Text variant="xs" weight="bold" color={colors.accent.primary}>
+                  Today: Day {todayDayNum}
+                </Text>
+              </View>
+            )}
+          </View>
+          
+          <ScrollView 
+            ref={barScrollViewRef}
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            style={{ marginTop: Spacing.xs }}
+            onLayout={(e) => {
+              const width = e.nativeEvent.layout.width;
+              if (width > 0) setBarContainerWidth(width);
+            }}
+          >
+            <View style={styles.barChartContainer}>
+              {barData.data.map((item) => {
+                const heightPercent = Math.max((item.value / barData.maxVal) * 110, item.value > 0 ? 6 : 2);
+                const isToday = isCurrentMonth && item.day === todayDayNum;
+
+                return (
+                  <View key={item.day} style={styles.barColumn}>
+                    <View style={styles.barTrack}>
+                      <View 
+                        style={[
+                          styles.barFill, 
+                          { 
+                            height: heightPercent, 
+                            backgroundColor: isToday 
+                              ? colors.accent.primary 
+                              : item.value > 0 
+                              ? activeThemeColor 
+                              : colors.border.subtle 
+                          }
+                        ]} 
+                      />
+                    </View>
+                    <Text 
+                      variant="xs" 
+                      weight={isToday ? "bold" : "regular"}
+                      color={isToday ? colors.accent.primary : colors.text.tertiary} 
+                      style={{ marginTop: 4, fontSize: isToday ? 11 : 10 }}
+                    >
+                      {item.day}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
         </View>
 
         {/* ── 4. Monthly Cash Flow & Savings Ratio Graph ───────────────────── */}
