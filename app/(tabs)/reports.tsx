@@ -240,11 +240,8 @@ export default function ReportsScreen() {
               <Text variant="xs" color={colors.text.secondary} weight="medium">
                 Total Income
               </Text>
-              <View style={[styles.statusChip, { backgroundColor: 'rgba(16, 185, 129, 0.16)', borderColor: 'rgba(16, 185, 129, 0.35)' }]}>
-                <Ionicons name="trending-up" size={12} color={colors.semantic.income} />
-                <Text variant="xs" weight="medium" color={colors.semantic.income} style={{ marginLeft: 3, fontSize: 10 }}>
-                  Income
-                </Text>
+              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(16, 185, 129, 0.18)', borderColor: 'rgba(16, 185, 129, 0.38)' }]}>
+                <Ionicons name="arrow-down" size={14} color={colors.semantic.income} />
               </View>
             </View>
             <Text variant="lg" weight="medium" color={colors.semantic.income} style={{ marginTop: Spacing.xs }}>
@@ -266,11 +263,8 @@ export default function ReportsScreen() {
               <Text variant="xs" color={colors.text.secondary} weight="medium">
                 Total Expense
               </Text>
-              <View style={[styles.statusChip, { backgroundColor: 'rgba(239, 68, 68, 0.16)', borderColor: 'rgba(239, 68, 68, 0.35)' }]}>
-                <Ionicons name="trending-down" size={12} color={colors.semantic.expense} />
-                <Text variant="xs" weight="medium" color={colors.semantic.expense} style={{ marginLeft: 3, fontSize: 10 }}>
-                  Expense
-                </Text>
+              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(239, 68, 68, 0.18)', borderColor: 'rgba(239, 68, 68, 0.38)' }]}>
+                <Ionicons name="arrow-up" size={14} color={colors.semantic.expense} />
               </View>
             </View>
             <Text variant="lg" weight="medium" color={colors.semantic.expense} style={{ marginTop: Spacing.xs }}>
@@ -561,12 +555,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  statusChip: {
-    flexDirection: 'row',
+  statIconBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: Radii.full,
+    justifyContent: 'center',
     borderWidth: 1,
   },
   modalOverlay: {
