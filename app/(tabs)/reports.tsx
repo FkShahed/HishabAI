@@ -79,7 +79,7 @@ export default function ReportsScreen() {
     });
   }, [expenseCategories, categorySpendingMap, budgets, selectedMonth, selectedYear]);
 
-  const visibleCategories = showAllCategories ? sortedExpenseCategories : sortedExpenseCategories.slice(0, 10);
+  const visibleCategories = showAllCategories ? sortedExpenseCategories : sortedExpenseCategories.slice(0, 6);
 
   // Determine progress bar color based on state
   const progressBarColor = 
@@ -379,14 +379,14 @@ export default function ReportsScreen() {
             );
           })}
 
-          {sortedExpenseCategories.length > 10 ? (
+          {sortedExpenseCategories.length > 6 ? (
             <TouchableOpacity
               onPress={() => setShowAllCategories(!showAllCategories)}
               style={styles.showMoreBtn}
               activeOpacity={0.7}
             >
               <Text variant="xs" weight="bold" color={colors.accent.primary}>
-                {showAllCategories ? 'Show Less' : `Show More (${sortedExpenseCategories.length - 10} More Categories)`}
+                {showAllCategories ? 'Show Less' : `Show More (${sortedExpenseCategories.length - 6} More Categories)`}
               </Text>
               <Ionicons
                 name={showAllCategories ? 'chevron-up' : 'chevron-down'}
