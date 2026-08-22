@@ -624,7 +624,6 @@ export default function ChartsScreen() {
 
             {dayOfWeekData.hasData && (
               <View style={[styles.typeBadge, { backgroundColor: activeDimColor }]}>
-                <Ionicons name="sparkles" size={12} color={activeThemeColor} style={{ marginRight: 4 }} />
                 <Text variant="xs" weight="bold" color={activeThemeColor}>
                   Peak: {dayOfWeekData.peakDayName}
                 </Text>
