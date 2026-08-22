@@ -11,7 +11,8 @@ import { Header } from '../../src/components/ui/Header';
 import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { auth, AuthService, FirebaseService } from '../../src/services/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, updateProfile } from 'firebase/auth';
+import * as ImagePicker from 'expo-image-picker';
 import { useTransactionStore, useBudgetStore, useCategoryStore, useUIStore } from '../../src/store';
 import { SUPPORTED_CURRENCIES, getCurrencySymbol } from '../../src/utils/finance';
 import { NotificationService } from '../../src/services/notifications';
@@ -32,11 +33,13 @@ export default function ProfileScreen() {
   const userName = useUIStore((s) => s.userName);
   const setUserName = useUIStore((s) => s.setUserName);
   const userPhotoUrl = useUIStore((s) => s.userPhotoUrl);
+  const setUserPhotoUrl = useUIStore((s) => s.setUserPhotoUrl);
   const dailyReminderEnabled = useUIStore((s) => s.dailyReminderEnabled);
   const setDailyReminderEnabled = useUIStore((s) => s.setDailyReminderEnabled);
   const backgroundPreset = useUIStore((s) => s.backgroundPreset) || 'aurora';
 
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isCurrencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isNameModalVisible, setNameModalVisible] = useState(false);
@@ -44,6 +47,48 @@ export default function ProfileScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const handlePickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required 📷', 'Permission to access photo gallery is required to choose a profile picture.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.6,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setIsUploadingPhoto(true);
+
+        let photoUri = asset.uri;
+        if (asset.base64) {
+          photoUri = `data:image/jpeg;base64,${asset.base64}`;
+        }
+
+        setImageFailed(false);
+        setUserPhotoUrl(photoUri);
+
+        if (auth.currentUser) {
+          await updateProfile(auth.currentUser, { photoURL: photoUri }).catch(() => {});
+          await FirebaseService.saveUserProfile(auth.currentUser.uid, { userPhotoUrl: photoUri });
+        }
+        setIsUploadingPhoto(false);
+        Alert.alert('Profile Picture Updated 📸', 'Your profile picture has been updated and synced successfully.');
+      }
+    } catch (err: any) {
+      setIsUploadingPhoto(false);
+      console.error('Image picker error:', err);
+      Alert.alert('Upload Error', 'Could not select image. Please try again.');
+    }
+  };
 
   const getCategoriesForType = useCategoryStore((s) => s.getCategoriesForType);
 
@@ -294,30 +339,41 @@ export default function ProfileScreen() {
         
         {/* Profile / Account Card */}
         <View style={[styles.profileCard, { backgroundColor: sectionBg, borderColor: sectionBorder }, Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)]}>
-          <View style={[styles.avatar, { backgroundColor: colors.accent.primary, overflow: 'hidden' }]}>
-            {photoUrl ? (
-              Platform.OS === 'web' ? (
-                <img 
-                  src={photoUrl} 
-                  referrerPolicy="no-referrer" 
-                  style={{ width: 48, height: 48, borderRadius: 24, objectFit: 'cover' }} 
-                  onError={() => setImageFailed(true)}
-                />
+          <TouchableOpacity 
+            style={styles.avatarWrapper} 
+            onPress={handlePickImage}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.avatar, { backgroundColor: colors.accent.primary, overflow: 'hidden' }]}>
+              {isUploadingPhoto ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : photoUrl ? (
+                Platform.OS === 'web' ? (
+                  <img 
+                    src={photoUrl} 
+                    referrerPolicy="no-referrer" 
+                    style={{ width: 52, height: 52, borderRadius: 26, objectFit: 'cover' }} 
+                    onError={() => setImageFailed(true)}
+                  />
+                ) : (
+                  <Image 
+                    source={{ uri: photoUrl }} 
+                    style={{ width: 52, height: 52, borderRadius: 26 }} 
+                    onError={() => setImageFailed(true)}
+                  />
+                )
               ) : (
-                <Image 
-                  source={{ uri: photoUrl }} 
-                  style={{ width: 48, height: 48, borderRadius: 24 }} 
-                  onError={() => setImageFailed(true)}
+                <Ionicons 
+                  name={currentUser?.email ? "person" : "person-outline"} 
+                  size={26} 
+                  color="#FFFFFF" 
                 />
-              )
-            ) : (
-              <Ionicons 
-                name={currentUser?.email ? "person" : "person-outline"} 
-                size={24} 
-                color="#FFFFFF" 
-              />
-            )}
-          </View>
+              )}
+            </View>
+            <View style={[styles.cameraBadge, { backgroundColor: colors.accent.primary }]}>
+              <Ionicons name="camera" size={11} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.profileInfo} 
             onPress={() => { setNameInput(userName); setNameModalVisible(true); }}
@@ -1125,13 +1181,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any) : {}),
   },
+  avatarWrapper: {
+    position: 'relative',
+    marginRight: Spacing.md,
+  },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: Spacing.md,
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   profileInfo: {
     flex: 1,
