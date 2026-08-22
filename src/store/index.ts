@@ -316,6 +316,7 @@ interface UIState {
   setUserPhotoUrl: (url: string | null) => void;
   setDailyReminderEnabled: (enabled: boolean) => void;
   fetchAndSyncUserProfile: (userId: string) => Promise<void>;
+  resetForSignOut: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -350,20 +351,20 @@ export const useUIStore = create<UIState>()(
       },
       setCurrency: (currency) => {
         set({ currency });
-        if (auth?.currentUser) {
+        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
           FirebaseService.saveUserProfile(auth.currentUser.uid, { currency }).catch(() => {});
         }
       },
       setFirstLaunch: (isFirstLaunch) => set({ isFirstLaunch }),
       setTheme: (theme) => {
         set({ theme });
-        if (auth?.currentUser) {
+        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
           FirebaseService.saveUserProfile(auth.currentUser.uid, { theme }).catch(() => {});
         }
       },
       setBackgroundPreset: (backgroundPreset) => {
         set({ backgroundPreset });
-        if (auth?.currentUser) {
+        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
           FirebaseService.saveUserProfile(auth.currentUser.uid, { backgroundPreset }).catch(() => {});
         }
       },
@@ -373,21 +374,31 @@ export const useUIStore = create<UIState>()(
       },
       setUserName: (userName) => {
         set({ userName });
-        if (auth?.currentUser) {
+        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
           FirebaseService.saveUserProfile(auth.currentUser.uid, { userName }).catch(() => {});
         }
       },
       setUserPhotoUrl: (userPhotoUrl) => {
         set({ userPhotoUrl });
-        if (auth?.currentUser) {
+        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
           FirebaseService.saveUserProfile(auth.currentUser.uid, { userPhotoUrl }).catch(() => {});
         }
       },
       setDailyReminderEnabled: (dailyReminderEnabled) => {
         set({ dailyReminderEnabled });
-        if (auth?.currentUser) {
+        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
           FirebaseService.saveUserProfile(auth.currentUser.uid, { dailyReminderEnabled }).catch(() => {});
         }
+      },
+      resetForSignOut: () => {
+        set({
+          userName: '',
+          userPhotoUrl: null,
+          currency: 'BDT',
+          theme: 'light',
+          backgroundPreset: 'aurora',
+          dailyReminderEnabled: false,
+        });
       },
       fetchAndSyncUserProfile: async (userId: string) => {
         if (!userId || userId === 'mock-local-user') return;
@@ -395,7 +406,11 @@ export const useUIStore = create<UIState>()(
           const profile = await FirebaseService.fetchUserProfile(userId);
           if (profile) {
             if (profile.userName) set({ userName: profile.userName });
-            if (profile.userPhotoUrl) set({ userPhotoUrl: profile.userPhotoUrl });
+            else if (auth.currentUser?.displayName) set({ userName: auth.currentUser.displayName });
+
+            if (profile.userPhotoUrl !== undefined) set({ userPhotoUrl: profile.userPhotoUrl });
+            else if (auth.currentUser?.photoURL) set({ userPhotoUrl: auth.currentUser.photoURL });
+
             if (profile.currency) set({ currency: profile.currency });
             if (profile.theme) set({ theme: profile.theme as 'dark' | 'light' });
             if (profile.backgroundPreset) set({ backgroundPreset: profile.backgroundPreset as BackgroundPreset });

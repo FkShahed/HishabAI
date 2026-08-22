@@ -341,6 +341,16 @@ export const FirebaseService = {
       if (snapshot && snapshot.exists()) {
         return snapshot.val();
       }
+
+      // Backup read from Firestore if RTDB returns null
+      const docRef = doc(db, 'users', userId, 'profile', 'data');
+      const docSnap = await getDoc(docRef).catch(() => null);
+      if (docSnap && docSnap.exists()) {
+        const data = docSnap.data();
+        set(ref(rtdb, `users/${userId}/profile`), data).catch(() => {});
+        return data;
+      }
+
       return null;
     } catch (error) {
       console.error('Error fetching user profile:', error);

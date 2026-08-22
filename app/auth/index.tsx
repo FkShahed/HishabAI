@@ -144,15 +144,15 @@ export default function AuthScreen() {
       let user;
       if (mode === 'signup') {
         user = await AuthService.signUp(email.trim(), password);
+        if (user && name.trim()) {
+          setUserName(name.trim());
+        }
       } else {
         user = await AuthService.signIn(email.trim(), password);
       }
 
       if (user) {
-        const displayName = name.trim() || user.displayName || user.email?.split('@')[0] || 'User';
-        setUserName(displayName);
-
-        // Fetch user data completely while showing loader
+        // Fetch user data completely while showing loader (syncs saved cloud profile)
         await loadUserData(user.uid);
         router.replace('/(tabs)');
       }

@@ -192,8 +192,10 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await AuthService.signOut();
-            useUIStore.getState().setUserName('');
-            useUIStore.getState().setUserPhotoUrl('');
+            useUIStore.getState().resetForSignOut();
+            useTransactionStore.getState().clearAllData();
+            useBudgetStore.getState().clearAllData();
+            useCategoryStore.getState().clearAllData();
             router.replace('/auth');
           },
         },
