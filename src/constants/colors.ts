@@ -13,7 +13,7 @@ export const DarkColors = {
     modal: '#0F0F1A',
     glass: 'rgba(19, 19, 31, 0.45)',
     glassBorder: 'rgba(255, 255, 255, 0.14)',
-    glassHeader: 'rgba(15, 15, 26, 0.85)',
+    glassHeader: 'rgba(15, 15, 26, 0.45)',
   },
 
   // ── Accent / Brand ────────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ export const DarkColors = {
 
   // ── Topbar / Header ───────────────────────────────────────────────────────
   topbar: {
-    bg: 'rgba(8, 8, 16, 0.80)',
+    bg: 'rgba(8, 8, 16, 0.45)',
     text: '#F0F0FF',
     subtext: '#8888AA',
     border: 'rgba(255, 255, 255, 0.10)',
@@ -123,7 +123,7 @@ export const LightColors: typeof DarkColors = {
     modal: '#FFFFFF',
     glass: 'rgba(255, 255, 255, 0.45)',
     glassBorder: 'rgba(255, 255, 255, 0.65)',
-    glassHeader: 'rgba(255, 255, 255, 0.85)',
+    glassHeader: 'rgba(255, 255, 255, 0.50)',
   },
 
   // ── Accent / Brand ────────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ export const LightColors: typeof DarkColors = {
 
   // ── Topbar / Header (Slightly transparent white, not beguni/purple) ───────
   topbar: {
-    bg: 'rgba(255, 255, 255, 0.82)',      // slightly transparent white topbar
+    bg: 'rgba(255, 255, 255, 0.50)',      // slightly transparent white topbar
     text: '#0F172A',     // crisp slate text
     subtext: '#475569',
     border: 'rgba(203, 213, 225, 0.6)',   // soft border
