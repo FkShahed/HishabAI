@@ -241,8 +241,10 @@ interface BudgetState {
 
   setBudgets: (budgets: Budget[]) => void;
   setBudget: (budget: Budget) => void;
+  deleteBudget: (id: string) => void;
   clearAllData: () => void;
   getBudgetForMonth: (month: number, year: number) => Budget | null;
+  getCategoryBudget: (month: number, year: number, categoryId: string) => Budget | null;
   getBudgetStatus: (month: number, year: number) => ReturnType<typeof calculateBudgetStatus>;
 }
 
@@ -256,7 +258,10 @@ export const useBudgetStore = create<BudgetState>()(
       setBudget: (budget) => {
         set((state) => {
           const existing = state.budgets.findIndex(
-            (b) => b.month === budget.month && b.year === budget.year
+            (b) =>
+              b.month === budget.month &&
+              b.year === budget.year &&
+              ((!b.categoryId && !budget.categoryId) || b.categoryId === budget.categoryId)
           );
           if (existing >= 0) {
             const updated = [...state.budgets];
@@ -270,10 +275,22 @@ export const useBudgetStore = create<BudgetState>()(
         }
       },
 
+      deleteBudget: (id) => {
+        set((state) => ({
+          budgets: state.budgets.filter((b) => b.id !== id),
+        }));
+        if (auth?.currentUser) {
+          FirebaseService.deleteBudget(auth.currentUser.uid, id).catch(console.error);
+        }
+      },
+
       clearAllData: () => set({ budgets: [] }),
 
       getBudgetForMonth: (month, year) =>
-        get().budgets.find((b) => b.month === month && b.year === year) ?? null,
+        get().budgets.find((b) => b.month === month && b.year === year && !b.categoryId) ?? null,
+
+      getCategoryBudget: (month, year, categoryId) =>
+        get().budgets.find((b) => b.month === month && b.year === year && b.categoryId === categoryId) ?? null,
 
       getBudgetStatus: (month, year) => {
         const budget = get().getBudgetForMonth(month, year);

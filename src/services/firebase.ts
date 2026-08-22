@@ -275,13 +275,25 @@ export const FirebaseService = {
   async saveBudget(userId: string, budget: any) {
     if (userId === 'mock-local-user') return true;
     try {
-      const budgetKey = `${budget.year}-${budget.month}`;
+      const budgetKey = budget.id || (budget.categoryId ? `${budget.year}-${budget.month}-${budget.categoryId}` : `${budget.year}-${budget.month}`);
       set(ref(rtdb, `users/${userId}/budgets/${budgetKey}`), budget).catch(() => {});
       const docRef = doc(db, 'users', userId, 'budgets', budgetKey);
       setDoc(docRef, budget).catch(() => {});
       return true;
     } catch (error) {
       console.error('Error saving budget:', error);
+      return false;
+    }
+  },
+
+  async deleteBudget(userId: string, budgetId: string) {
+    if (userId === 'mock-local-user') return true;
+    try {
+      remove(ref(rtdb, `users/${userId}/budgets/${budgetId}`)).catch(() => {});
+      deleteDoc(doc(db, 'users', userId, 'budgets', budgetId)).catch(() => {});
+      return true;
+    } catch (error) {
+      console.error('Error deleting budget:', error);
       return false;
     }
   },

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, TextInput } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -8,27 +8,41 @@ import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Header } from '../../src/components/ui/Header';
 import { MonthSelector } from '../../src/components/ui/MonthSelector';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
-import { useUIStore, useTransactionStore, useBudgetStore } from '../../src/store';
+import { useUIStore, useTransactionStore, useBudgetStore, useCategoryStore } from '../../src/store';
 import { formatCurrency } from '../../src/utils/finance';
 import { Button } from '../../src/components/ui/Button';
+import { CategoryIcon } from '../../src/components/ui/CategoryIcon';
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const isDark = colors.bg.primary === '#080810';
   
   const selectedMonth = useUIStore((s) => s.selectedMonth);
   const selectedYear = useUIStore((s) => s.selectedYear);
   const goToPrevMonth = useUIStore((s) => s.goToPrevMonth);
   const goToNextMonth = useUIStore((s) => s.goToNextMonth);
   const currency = useUIStore((s) => s.currency);
+
+  const categories = useCategoryStore((s) => s.categories);
+  const expenseCategories = categories.filter((c) => c.type === 'expense' && c.isActive);
+
   const budgets = useBudgetStore((s) => s.budgets); // subscribe to force re-render
   const getBudgetForMonth = useBudgetStore((s) => s.getBudgetForMonth);
+  const getCategoryBudget = useBudgetStore((s) => s.getCategoryBudget);
   const getBudgetStatus = useBudgetStore((s) => s.getBudgetStatus);
   const setBudget = useBudgetStore((s) => s.setBudget);
+  const deleteBudget = useBudgetStore((s) => s.deleteBudget);
   const getMonthlySummary = useTransactionStore((s) => s.getMonthlySummary);
 
   const [isBudgetModalVisible, setBudgetModalVisible] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
+
+  const [isCatBudgetModalVisible, setIsCatBudgetModalVisible] = useState(false);
+  const [selectedCategoryForBudget, setSelectedCategoryForBudget] = useState<any>(null);
+  const [currentEditingCatBudget, setCurrentEditingCatBudget] = useState<any>(null);
+  const [catBudgetInput, setCatBudgetInput] = useState('');
+
   const getTransactionsForMonth = useTransactionStore((s) => s.getTransactionsForMonth);
   const transactionsState = useTransactionStore((s) => s.transactions); // force re-render
 
@@ -38,6 +52,16 @@ export default function ReportsScreen() {
   // Find a generic monthly budget
   const monthlyBudget = getBudgetForMonth(selectedMonth, selectedYear);
   const budgetStatus = getBudgetStatus(selectedMonth, selectedYear);
+
+  const categorySpendingMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    transactions.forEach((tx) => {
+      if (tx.type === 'expense' && tx.categoryId) {
+        map[tx.categoryId] = (map[tx.categoryId] || 0) + tx.amount;
+      }
+    });
+    return map;
+  }, [transactions]);
 
   // Determine progress bar color based on state
   const progressBarColor = 
@@ -62,6 +86,39 @@ export default function ReportsScreen() {
     setBudgetModalVisible(false);
   };
 
+  const openCategoryBudgetModal = (category: any, existingBudget: any) => {
+    setSelectedCategoryForBudget(category);
+    setCurrentEditingCatBudget(existingBudget);
+    setCatBudgetInput(existingBudget ? existingBudget.amount.toString() : '');
+    setIsCatBudgetModalVisible(true);
+  };
+
+  const handleSaveCategoryBudget = () => {
+    if (!selectedCategoryForBudget) return;
+    const amount = parseFloat(catBudgetInput.replace(/[^0-9.]/g, ''));
+    if (!isNaN(amount) && amount >= 0) {
+      setBudget({
+        id: currentEditingCatBudget?.id || `budget-${selectedYear}-${selectedMonth}-${selectedCategoryForBudget.id}`,
+        userId: 'mock-local-user',
+        categoryId: selectedCategoryForBudget.id,
+        amount,
+        month: selectedMonth,
+        year: selectedYear,
+        currency,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    setIsCatBudgetModalVisible(false);
+  };
+
+  const handleDeleteCategoryBudget = () => {
+    if (currentEditingCatBudget) {
+      deleteBudget(currentEditingCatBudget.id);
+    }
+    setIsCatBudgetModalVisible(false);
+  };
+
   return (
     <GlassBackground style={styles.container}>
       <Header title="Reports & Budget" showBack={false} />
@@ -73,7 +130,7 @@ export default function ReportsScreen() {
         onNext={goToNextMonth}
       />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         
         {/* Monthly Budget Card */}
         <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
@@ -164,12 +221,105 @@ export default function ReportsScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Individual Category Budgets Breakdown Card */}
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, marginTop: Spacing.xs }]}>
+          <View style={styles.cardHeader}>
+            <View>
+              <Text variant="md" weight="bold">Category Budgets</Text>
+              <Text variant="xs" color={colors.text.secondary}>Set limits for individual categories</Text>
+            </View>
+          </View>
+
+          {expenseCategories.map((category) => {
+            const catSpent = categorySpendingMap[category.id] || 0;
+            const catBudget = getCategoryBudget(selectedMonth, selectedYear, category.id);
+            const budgetAmt = catBudget?.amount || 0;
+            const percentage = budgetAmt > 0 ? (catSpent / budgetAmt) * 100 : 0;
+            const remaining = budgetAmt - catSpent;
+            const isExceeded = budgetAmt > 0 && catSpent > budgetAmt;
+
+            const catProgressColor = percentage >= 100
+              ? colors.semantic.danger
+              : percentage >= 80
+              ? colors.semantic.warning
+              : colors.semantic.safe;
+
+            return (
+              <View 
+                key={category.id} 
+                style={[styles.categoryBudgetItem, { borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}
+              >
+                <View style={styles.catHeaderRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <CategoryIcon iconName={category.icon} color={category.color} size={18} />
+                    <Text variant="sm" weight="semibold" style={{ marginLeft: 8 }}>
+                      {category.name}
+                    </Text>
+                  </View>
+                  
+                  <TouchableOpacity
+                    onPress={() => openCategoryBudgetModal(category, catBudget)}
+                    style={[styles.catActionBtn, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name={catBudget ? "pencil-sharp" : "add-circle-outline"} size={14} color={colors.accent.primary} />
+                    <Text variant="xs" weight="bold" color={colors.accent.primary} style={{ marginLeft: 4 }}>
+                      {catBudget ? "Edit Limit" : "Set Limit"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Amount Row */}
+                <View style={styles.catAmountRow}>
+                  <Text variant="xs" color={colors.text.secondary}>
+                    Spent: <Text variant="xs" weight="bold" color={colors.text.primary}>{formatCurrency(catSpent, currency)}</Text>
+                  </Text>
+                  {catBudget ? (
+                    <Text variant="xs" color={colors.text.tertiary}>
+                      Limit: <Text variant="xs" weight="bold" color={colors.text.primary}>{formatCurrency(budgetAmt, currency)}</Text>
+                    </Text>
+                  ) : (
+                    <Text variant="xs" color={colors.text.tertiary}>
+                      No limit set
+                    </Text>
+                  )}
+                </View>
+
+                {/* Progress Bar & Status if budget set */}
+                {catBudget ? (
+                  <View style={{ marginTop: 6 }}>
+                    <View style={[styles.progressBarBg, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', height: 6 }]}>
+                      <View 
+                        style={[
+                          styles.progressBarFill, 
+                          { 
+                            width: `${Math.min(percentage, 100)}%`,
+                            backgroundColor: catProgressColor
+                          }
+                        ]} 
+                      />
+                    </View>
+                    <View style={[styles.budgetRow, { marginTop: 4 }]}>
+                      <Text variant="xs" color={colors.text.tertiary} style={{ fontSize: 11 }}>
+                        {percentage.toFixed(0)}% used
+                      </Text>
+                      <Text variant="xs" color={isExceeded ? colors.semantic.danger : colors.text.tertiary} weight="semibold" style={{ fontSize: 11 }}>
+                        {isExceeded ? `Over by ${formatCurrency(Math.abs(remaining), currency)}` : `${formatCurrency(remaining, currency)} left`}
+                      </Text>
+                    </View>
+                  </View>
+                ) : null}
+              </View>
+            );
+          })}
+        </View>
         
         {/* Spacer for bottom tab */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Set Budget Modal */}
+      {/* Set Overall Budget Modal */}
       <Modal visible={isBudgetModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1 }]}>
@@ -185,6 +335,46 @@ export default function ReportsScreen() {
             <View style={styles.modalActions}>
               <Button label="Cancel" variant="secondary" onPress={() => setBudgetModalVisible(false)} style={{ flex: 1, marginRight: Spacing.sm }} />
               <Button label="Save" variant="primary" onPress={handleSaveBudget} style={{ flex: 1 }} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Set Category Budget Modal */}
+      <Modal visible={isCatBudgetModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1 }]}>
+            {selectedCategoryForBudget ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
+                <CategoryIcon iconName={selectedCategoryForBudget.icon} color={selectedCategoryForBudget.color} size={24} />
+                <View style={{ marginLeft: Spacing.sm }}>
+                  <Text variant="md" weight="bold">Set {selectedCategoryForBudget.name} Limit</Text>
+                  <Text variant="xs" color={colors.text.secondary}>Category budget for this month</Text>
+                </View>
+              </View>
+            ) : null}
+
+            <TextInput
+              style={[styles.budgetInput, { borderColor: colors.border.medium, color: colors.text.primary, backgroundColor: colors.bg.card }]}
+              keyboardType="numeric"
+              value={catBudgetInput}
+              onChangeText={setCatBudgetInput}
+              placeholder="Enter limit amount"
+              placeholderTextColor={colors.text.tertiary}
+              autoFocus
+            />
+
+            <View style={styles.modalActions}>
+              {currentEditingCatBudget ? (
+                <Button 
+                  label="Remove" 
+                  variant="danger" 
+                  onPress={handleDeleteCategoryBudget} 
+                  style={{ marginRight: Spacing.sm }} 
+                />
+              ) : null}
+              <Button label="Cancel" variant="secondary" onPress={() => setIsCatBudgetModalVisible(false)} style={{ flex: 1, marginRight: Spacing.sm }} />
+              <Button label="Save Limit" variant="primary" onPress={handleSaveCategoryBudget} style={{ flex: 1 }} />
             </View>
           </View>
         </View>
@@ -239,6 +429,28 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: Radii.md,
     marginTop: Spacing.md,
+  },
+  categoryBudgetItem: {
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+  },
+  catHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  catActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radii.sm,
+  },
+  catAmountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
   },
   emptyState: {
     alignItems: 'center',
