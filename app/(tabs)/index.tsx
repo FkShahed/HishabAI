@@ -48,7 +48,11 @@ export default function HomeScreen() {
       {/* Topbar Header Banner */}
       <View style={[
         styles.topbarContainer, 
-        { paddingTop: insets.top, backgroundColor: colors.topbar.bg, borderBottomColor: colors.topbar.border },
+        { 
+          paddingTop: insets.top, 
+          backgroundColor: Platform.OS === 'web' ? colors.topbar.bg : (isDark ? '#080810' : '#F8FAFC'), 
+          borderBottomColor: colors.topbar.border 
+        },
         Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
       ]}>
         <View style={styles.header}>
@@ -103,18 +107,13 @@ export default function HomeScreen() {
         <View style={[
           styles.compactSummaryCard, 
           { 
-            backgroundColor: isDark ? 'rgba(19, 19, 31, 0.55)' : 'rgba(255, 255, 255, 0.78)', 
+            backgroundColor: Platform.OS === 'web' 
+              ? (isDark ? 'rgba(19, 19, 31, 0.65)' : 'rgba(255, 255, 255, 0.85)')
+              : (isDark ? '#13131F' : '#FFFFFF'), 
             borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.55)',
             ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any) : {})
           }
         ]}>
-          {BlurViewComponent && Platform.OS !== 'web' ? (
-            <BlurViewComponent 
-              intensity={isDark ? 45 : 35} 
-              tint={isDark ? 'dark' : 'light'} 
-              style={StyleSheet.absoluteFill} 
-            />
-          ) : null}
           {/* Integrated Month Selector inside card header */}
           <View style={styles.cardMonthHeader}>
             <TouchableOpacity onPress={goToPrevMonth} style={[styles.monthNavBtn, { backgroundColor: 'rgba(255, 255, 255, 0.06)', borderRadius: 10 }]} activeOpacity={0.7}>

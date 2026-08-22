@@ -8,6 +8,7 @@ import { AddOptionModal } from '../../src/components/ui/AddOptionModal';
 export default function TabLayout() {
   const colors = useThemeColors();
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const isDark = colors.bg.primary === '#080810';
 
   return (
     <>
@@ -15,8 +16,12 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: colors.bg.glassHeader,
-            borderTopColor: colors.bg.glassBorder,
+            backgroundColor: Platform.OS === 'web'
+              ? colors.bg.glassHeader
+              : isDark
+              ? '#0F0F1A'
+              : '#FFFFFF',
+            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.6)',
             borderTopWidth: 1,
             position: 'absolute',
             bottom: 0,
