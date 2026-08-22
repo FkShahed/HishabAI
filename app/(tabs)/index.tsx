@@ -58,8 +58,8 @@ export default function HomeScreen() {
               style={{ width: 26, height: 26, borderRadius: 7, marginRight: 8 }}
               resizeMode="contain"
             />
-            <Text variant="xl" weight="extrabold" color={colors.topbar.text} style={{ letterSpacing: 0.6 }}>
-              Hisab<Text variant="xl" weight="extrabold" color={colors.accent.primary} style={{ letterSpacing: 0.6 }}>AI</Text>
+            <Text variant="lg" weight="medium" color={colors.topbar.text} style={{ letterSpacing: 0.4 }}>
+              Hisab<Text variant="lg" weight="medium" color={colors.accent.primary} style={{ letterSpacing: 0.4 }}>AI</Text>
             </Text>
           </View>
 
