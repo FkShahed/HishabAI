@@ -42,6 +42,7 @@ export default function ReportsScreen() {
   const [selectedCategoryForBudget, setSelectedCategoryForBudget] = useState<any>(null);
   const [currentEditingCatBudget, setCurrentEditingCatBudget] = useState<any>(null);
   const [catBudgetInput, setCatBudgetInput] = useState('');
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const getTransactionsForMonth = useTransactionStore((s) => s.getTransactionsForMonth);
   const transactionsState = useTransactionStore((s) => s.transactions); // force re-render
@@ -62,6 +63,23 @@ export default function ReportsScreen() {
     });
     return map;
   }, [transactions]);
+
+  const sortedExpenseCategories = useMemo(() => {
+    return [...expenseCategories].sort((a, b) => {
+      const aSpent = categorySpendingMap[a.id] || 0;
+      const bSpent = categorySpendingMap[b.id] || 0;
+      const aBudget = getCategoryBudget(selectedMonth, selectedYear, a.id);
+      const bBudget = getCategoryBudget(selectedMonth, selectedYear, b.id);
+
+      const aScore = (aBudget ? 1000000 : 0) + aSpent;
+      const bScore = (bBudget ? 1000000 : 0) + bSpent;
+
+      if (bScore !== aScore) return bScore - aScore;
+      return a.sortOrder - b.sortOrder;
+    });
+  }, [expenseCategories, categorySpendingMap, budgets, selectedMonth, selectedYear]);
+
+  const visibleCategories = showAllCategories ? sortedExpenseCategories : sortedExpenseCategories.slice(0, 10);
 
   // Determine progress bar color based on state
   const progressBarColor = 
@@ -231,7 +249,7 @@ export default function ReportsScreen() {
             </View>
           </View>
 
-          {expenseCategories.map((category) => {
+          {visibleCategories.map((category) => {
             const catSpent = categorySpendingMap[category.id] || 0;
             const catBudget = getCategoryBudget(selectedMonth, selectedYear, category.id);
             const budgetAmt = catBudget?.amount || 0;
@@ -313,6 +331,30 @@ export default function ReportsScreen() {
               </View>
             );
           })}
+
+          {sortedExpenseCategories.length > 10 ? (
+            <TouchableOpacity
+              onPress={() => setShowAllCategories(!showAllCategories)}
+              style={[
+                styles.showMoreBtn,
+                {
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                }
+              ]}
+              activeOpacity={0.8}
+            >
+              <Text variant="xs" weight="bold" color={colors.accent.primary}>
+                {showAllCategories ? 'Show Less' : `Show More (${sortedExpenseCategories.length - 10} More Categories)`}
+              </Text>
+              <Ionicons
+                name={showAllCategories ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color={colors.accent.primary}
+                style={{ marginLeft: 6 }}
+              />
+            </TouchableOpacity>
+          ) : null}
         </View>
         
         {/* Spacer for bottom tab */}
@@ -451,6 +493,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 4,
+  },
+  showMoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    marginTop: Spacing.md,
   },
   emptyState: {
     alignItems: 'center',
