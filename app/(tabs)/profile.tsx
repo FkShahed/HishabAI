@@ -226,26 +226,40 @@ export default function ProfileScreen() {
     return () => unsub();
   }, []);
 
+  const performSignOut = async () => {
+    try {
+      await AuthService.signOut();
+      useUIStore.getState().resetForSignOut();
+      useTransactionStore.getState().clearAllData();
+      useBudgetStore.getState().clearAllData();
+      useCategoryStore.getState().clearAllData();
+      router.replace('/auth' as any);
+    } catch (err: any) {
+      console.error('Sign out error:', err);
+      Alert.alert('Sign Out Error', err?.message || 'Could not sign out. Please try again.');
+    }
+  };
+
   const handleSignOut = async () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await AuthService.signOut();
-            useUIStore.getState().resetForSignOut();
-            useTransactionStore.getState().clearAllData();
-            useBudgetStore.getState().clearAllData();
-            useCategoryStore.getState().clearAllData();
-            router.replace('/auth');
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to sign out?');
+      if (confirmed) {
+        await performSignOut();
+      }
+    } else {
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to sign out?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: performSignOut,
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const handleSaveName = async () => {
