@@ -38,13 +38,13 @@ export function formatDateShort(dateStr: string): string {
   }
 }
 
-/** Format YYYY-MM-DD as day name: "Thursday" */
+/** Format YYYY-MM-DD as date format: "14 Jul Saturday" */
 export function formatDayName(dateStr: string): string {
   if (!dateStr || typeof dateStr !== 'string') return '';
   try {
     const parsed = parseISO(dateStr);
     if (isNaN(parsed.getTime())) return dateStr;
-    return format(parsed, 'EEEE');
+    return format(parsed, 'd MMM EEEE');
   } catch (e) {
     return dateStr;
   }
