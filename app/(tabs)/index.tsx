@@ -55,12 +55,27 @@ export default function HomeScreen() {
           <View style={styles.headerLeft}>
             <Image
               source={require('../../assets/images/icon.png')}
-              style={{ width: 24, height: 24, borderRadius: 6, marginRight: 8 }}
+              style={{ width: 26, height: 26, borderRadius: 7, marginRight: 8 }}
               resizeMode="contain"
             />
-            <Text variant="lg" weight="bold" color={colors.topbar.text}>
-              HisabAI
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text variant="lg" weight="extrabold" color={colors.topbar.text} style={{ letterSpacing: 0.5 }}>
+                Hisab
+              </Text>
+              <View style={{
+                backgroundColor: colors.accent.primaryDim || 'rgba(124, 58, 237, 0.18)',
+                paddingHorizontal: 6,
+                paddingVertical: 1,
+                borderRadius: 6,
+                marginLeft: 4,
+                borderWidth: 1,
+                borderColor: colors.accent.primary,
+              }}>
+                <Text variant="xs" weight="extrabold" color={colors.accent.primary} style={{ letterSpacing: 0.8, fontSize: 11 }}>
+                  AI
+                </Text>
+              </View>
+            </View>
           </View>
 
           <TouchableOpacity 
