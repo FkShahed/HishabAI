@@ -16,29 +16,34 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: Platform.OS === 'web'
-              ? colors.bg.glassHeader
-              : isDark
-              ? '#0F0F1A'
-              : '#FFFFFF',
-            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.6)',
-            borderTopWidth: 1,
             position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            elevation: 8,
-            height: TAB_BAR_HEIGHT,
-            paddingBottom: 12,
-            paddingTop: 12,
+            bottom: Platform.OS === 'ios' ? 24 : 16,
+            left: 16,
+            right: 16,
+            height: 64,
+            borderRadius: 32,
+            backgroundColor: Platform.OS === 'web'
+              ? (isDark ? 'rgba(15, 15, 26, 0.82)' : 'rgba(255, 255, 255, 0.90)')
+              : (isDark ? '#12121E' : '#FFFFFF'),
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.70)',
+            elevation: 12,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isDark ? 0.45 : 0.12,
+            shadowRadius: 16,
+            paddingBottom: Platform.OS === 'ios' ? 8 : 6,
+            paddingTop: 6,
+            paddingHorizontal: 8,
+            overflow: 'visible',
             ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any) : {}),
           },
           tabBarActiveTintColor: colors.accent.primary,
           tabBarInactiveTintColor: colors.text.tertiary,
           tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '500',
-            marginTop: 4,
+            fontSize: 11,
+            fontWeight: '600',
+            marginTop: 2,
           },
         }}
       >
@@ -47,7 +52,7 @@ export default function TabLayout() {
           options={{
             title: 'Home',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={size} color={color} />
+              <Ionicons name="home" size={22} color={color} />
             ),
           }}
         />
@@ -56,7 +61,7 @@ export default function TabLayout() {
           options={{
             title: 'Charts',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="pie-chart" size={size} color={color} />
+              <Ionicons name="pie-chart" size={22} color={color} />
             ),
           }}
         />
@@ -66,7 +71,7 @@ export default function TabLayout() {
             title: 'Add',
             tabBarIcon: () => (
               <View style={[styles.addButton, { backgroundColor: colors.accent.primary, shadowColor: colors.accent.primary }]}>
-                <Ionicons name="add" size={32} color="#FFFFFF" />
+                <Ionicons name="add" size={28} color="#FFFFFF" />
               </View>
             ),
           }}
@@ -82,7 +87,7 @@ export default function TabLayout() {
           options={{
             title: 'Reports',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="document-text" size={size} color={color} />
+              <Ionicons name="document-text" size={22} color={color} />
             ),
           }}
         />
@@ -91,7 +96,7 @@ export default function TabLayout() {
           options={{
             title: 'Settings',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="settings" size={size} color={color} />
+              <Ionicons name="settings" size={22} color={color} />
             ),
           }}
         />
@@ -108,12 +113,12 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   addButton: {
     backgroundColor: Colors.accent.primary,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
     shadowColor: Colors.accent.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
