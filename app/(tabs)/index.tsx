@@ -55,11 +55,11 @@ export default function HomeScreen() {
           <View style={styles.headerLeft}>
             <Image
               source={require('../../assets/images/icon.png')}
-              style={{ width: 26, height: 26, borderRadius: 7, marginRight: 9 }}
+              style={{ width: 26, height: 26, borderRadius: 7, marginRight: 8 }}
               resizeMode="contain"
             />
-            <Text variant="lg" weight="extrabold" color={colors.topbar.text} style={{ letterSpacing: 0.6 }}>
-              Hisab<Text color={colors.accent.primary} style={{ letterSpacing: 0.8 }}>AI</Text>
+            <Text variant="xl" weight="extrabold" color={colors.topbar.text} style={{ letterSpacing: 0.6 }}>
+              Hisab<Text variant="xl" weight="extrabold" color={colors.accent.primary} style={{ letterSpacing: 0.6 }}>AI</Text>
             </Text>
           </View>
 
