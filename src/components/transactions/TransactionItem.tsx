@@ -52,7 +52,7 @@ export function TransactionItem({ transaction, onPress, showDate = false, isLast
           size="sm"
         />
         <View style={styles.info}>
-          <Text variant="sm" weight="medium" numberOfLines={1}>
+          <Text variant="sm" weight="regular" numberOfLines={1}>
             {transaction.categoryNameSnapshot}
           </Text>
           {showDate && (
@@ -71,7 +71,7 @@ export function TransactionItem({ transaction, onPress, showDate = false, isLast
         )}
         <Text
           variant="sm"
-          weight="semibold"
+          weight="regular"
           color={
             transaction.type === 'expense'
               ? colors.text.primary
