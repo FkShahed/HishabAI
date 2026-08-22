@@ -18,9 +18,6 @@ import { auth } from '../../src/services/firebase';
 import { AddOptionModal } from '../../src/components/ui/AddOptionModal';
 
 let BlurViewComponent: any = null;
-try {
-  BlurViewComponent = require('expo-blur').BlurView;
-} catch (e) {}
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();

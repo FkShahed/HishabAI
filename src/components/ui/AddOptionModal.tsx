@@ -12,9 +12,6 @@ import { useUIStore } from '../../store';
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 let BlurViewComponent: any = null;
-try {
-  BlurViewComponent = require('expo-blur').BlurView;
-} catch (e) {}
 
 interface AddOptionModalProps {
   visible: boolean;

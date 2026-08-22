@@ -11,9 +11,6 @@ import { AVAILABLE_EXPENSE_ICONS, AVAILABLE_INCOME_ICONS } from '../../constants
 import { CategoryIcon } from './CategoryIcon';
 
 let BlurViewComponent: any = null;
-try {
-  BlurViewComponent = require('expo-blur').BlurView;
-} catch (e) {}
 
 import { Category } from '../../types';
 

@@ -18,9 +18,6 @@ import { useUIStore, useTransactionStore } from '../../src/store';
 import { formatCurrency, getCurrencySymbol, formatDateDisplay } from '../../src/utils/finance';
 
 let BlurViewComponent: any = null;
-try {
-  BlurViewComponent = require('expo-blur').BlurView;
-} catch (e) {}
 
 /** Helper to format compact amounts on small calendar cells */
 function formatCompactAmount(amount: number, symbol: string): string {

@@ -10,9 +10,6 @@ import { useUIStore } from '../../store';
 import { evaluateMathExpression, formatCurrency } from '../../utils/finance';
 
 let BlurViewComponent: any = null;
-try {
-  BlurViewComponent = require('expo-blur').BlurView;
-} catch (e) {}
 
 interface CalculatorKeypadModalProps {
   visible: boolean;
