@@ -307,66 +307,74 @@ export default function ReportsScreen() {
                   }
                 ]}
               >
-                <View style={styles.catHeaderRow}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                  {/* Category Icon aligned with top title row */}
+                  <View style={{ marginTop: 1, marginRight: 10 }}>
                     <CategoryIcon icon={category.icon} color={category.color} size="sm" />
-                    <Text variant="sm" weight="semibold" style={{ marginLeft: 8 }}>
-                      {category.name}
-                    </Text>
                   </View>
-                  
-                  <TouchableOpacity
-                    onPress={() => openCategoryBudgetModal(category, catBudget)}
-                    style={[styles.catActionBtn, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name={catBudget ? "pencil-sharp" : "add-circle-outline"} size={14} color={colors.accent.primary} />
-                    <Text variant="xs" weight="bold" color={colors.accent.primary} style={{ marginLeft: 4 }}>
-                      {catBudget ? "Edit Limit" : "Set Limit"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
 
-                {/* Amount Row */}
-                <View style={styles.catAmountRow}>
-                  <Text variant="xs" color={colors.text.secondary}>
-                    Spent: <Text variant="xs" weight="bold" color={colors.text.primary}>{formatCurrency(catSpent, currency)}</Text>
-                  </Text>
-                  {catBudget ? (
-                    <Text variant="xs" color={colors.text.tertiary}>
-                      Limit: <Text variant="xs" weight="bold" color={colors.text.primary}>{formatCurrency(budgetAmt, currency)}</Text>
-                    </Text>
-                  ) : (
-                    <Text variant="xs" color={colors.text.tertiary}>
-                      No limit set
-                    </Text>
-                  )}
-                </View>
+                  {/* Category Content Column */}
+                  <View style={{ flex: 1 }}>
+                    {/* Title & Action Button Row */}
+                    <View style={styles.catHeaderRow}>
+                      <Text variant="sm" weight="semibold" style={{ flex: 1 }}>
+                        {category.name}
+                      </Text>
+                      
+                      <TouchableOpacity
+                        onPress={() => openCategoryBudgetModal(category, catBudget)}
+                        style={[styles.catActionBtn, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name={catBudget ? "pencil-sharp" : "add-circle-outline"} size={13} color={colors.accent.primary} />
+                        <Text variant="xs" weight="bold" color={colors.accent.primary} style={{ marginLeft: 4 }}>
+                          {catBudget ? "Edit Limit" : "Set Limit"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
 
-                {/* Progress Bar & Status if budget set */}
-                {catBudget ? (
-                  <View style={{ marginTop: 6 }}>
-                    <View style={[styles.progressBarBg, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', height: 6 }]}>
-                      <View 
-                        style={[
-                          styles.progressBarFill, 
-                          { 
-                            width: `${Math.min(percentage, 100)}%`,
-                            backgroundColor: catProgressColor
-                          }
-                        ]} 
-                      />
-                    </View>
-                    <View style={[styles.budgetRow, { marginTop: 4 }]}>
-                      <Text variant="xs" color={colors.text.tertiary} style={{ fontSize: 11 }}>
-                        {percentage.toFixed(0)}% used
+                    {/* Amount Row */}
+                    <View style={styles.catAmountRow}>
+                      <Text variant="xs" color={colors.text.secondary}>
+                        Spent: <Text variant="xs" weight="bold" color={colors.text.primary}>{formatCurrency(catSpent, currency)}</Text>
                       </Text>
-                      <Text variant="xs" color={isExceeded ? colors.semantic.danger : colors.text.tertiary} weight="semibold" style={{ fontSize: 11 }}>
-                        {isExceeded ? `Over by ${formatCurrency(Math.abs(remaining), currency)}` : `${formatCurrency(remaining, currency)} left`}
-                      </Text>
+                      {catBudget ? (
+                        <Text variant="xs" color={colors.text.tertiary}>
+                          Limit: <Text variant="xs" weight="bold" color={colors.text.primary}>{formatCurrency(budgetAmt, currency)}</Text>
+                        </Text>
+                      ) : (
+                        <Text variant="xs" color={colors.text.tertiary}>
+                          No limit set
+                        </Text>
+                      )}
                     </View>
+
+                    {/* Progress Bar & Status if budget set */}
+                    {catBudget ? (
+                      <View style={{ marginTop: 6 }}>
+                        <View style={[styles.progressBarBg, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', height: 6 }]}>
+                          <View 
+                            style={[
+                              styles.progressBarFill, 
+                              { 
+                                width: `${Math.min(percentage, 100)}%`,
+                                backgroundColor: catProgressColor
+                              }
+                            ]} 
+                          />
+                        </View>
+                        <View style={[styles.budgetRow, { marginTop: 4 }]}>
+                          <Text variant="xs" color={colors.text.tertiary} style={{ fontSize: 11 }}>
+                            {percentage.toFixed(0)}% used
+                          </Text>
+                          <Text variant="xs" color={isExceeded ? colors.semantic.danger : colors.text.tertiary} weight="semibold" style={{ fontSize: 11 }}>
+                            {isExceeded ? `Over by ${formatCurrency(Math.abs(remaining), currency)}` : `${formatCurrency(remaining, currency)} left`}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : null}
                   </View>
-                ) : null}
+                </View>
               </View>
             );
           })}
