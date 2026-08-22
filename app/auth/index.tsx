@@ -223,16 +223,16 @@ export default function AuthScreen() {
             return;
           }
 
-          if (user.displayName) {
+          // Fetch user data completely while showing loader
+          await loadUserData(user.uid);
+          const currentStoreName = useUIStore.getState().userName;
+          if (!currentStoreName && user.displayName) {
             setUserName(user.displayName);
           }
           const pic = (user as any).customPhotoURL || user.photoURL || user.providerData?.[0]?.photoURL;
-          if (pic) {
+          if (pic && !useUIStore.getState().userPhotoUrl) {
             setUserPhotoUrl(pic);
           }
-
-          // Fetch user data completely while showing loader
-          await loadUserData(user.uid);
           router.replace('/(tabs)');
         }
       } else {
