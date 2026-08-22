@@ -307,9 +307,9 @@ export default function ReportsScreen() {
                   }
                 ]}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                  {/* Category Icon aligned with top title row */}
-                  <View style={{ marginTop: 1, marginRight: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {/* Category Icon vertically centered */}
+                  <View style={{ marginRight: 10 }}>
                     <CategoryIcon icon={category.icon} color={category.color} size="sm" />
                   </View>
 
