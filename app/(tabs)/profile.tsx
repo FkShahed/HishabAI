@@ -820,7 +820,7 @@ export default function ProfileScreen() {
       {/* Sign Out Confirmation Modal */}
       <Modal visible={isSignOutModalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.semantic.dangerDim, borderWidth: 1, padding: Spacing.md }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: 'transparent', borderWidth: 0, padding: Spacing.md }]}>
             <View style={{ alignItems: 'center', marginBottom: Spacing.md }}>
               <View style={[styles.warningBadge, { backgroundColor: colors.semantic.dangerDim }]}>
                 <Ionicons name="log-out-outline" size={28} color={colors.semantic.danger} />

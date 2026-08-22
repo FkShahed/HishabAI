@@ -352,11 +352,11 @@ export default function AuthScreen() {
           style={[
             styles.formCard,
             {
-              backgroundColor: isDark ? 'rgba(24, 24, 40, 0.65)' : 'rgba(255, 255, 255, 0.85)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.60)',
+              backgroundColor: 'transparent',
+              borderColor: 'transparent',
+              borderWidth: 0,
               opacity: fadeAnim,
             },
-            Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
           ]}
         >
           {mode === 'signup' && (
@@ -568,13 +568,10 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   formCard: {
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.sm,
     borderRadius: Radii.lg,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    borderWidth: 0,
   },
   errorBox: {
     flexDirection: 'row',
