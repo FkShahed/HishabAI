@@ -56,6 +56,11 @@ export default function HomeScreen() {
       ]}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={{ width: 24, height: 24, borderRadius: 6, marginRight: 8 }}
+              resizeMode="contain"
+            />
             <Text variant="lg" weight="bold" color={colors.topbar.text}>
               HisabAI
             </Text>
