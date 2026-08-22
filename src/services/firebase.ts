@@ -3,6 +3,7 @@ import {
   getFirestore, 
   collection, 
   doc, 
+  getDoc,
   setDoc, 
   getDocs, 
   query, 
@@ -18,6 +19,7 @@ import {
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
   signOut as firebaseSignOut,
   EmailAuthProvider,
   GoogleAuthProvider,
@@ -88,8 +90,12 @@ export const ensureAuthenticated = (): Promise<{ uid: string; email?: string | n
 };
 
 export const AuthService = {
-  async signUp(email: string, pass: string) {
+  async signUp(email: string, pass: string, displayName?: string) {
     const credential = await createUserWithEmailAndPassword(auth, email, pass);
+    if (displayName && credential.user) {
+      await updateProfile(credential.user, { displayName }).catch(() => {});
+      await FirebaseService.saveUserProfile(credential.user.uid, { userName: displayName }).catch(() => {});
+    }
     return credential.user;
   },
 

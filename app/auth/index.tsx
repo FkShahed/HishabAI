@@ -143,7 +143,7 @@ export default function AuthScreen() {
     try {
       let user;
       if (mode === 'signup') {
-        user = await AuthService.signUp(email.trim(), password);
+        user = await AuthService.signUp(email.trim(), password, name.trim());
         if (user && name.trim()) {
           setUserName(name.trim());
         }
