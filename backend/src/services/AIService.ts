@@ -161,7 +161,11 @@ export class GeminiAIService implements IAIService {
         if (transcript && transcript.trim().length > 0) {
           console.log('[GeminiAIService] Groq STT successful. Parsing transcript text with Gemini...');
           const res = await this.parseVoiceText(transcript, context);
-          return { ...res, engineUsed: 'Groq' };
+          return {
+            ...res,
+            engineUsed: 'Groq (Whisper) + Gemini',
+            sttEngine: 'groq',
+          };
         }
       } catch (sttErr: any) {
         console.warn('[GeminiAIService] Groq STT failed — falling back to Gemini audio parsing:', sttErr.message);
@@ -182,7 +186,11 @@ export class GeminiAIService implements IAIService {
     );
     const responseText = result.response.text();
     const parsed = this.parseAndValidateResponse(responseText, 'voice', context);
-    return { ...parsed, engineUsed: 'Gemini Direct' };
+    return {
+      ...parsed,
+      engineUsed: 'Direct Gemini Audio (Fallback)',
+      sttEngine: 'gemini',
+    };
   }
 
   /**

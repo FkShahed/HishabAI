@@ -158,6 +158,8 @@ export interface AIParseResponse {
   total?: number;
   processingNotes?: string;    // warnings, dropped transactions, etc.
   droppedCount?: number;       // how many AI transactions failed schema validation
+  engineUsed?: string;         // 'Groq (Whisper) + Gemini' | 'Direct Gemini Audio (Fallback)'
+  sttEngine?: 'groq' | 'gemini';
 }
 
 // ─── Service Adapter Interfaces ──────────────────────────────────────────────
