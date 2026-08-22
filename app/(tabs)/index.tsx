@@ -101,8 +101,8 @@ export default function HomeScreen() {
         <View style={[
           styles.compactSummaryCard, 
           { 
-            backgroundColor: colors.bg.glass, 
-            borderColor: colors.bg.glassBorder,
+            backgroundColor: isDark ? 'rgba(19, 19, 31, 0.55)' : 'rgba(255, 255, 255, 0.78)', 
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.55)',
             ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any) : {})
           }
         ]}>
@@ -293,11 +293,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
   cardMonthHeader: {
     flexDirection: 'row',
