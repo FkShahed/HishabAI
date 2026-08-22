@@ -249,7 +249,7 @@ export default function ReportsScreen() {
             </View>
           </View>
 
-          {visibleCategories.map((category) => {
+          {visibleCategories.map((category, index) => {
             const catSpent = categorySpendingMap[category.id] || 0;
             const catBudget = getCategoryBudget(selectedMonth, selectedYear, category.id);
             const budgetAmt = catBudget?.amount || 0;
@@ -266,7 +266,13 @@ export default function ReportsScreen() {
             return (
               <View 
                 key={category.id} 
-                style={[styles.categoryBudgetItem, { borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}
+                style={[
+                  styles.categoryBudgetItem, 
+                  { 
+                    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                    borderBottomWidth: index === visibleCategories.length - 1 ? 0 : 1,
+                  }
+                ]}
               >
                 <View style={styles.catHeaderRow}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
@@ -492,8 +498,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xs,
-    marginTop: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.md,
     backgroundColor: 'transparent',
   },
   emptyState: {
