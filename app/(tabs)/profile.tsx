@@ -282,7 +282,7 @@ export default function ProfileScreen() {
   const currentCurrencySymbol = getCurrencySymbol(currency);
   const isDark = colors.bg.primary === '#080810';
   const sectionBg = isDark ? 'rgba(24, 24, 40, 0.65)' : 'rgba(255, 255, 255, 0.78)';
-  const sectionBorder = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(203, 213, 225, 0.9)';
+  const sectionBorder = isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(203, 213, 225, 0.55)';
 
   return (
     <GlassBackground style={styles.container}>
