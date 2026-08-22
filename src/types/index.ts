@@ -65,6 +65,7 @@ export interface Category {
 export interface Budget {
   id: string;
   userId: string;
+  categoryId?: string;
   month: number; // 1-12
   year: number;
   amount: number;
