@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator, Animated } from 'react-native';
 
 
 import { router } from 'expo-router';
@@ -38,6 +38,38 @@ export default function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [focusedInput, setFocusedInput] = useState<'name' | 'email' | 'password' | null>(null);
+
+  const isDark = colors.bg.primary === '#080810';
+  const tabAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const switchMode = (targetMode: 'signin' | 'signup') => {
+    if (mode === targetMode) return;
+    setErrorMessage('');
+    
+    Animated.parallel([
+      Animated.timing(tabAnim, {
+        toValue: targetMode === 'signin' ? 0 : 1,
+        duration: 220,
+        useNativeDriver: false,
+      }),
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0.35,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+
+    setMode(targetMode);
+  };
 
   const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '254866158438-sm0ksqb3dathmggubibr9d7no51lcgio.apps.googleusercontent.com';
   const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '254866158438-m6c9hglpc030rjemqtchjmtdl2pre70j.apps.googleusercontent.com';
@@ -240,11 +272,11 @@ export default function AuthScreen() {
 
         {/* Header Hero */}
         <View style={styles.hero}>
-          <View style={[styles.iconCircle, { backgroundColor: colors.bg.secondary }]}>
+          <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)', borderColor: colors.border.subtle, borderWidth: 1 }]}>
             <Image
               source={require('../../assets/images/icon.png')}
               style={styles.logoImage}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           </View>
           <Text variant="xl" weight="bold" align="center" color={colors.text.primary} style={{ marginTop: Spacing.md }}>
@@ -257,21 +289,45 @@ export default function AuthScreen() {
           </Text>
         </View>
 
-        {/* Mode Toggle */}
-        <View style={[styles.toggleRow, { backgroundColor: colors.bg.secondary }]}>
+        {/* Smooth Glassmorphic Mode Toggle */}
+        <View style={[styles.toggleRow, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)', borderColor: colors.border.subtle, borderWidth: 1 }]}>
+          <Animated.View
+            style={[
+              styles.slidingPill,
+              {
+                backgroundColor: colors.bg.card,
+                borderColor: colors.accent.primary,
+                borderWidth: 1,
+                left: tabAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['1%', '50%'],
+                }),
+              },
+            ]}
+          />
           <TouchableOpacity
-            style={[styles.toggleTab, mode === 'signin' && { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }]}
-            onPress={() => { setMode('signin'); setErrorMessage(''); }}
+            style={styles.toggleTab}
+            onPress={() => switchMode('signin')}
+            activeOpacity={0.8}
           >
-            <Text variant="sm" weight={mode === 'signin' ? 'bold' : 'medium'} color={mode === 'signin' ? colors.text.primary : colors.text.secondary}>
+            <Text
+              variant="sm"
+              weight={mode === 'signin' ? 'bold' : 'medium'}
+              color={mode === 'signin' ? colors.accent.primary : colors.text.secondary}
+            >
               Sign In
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleTab, mode === 'signup' && { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }]}
-            onPress={() => { setMode('signup'); setErrorMessage(''); }}
+            style={styles.toggleTab}
+            onPress={() => switchMode('signup')}
+            activeOpacity={0.8}
           >
-            <Text variant="sm" weight={mode === 'signup' ? 'bold' : 'medium'} color={mode === 'signup' ? colors.text.primary : colors.text.secondary}>
+            <Text
+              variant="sm"
+              weight={mode === 'signup' ? 'bold' : 'medium'}
+              color={mode === 'signup' ? colors.accent.primary : colors.text.secondary}
+            >
               Create Account
             </Text>
           </TouchableOpacity>
@@ -287,99 +343,129 @@ export default function AuthScreen() {
           </View>
         ) : null}
 
-        {/* Google Auth Button (Temporarily commented out) */}
-        {/*
-        <TouchableOpacity
+        {/* Glassmorphic Form Card with Smooth Fade Animation */}
+        <Animated.View 
           style={[
-            styles.googleButton,
-            { backgroundColor: colors.bg.card, borderColor: colors.border.subtle, borderWidth: 1 }
+            styles.formCard,
+            {
+              backgroundColor: isDark ? 'rgba(24, 24, 40, 0.65)' : 'rgba(255, 255, 255, 0.85)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.60)',
+              opacity: fadeAnim,
+            },
+            Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
           ]}
-          onPress={handleGoogleAuth}
-          disabled={loading}
-          activeOpacity={0.8}
         >
-          <Ionicons name="logo-google" size={20} color="#EA4335" style={{ marginRight: 10 }} />
-          <Text variant="md" weight="bold" color={colors.text.primary}>
-            {mode === 'signin' ? 'Sign In with Google' : 'Sign Up with Google'}
-          </Text>
-        </TouchableOpacity>
+          {mode === 'signup' && (
+            <View style={styles.inputGroup}>
+              <Text variant="xs" weight="bold" color={colors.text.secondary} style={styles.label}>
+                FULL NAME
+              </Text>
+              <View style={[
+                styles.inputWrapper, 
+                { 
+                  backgroundColor: colors.bg.card, 
+                  borderColor: focusedInput === 'name' ? colors.accent.primary : colors.border.subtle 
+                }
+              ]}>
+                <Ionicons 
+                  name="person-outline" 
+                  size={20} 
+                  color={focusedInput === 'name' ? colors.accent.primary : colors.text.tertiary} 
+                  style={{ marginRight: 10 }} 
+                />
+                <TextInput
+                  style={[styles.textInput, { color: colors.text.primary }]}
+                  placeholder="e.g. Fazlul Karim Shahed"
+                  placeholderTextColor={colors.text.tertiary}
+                  value={name}
+                  onChangeText={setName}
+                  onFocus={() => setFocusedInput('name')}
+                  onBlur={() => setFocusedInput(null)}
+                />
+              </View>
+            </View>
+          )}
 
-        <View style={styles.dividerRow}>
-          <View style={[styles.dividerLine, { backgroundColor: colors.border.subtle }]} />
-          <Text variant="xs" color={colors.text.tertiary} style={{ marginHorizontal: Spacing.md }}>
-            OR EMAIL
-          </Text>
-          <View style={[styles.dividerLine, { backgroundColor: colors.border.subtle }]} />
-        </View>
-        */}
-
-        {/* Form Inputs */}
-        {mode === 'signup' && (
           <View style={styles.inputGroup}>
-            <Text variant="sm" color={colors.text.secondary} style={styles.label}>Full Name</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
-              <Ionicons name="person-outline" size={20} color={colors.text.tertiary} style={{ marginRight: 8 }} />
+            <Text variant="xs" weight="bold" color={colors.text.secondary} style={styles.label}>
+              EMAIL ADDRESS
+            </Text>
+            <View style={[
+              styles.inputWrapper, 
+              { 
+                backgroundColor: colors.bg.card, 
+                borderColor: focusedInput === 'email' ? colors.accent.primary : colors.border.subtle 
+              }
+            ]}>
+              <Ionicons 
+                name="mail-outline" 
+                size={20} 
+                color={focusedInput === 'email' ? colors.accent.primary : colors.text.tertiary} 
+                style={{ marginRight: 10 }} 
+              />
               <TextInput
                 style={[styles.textInput, { color: colors.text.primary }]}
-                placeholder="e.g. Fazlul Karim Shahed"
+                placeholder="you@example.com"
                 placeholderTextColor={colors.text.tertiary}
-                value={name}
-                onChangeText={setName}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+                onFocus={() => setFocusedInput('email')}
+                onBlur={() => setFocusedInput(null)}
               />
             </View>
           </View>
-        )}
 
-        <View style={styles.inputGroup}>
-          <Text variant="sm" color={colors.text.secondary} style={styles.label}>Email Address</Text>
-          <View style={[styles.inputWrapper, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
-            <Ionicons name="mail-outline" size={20} color={colors.text.tertiary} style={{ marginRight: 8 }} />
-            <TextInput
-              style={[styles.textInput, { color: colors.text.primary }]}
-              placeholder="you@example.com"
-              placeholderTextColor={colors.text.tertiary}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text variant="sm" color={colors.text.secondary} style={styles.label}>Password</Text>
-          <View style={[styles.inputWrapper, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.text.tertiary} style={{ marginRight: 8 }} />
-            <TextInput
-              style={[styles.textInput, { color: colors.text.primary }]}
-              placeholder="Min 6 characters"
-              placeholderTextColor={colors.text.tertiary}
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity 
-              onPress={() => setShowPassword(!showPassword)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{ padding: 4 }}
-              activeOpacity={0.7}
-            >
+          <View style={styles.inputGroup}>
+            <Text variant="xs" weight="bold" color={colors.text.secondary} style={styles.label}>
+              PASSWORD
+            </Text>
+            <View style={[
+              styles.inputWrapper, 
+              { 
+                backgroundColor: colors.bg.card, 
+                borderColor: focusedInput === 'password' ? colors.accent.primary : colors.border.subtle 
+              }
+            ]}>
               <Ionicons 
-                name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                name="lock-closed-outline" 
                 size={20} 
-                color={colors.text.secondary} 
+                color={focusedInput === 'password' ? colors.accent.primary : colors.text.tertiary} 
+                style={{ marginRight: 10 }} 
               />
-            </TouchableOpacity>
+              <TextInput
+                style={[styles.textInput, { color: colors.text.primary }]}
+                placeholder="Min 6 characters"
+                placeholderTextColor={colors.text.tertiary}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => setFocusedInput('password')}
+                onBlur={() => setFocusedInput(null)}
+              />
+              <TouchableOpacity 
+                onPress={() => setShowPassword(!showPassword)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ padding: 4 }}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                  size={20} 
+                  color={colors.text.secondary} 
+                />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
 
-        {/* Submit Button */}
-        <Button
-          label={mode === 'signin' ? 'Sign In' : 'Create Account'}
-          onPress={handleAuthAction}
-          isLoading={loading}
-          style={{ marginTop: Spacing.md }}
-        />
+          <Button
+            label={mode === 'signin' ? 'Sign In' : 'Create Account'}
+            onPress={handleAuthAction}
+            isLoading={loading}
+            style={{ marginTop: Spacing.xs }}
+          />
+        </Animated.View>
 
       </ScrollView>
 
@@ -453,14 +539,38 @@ const styles = StyleSheet.create({
   toggleRow: {
     flexDirection: 'row',
     borderRadius: Radii.md,
-    padding: 4,
-    marginBottom: Spacing.xl,
+    padding: 3,
+    marginBottom: Spacing.lg,
+    position: 'relative',
+    height: 44,
+  },
+  slidingPill: {
+    position: 'absolute',
+    top: 3,
+    bottom: 3,
+    width: '49%',
+    borderRadius: Radii.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   toggleTab: {
     flex: 1,
-    paddingVertical: Spacing.sm,
+    justifyContent: 'center',
     alignItems: 'center',
     borderRadius: Radii.sm,
+    zIndex: 2,
+  },
+  formCard: {
+    padding: Spacing.lg,
+    borderRadius: Radii.lg,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
   },
   errorBox: {
     flexDirection: 'row',
