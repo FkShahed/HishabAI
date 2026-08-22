@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from './Text';
+import { useThemeColors } from '../../constants/colors';
 
 export interface CategoryIconProps {
   icon: string;
@@ -47,15 +48,18 @@ const EMOJI_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   '➕': 'add-circle-outline',
   '☕': 'cafe-outline',
   '🍕': 'pizza-outline',
+  '🍰': 'nutrition-outline',
   '🛒': 'cart-outline',
   '💳': 'card-outline',
   '💡': 'bulb-outline',
+  '⛽': 'car-outline',
   '🚕': 'car-outline',
   '💊': 'fitness-outline',
   '🎓': 'school-outline',
   '🎧': 'headset-outline',
   '🎸': 'musical-notes-outline',
   '🍿': 'film-outline',
+  '🏕️': 'compass-outline',
   '🏋️': 'barbell-outline',
   '🚲': 'bicycle-outline',
   '🎨': 'color-palette-outline',
@@ -68,26 +72,31 @@ const EMOJI_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   '🧾': 'receipt-outline',
   '🧼': 'water-outline',
   '👕': 'shirt-outline',
+  '👠': 'shirt-outline',
   '⌚': 'watch-outline',
   '🎟️': 'ticket-outline',
   '🏷️': 'pricetag-outline',
 };
 
 export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
+  const colors = useThemeColors();
+  const isDark = colors.bg.primary === '#080810';
+  const activeColor = color || '#7C3AED';
+
   const getDimensions = () => {
     switch (size) {
-      case 'sm': return { container: 28, iconSize: 16, font: 14, radius: 14 };
-      case 'md': return { container: 34, iconSize: 20, font: 18, radius: 17 };
-      case 'lg': return { container: 46, iconSize: 27, font: 24, radius: 23 };
-      case 'xl': return { container: 62, iconSize: 36, font: 32, radius: 31 };
-      default: return { container: 34, iconSize: 20, font: 18, radius: 17 };
+      case 'sm': return { container: 30, iconSize: 17, font: 15, radius: 15 };
+      case 'md': return { container: 36, iconSize: 20, font: 18, radius: 18 };
+      case 'lg': return { container: 48, iconSize: 28, font: 25, radius: 24 };
+      case 'xl': return { container: 64, iconSize: 38, font: 34, radius: 32 };
+      default: return { container: 36, iconSize: 20, font: 18, radius: 18 };
     }
   };
 
   const dim = getDimensions();
 
   const getRgba = (hex: string, opacity: number) => {
-    let r = 59, g = 130, b = 246;
+    let r = 124, g = 58, b = 237;
     if (hex && hex.startsWith('#')) {
       if (hex.length === 7) {
         r = parseInt(hex.substring(1, 3), 16);
@@ -110,6 +119,11 @@ export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
     vectorName = EMOJI_TO_IONICON[icon];
   }
 
+  // Adjust yellow/faint colors in Light mode for crisp contrast & high visibility
+  const hexLower = activeColor.toLowerCase();
+  const isTooLight = hexLower === '#fde68a' || hexLower === '#fcd34d' || hexLower === '#eab308' || hexLower === '#ffffff';
+  const effectiveIconColor = (!isDark && isTooLight) ? '#D97706' : activeColor;
+
   return (
     <View
       style={[
@@ -118,27 +132,18 @@ export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
           width: dim.container,
           height: dim.container,
           borderRadius: dim.radius,
-          backgroundColor: getRgba(color, 0.14),
-          borderColor: getRgba(color, 0.32),
+          backgroundColor: getRgba(effectiveIconColor, isDark ? 0.22 : 0.16),
+          borderColor: getRgba(effectiveIconColor, isDark ? 0.48 : 0.38),
           borderWidth: 1,
-          ...Platform.select({
-            ios: {
-              shadowColor: color,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.16,
-              shadowRadius: 3,
-            },
-            android: {
-              elevation: 1,
-            },
-          }),
         },
       ]}
     >
       {vectorName ? (
-        <Ionicons name={vectorName} size={dim.iconSize} color={color} />
+        <Ionicons name={vectorName} size={dim.iconSize} color={effectiveIconColor} />
       ) : (
-        <Text style={{ fontSize: dim.font, textAlign: 'center', includeFontPadding: false }}>{icon}</Text>
+        <Text style={{ fontSize: dim.font, textAlign: 'center', includeFontPadding: false }}>
+          {icon || '🏷️'}
+        </Text>
       )}
     </View>
   );
