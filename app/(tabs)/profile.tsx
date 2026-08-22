@@ -253,7 +253,12 @@ export default function ProfileScreen() {
 
   const handleSaveName = async () => {
     if (nameInput.trim()) {
-      setUserName(nameInput.trim());
+      const newName = nameInput.trim();
+      setUserName(newName);
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: newName }).catch(() => {});
+        await FirebaseService.saveUserProfile(auth.currentUser.uid, { userName: newName }).catch(() => {});
+      }
     }
     setNameModalVisible(false);
   };

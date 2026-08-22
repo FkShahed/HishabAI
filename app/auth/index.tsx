@@ -130,11 +130,15 @@ export default function AuthScreen() {
         signInWithCredential(auth, credential)
           .then(async (userCred) => {
             const user = userCred.user;
-            if (user.displayName) setUserName(user.displayName);
-            const pic = user.photoURL || user.providerData?.[0]?.photoURL;
-            if (pic) setUserPhotoUrl(pic);
-
             await loadUserData(user.uid);
+            const currentStoreName = useUIStore.getState().userName;
+            if (!currentStoreName && user.displayName) {
+              setUserName(user.displayName);
+            }
+            const pic = user.photoURL || user.providerData?.[0]?.photoURL;
+            if (pic && !useUIStore.getState().userPhotoUrl) {
+              setUserPhotoUrl(pic);
+            }
             router.replace('/(tabs)');
           })
           .catch((err: any) => {

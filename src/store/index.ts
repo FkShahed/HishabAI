@@ -391,19 +391,21 @@ export const useUIStore = create<UIState>()(
       },
       setUserName: (userName) => {
         set({ userName });
-        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
+        if (auth?.currentUser) {
+          updateProfile(auth.currentUser, { displayName: userName }).catch(() => {});
           FirebaseService.saveUserProfile(auth.currentUser.uid, { userName }).catch(() => {});
         }
       },
       setUserPhotoUrl: (userPhotoUrl) => {
         set({ userPhotoUrl });
-        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
+        if (auth?.currentUser) {
+          updateProfile(auth.currentUser, { photoURL: userPhotoUrl }).catch(() => {});
           FirebaseService.saveUserProfile(auth.currentUser.uid, { userPhotoUrl }).catch(() => {});
         }
       },
       setDailyReminderEnabled: (dailyReminderEnabled) => {
         set({ dailyReminderEnabled });
-        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
+        if (auth?.currentUser) {
           FirebaseService.saveUserProfile(auth.currentUser.uid, { dailyReminderEnabled }).catch(() => {});
         }
       },
@@ -421,9 +423,17 @@ export const useUIStore = create<UIState>()(
         if (!userId || userId === 'mock-local-user') return;
         try {
           const profile = await FirebaseService.fetchUserProfile(userId);
+          const localName = get().userName;
+          const hasCustomLocalName = localName && localName.trim().length > 0 && localName !== 'Guest User' && localName !== 'User';
+
           if (profile) {
-            if (profile.userName) set({ userName: profile.userName });
-            else if (auth.currentUser?.displayName) set({ userName: auth.currentUser.displayName });
+            if (profile.userName) {
+              set({ userName: profile.userName });
+            } else if (hasCustomLocalName) {
+              FirebaseService.saveUserProfile(userId, { userName: localName }).catch(() => {});
+            } else if (auth.currentUser?.displayName) {
+              set({ userName: auth.currentUser.displayName });
+            }
 
             if (profile.userPhotoUrl !== undefined) set({ userPhotoUrl: profile.userPhotoUrl });
             else if (auth.currentUser?.photoURL) set({ userPhotoUrl: auth.currentUser.photoURL });
@@ -433,7 +443,7 @@ export const useUIStore = create<UIState>()(
             if (profile.backgroundPreset) set({ backgroundPreset: profile.backgroundPreset as BackgroundPreset });
             if (profile.dailyReminderEnabled !== undefined) set({ dailyReminderEnabled: profile.dailyReminderEnabled });
           } else if (auth.currentUser) {
-            const initialName = auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'User';
+            const initialName = hasCustomLocalName ? localName : (auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'User');
             const initialPhoto = auth.currentUser.photoURL || auth.currentUser.providerData?.[0]?.photoURL || null;
             set({ userName: initialName, userPhotoUrl: initialPhoto });
             FirebaseService.saveUserProfile(userId, { userName: initialName, userPhotoUrl: initialPhoto }).catch(() => {});
