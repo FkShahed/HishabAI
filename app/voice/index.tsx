@@ -20,6 +20,8 @@ export default function VoiceAIScreen() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  const [engineStatus, setEngineStatus] = useState<string | null>(null);
+
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function VoiceAIScreen() {
         // Stop recording
         setIsRecording(false);
         setIsProcessing(true);
+        setEngineStatus('Analyzing using Groq / Gemini...');
 
         let audioUri: string | null = null;
 
@@ -81,6 +84,12 @@ export default function VoiceAIScreen() {
             const result = await AIServiceClient.parseVoice(audioUri, categories);
             transcript = result.rawTranscript || '';
             processingNotes = result.processingNotes || '';
+
+            const engineName = (result as any).engineUsed === 'Groq' 
+              ? 'Analyzing using Groq (Whisper STT)' 
+              : 'Analyzing using Gemini (Direct Audio)';
+            setEngineStatus(engineName);
+
             if (result.success && result.transactions && result.transactions.length > 0) {
               setPreview(result.transactions, 'voice', result.rawTranscript);
               parsedSuccessfully = true;
@@ -90,6 +99,7 @@ export default function VoiceAIScreen() {
             alert(apiError.message || 'Voice processing failed. Please try again.');
             setIsProcessing(false);
             setRecording(null);
+            setEngineStatus(null);
             return;
           }
         }
@@ -105,6 +115,7 @@ export default function VoiceAIScreen() {
           }
           setIsProcessing(false);
           setRecording(null);
+          setEngineStatus(null);
           return;
         }
 
@@ -114,6 +125,7 @@ export default function VoiceAIScreen() {
 
       } else {
         // Start recording
+        setEngineStatus(null);
         let perm = await Audio.getPermissionsAsync();
         if (!perm.granted) {
           perm = await Audio.requestPermissionsAsync();
@@ -149,6 +161,7 @@ export default function VoiceAIScreen() {
       console.error('Recording toggle error:', error);
       setIsProcessing(false);
       setIsRecording(false);
+      setEngineStatus(null);
       alert(error.message || 'An error occurred with the microphone or AI processing.');
     }
   };
@@ -164,11 +177,11 @@ export default function VoiceAIScreen() {
   return (
     <GlassBackground style={[styles.container, { paddingBottom: insets.bottom }]}>
       <Header 
-        title="Voice Input" 
+        title="Voice AI" 
         showBack={false}
         rightElement={
           <TouchableOpacity onPress={handleCancel} style={styles.cancelBtn}>
-            <Ionicons name="close" size={28} color={colors.topbar.icon} />
+            <Text variant="sm" color={colors.text.secondary}>Cancel</Text>
           </TouchableOpacity>
         }
       />
@@ -196,9 +209,19 @@ export default function VoiceAIScreen() {
         <Text variant="lg" weight="bold" align="center" style={styles.statusText}>
           {isProcessing ? 'AI Analyzing Voice...' : isRecording ? 'Listening... Speak now' : 'Tap to start speaking'}
         </Text>
-        <Text variant="sm" color={colors.text.secondary} align="center" style={styles.hintText}>
-          {isRecording ? 'Say things like: "Spent 500 taka on groceries today"' : 'Record your income or expense using your voice'}
-        </Text>
+
+        {isProcessing && engineStatus ? (
+          <View style={[styles.engineBadge, { backgroundColor: colors.accent.primary + '20' }]}>
+            <Ionicons name="sparkles-outline" size={13} color={colors.accent.primary} style={{ marginRight: 5 }} />
+            <Text variant="xs" weight="bold" color={colors.accent.primary}>
+              {engineStatus}
+            </Text>
+          </View>
+        ) : (
+          <Text variant="sm" color={colors.text.secondary} align="center" style={styles.hintText}>
+            {isRecording ? 'Say things like: "Spent 500 taka on groceries today"' : 'Record your income or expense using your voice'}
+          </Text>
+        )}
         
         <TouchableOpacity 
           style={[
@@ -258,6 +281,15 @@ const styles = StyleSheet.create({
   hintText: {
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.xl,
+  },
+  engineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderRadius: Radii.full,
+    marginBottom: Spacing.xl,
+    marginTop: 2,
   },
   controls: {
     alignItems: 'center',

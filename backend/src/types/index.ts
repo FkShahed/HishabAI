@@ -69,6 +69,7 @@ export const aiParseResponseSchema = z.object({
 
   total: z.number().optional(),
   processingNotes: z.string().optional(),
+  engineUsed: z.string().optional(),
 });
 
 // ─── Service Response Types ───────────────────────────────────────────────────
@@ -81,6 +82,7 @@ export interface AIParseResponse {
   total?: number;
   processingNotes?: string;
   droppedCount?: number;  // transactions dropped due to validation failure
+  engineUsed?: string;
 }
 
 export interface OCRResult {
