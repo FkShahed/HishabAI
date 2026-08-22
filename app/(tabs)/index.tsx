@@ -137,7 +137,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.cardDivider, { backgroundColor: colors.bg.glassBorder }]} />
+          <View style={[styles.cardDivider, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)' }]} />
 
           {/* 3-Column Compact Balance Summary */}
           <View style={styles.summaryRow}>
