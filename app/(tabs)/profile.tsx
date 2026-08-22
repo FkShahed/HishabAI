@@ -42,6 +42,8 @@ export default function ProfileScreen() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isCurrencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [isSignOutModalVisible, setSignOutModalVisible] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [isNameModalVisible, setNameModalVisible] = useState(false);
   const [nameInput, setNameInput] = useState(userName);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -226,39 +228,26 @@ export default function ProfileScreen() {
     return () => unsub();
   }, []);
 
-  const performSignOut = async () => {
+  const handleSignOut = () => {
+    setSignOutModalVisible(true);
+  };
+
+  const handleConfirmSignOut = async () => {
+    setIsSigningOut(true);
     try {
       await AuthService.signOut();
       useUIStore.getState().resetForSignOut();
       useTransactionStore.getState().clearAllData();
       useBudgetStore.getState().clearAllData();
       useCategoryStore.getState().clearAllData();
+
+      setIsSigningOut(false);
+      setSignOutModalVisible(false);
       router.replace('/auth' as any);
     } catch (err: any) {
+      setIsSigningOut(false);
+      setSignOutModalVisible(false);
       console.error('Sign out error:', err);
-      Alert.alert('Sign Out Error', err?.message || 'Could not sign out. Please try again.');
-    }
-  };
-
-  const handleSignOut = async () => {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Are you sure you want to sign out?');
-      if (confirmed) {
-        await performSignOut();
-      }
-    } else {
-      Alert.alert(
-        'Sign Out',
-        'Are you sure you want to sign out?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Sign Out',
-            style: 'destructive',
-            onPress: performSignOut,
-          },
-        ]
-      );
     }
   };
 
@@ -819,6 +808,45 @@ export default function ProfileScreen() {
                 );
               })}
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Sign Out Confirmation Modal */}
+      <Modal visible={isSignOutModalVisible} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.semantic.dangerDim, borderWidth: 1, padding: Spacing.md }]}>
+            <View style={{ alignItems: 'center', marginBottom: Spacing.md }}>
+              <View style={[styles.warningBadge, { backgroundColor: colors.semantic.dangerDim }]}>
+                <Ionicons name="log-out-outline" size={28} color={colors.semantic.danger} />
+              </View>
+              <Text variant="md" weight="bold" color={colors.semantic.danger} style={{ marginTop: Spacing.sm }}>
+                Sign Out?
+              </Text>
+              <Text variant="xs" color={colors.text.secondary} align="center" style={{ marginTop: Spacing.xs, paddingHorizontal: Spacing.xs }}>
+                Are you sure you want to sign out of your HisabAI account?
+              </Text>
+            </View>
+
+            <View style={styles.modalActions}>
+              <Button 
+                label="Cancel" 
+                variant="secondary" 
+                size="sm"
+                onPress={() => setSignOutModalVisible(false)}
+                style={{ flex: 1, marginRight: Spacing.sm }}
+                disabled={isSigningOut}
+              />
+              <Button 
+                label={isSigningOut ? "Signing Out..." : "Sign Out"} 
+                variant="danger" 
+                size="sm"
+                onPress={handleConfirmSignOut}
+                style={{ flex: 1 }}
+                disabled={isSigningOut}
+                leftIcon={isSigningOut ? <ActivityIndicator size="small" color="#FFF" /> : <Ionicons name="log-out" size={15} color="#FFF" />}
+              />
+            </View>
           </View>
         </View>
       </Modal>
