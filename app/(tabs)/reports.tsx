@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Modal, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -226,15 +226,48 @@ export default function ReportsScreen() {
 
         {/* Transaction Summary Stats */}
         <View style={styles.statsGrid}>
-          <View style={[styles.statBox, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
-            <Text variant="sm" color={colors.text.secondary}>Total Income</Text>
-            <Text variant="lg" weight="bold" color={colors.semantic.income}>
+          {/* Total Income Card */}
+          <View style={[
+            styles.statCard, 
+            { 
+              backgroundColor: colors.bg.glass, 
+              borderColor: colors.bg.glassBorder,
+              borderWidth: 1,
+            },
+            Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
+          ]}>
+            <View style={styles.statHeaderRow}>
+              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.35)', borderWidth: 1 }]}>
+                <Ionicons name="arrow-down-circle" size={18} color={colors.semantic.income} />
+              </View>
+              <Text variant="xs" weight="bold" color={colors.text.tertiary} style={{ letterSpacing: 0.6, fontSize: 10 }}>
+                TOTAL INCOME
+              </Text>
+            </View>
+            <Text variant="xl" weight="extrabold" color={colors.semantic.income} style={{ marginTop: Spacing.xs }}>
               {formatCurrency(summary.totalIncome, currency)}
             </Text>
           </View>
-          <View style={[styles.statBox, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
-            <Text variant="sm" color={colors.text.secondary}>Total Expense</Text>
-            <Text variant="lg" weight="bold" color={colors.semantic.expense}>
+
+          {/* Total Expense Card */}
+          <View style={[
+            styles.statCard, 
+            { 
+              backgroundColor: colors.bg.glass, 
+              borderColor: colors.bg.glassBorder,
+              borderWidth: 1,
+            },
+            Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
+          ]}>
+            <View style={styles.statHeaderRow}>
+              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.35)', borderWidth: 1 }]}>
+                <Ionicons name="arrow-up-circle" size={18} color={colors.semantic.expense} />
+              </View>
+              <Text variant="xs" weight="bold" color={colors.text.tertiary} style={{ letterSpacing: 0.6, fontSize: 10 }}>
+                TOTAL EXPENSE
+              </Text>
+            </View>
+            <Text variant="xl" weight="extrabold" color={colors.semantic.expense} style={{ marginTop: Spacing.xs }}>
               {formatCurrency(summary.totalExpense, currency)}
             </Text>
           </View>
@@ -509,14 +542,25 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
-  statBox: {
+  statCard: {
     flex: 1,
-    borderRadius: Radii.lg,
+    borderRadius: Radii.md,
     padding: Spacing.md,
-    borderWidth: 1,
+  },
+  statHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalOverlay: {
     flex: 1,
