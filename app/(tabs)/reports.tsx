@@ -230,18 +230,21 @@ export default function ReportsScreen() {
           <View style={[
             styles.statCard, 
             { 
-              backgroundColor: colors.bg.glass, 
-              borderColor: colors.bg.glassBorder,
+              backgroundColor: isDark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.04)', 
+              borderColor: isDark ? 'rgba(16, 185, 129, 0.28)' : 'rgba(16, 185, 129, 0.22)',
               borderWidth: 1,
             },
-            Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
+            Platform.OS === 'web' && ({ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any)
           ]}>
             <View style={styles.statHeaderRow}>
-              <Text variant="sm" weight="regular" color={colors.text.secondary}>
+              <Text variant="xs" color={colors.text.secondary} weight="medium">
                 Total Income
               </Text>
-              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.35)', borderWidth: 1 }]}>
-                <Ionicons name="arrow-down-circle" size={16} color={colors.semantic.income} />
+              <View style={[styles.statusChip, { backgroundColor: 'rgba(16, 185, 129, 0.16)', borderColor: 'rgba(16, 185, 129, 0.35)' }]}>
+                <Ionicons name="trending-up" size={12} color={colors.semantic.income} />
+                <Text variant="xs" weight="medium" color={colors.semantic.income} style={{ marginLeft: 3, fontSize: 10 }}>
+                  Income
+                </Text>
               </View>
             </View>
             <Text variant="lg" weight="medium" color={colors.semantic.income} style={{ marginTop: Spacing.xs }}>
@@ -253,18 +256,21 @@ export default function ReportsScreen() {
           <View style={[
             styles.statCard, 
             { 
-              backgroundColor: colors.bg.glass, 
-              borderColor: colors.bg.glassBorder,
+              backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : 'rgba(239, 68, 68, 0.04)', 
+              borderColor: isDark ? 'rgba(239, 68, 68, 0.28)' : 'rgba(239, 68, 68, 0.22)',
               borderWidth: 1,
             },
-            Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
+            Platform.OS === 'web' && ({ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any)
           ]}>
             <View style={styles.statHeaderRow}>
-              <Text variant="sm" weight="regular" color={colors.text.secondary}>
+              <Text variant="xs" color={colors.text.secondary} weight="medium">
                 Total Expense
               </Text>
-              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.35)', borderWidth: 1 }]}>
-                <Ionicons name="arrow-up-circle" size={16} color={colors.semantic.expense} />
+              <View style={[styles.statusChip, { backgroundColor: 'rgba(239, 68, 68, 0.16)', borderColor: 'rgba(239, 68, 68, 0.35)' }]}>
+                <Ionicons name="trending-down" size={12} color={colors.semantic.expense} />
+                <Text variant="xs" weight="medium" color={colors.semantic.expense} style={{ marginLeft: 3, fontSize: 10 }}>
+                  Expense
+                </Text>
               </View>
             </View>
             <Text variant="lg" weight="medium" color={colors.semantic.expense} style={{ marginTop: Spacing.xs }}>
@@ -555,12 +561,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  statIconBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  statusChip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: Radii.full,
+    borderWidth: 1,
   },
   modalOverlay: {
     flex: 1,
