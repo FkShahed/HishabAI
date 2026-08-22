@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Modal, TouchableWithoutFeedback, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, G } from 'react-native-svg';
@@ -62,6 +62,27 @@ export default function ChartsScreen() {
 
   // State: Show Top 5 vs See All categories toggle
   const [showAllCategories, setShowAllCategories] = useState(false);
+
+  // Bar Chart Scroll Ref & Layout Width for Centering Today
+  const barScrollViewRef = useRef<ScrollView>(null);
+  const [barContainerWidth, setBarContainerWidth] = useState(320);
+
+  const todayObj = new Date();
+  const isCurrentMonth = selectedMonth === todayObj.getMonth() + 1 && selectedYear === todayObj.getFullYear();
+  const todayDayNum = todayObj.getDate();
+
+  useEffect(() => {
+    const targetDay = isCurrentMonth ? todayDayNum : 15;
+    const columnWidth = 23; // 16px bar + 7px gap
+    const barCenterX = (targetDay - 1) * columnWidth + 8;
+    const scrollX = Math.max(0, barCenterX - barContainerWidth / 2);
+
+    const timer = setTimeout(() => {
+      barScrollViewRef.current?.scrollTo({ x: scrollX, animated: true });
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [selectedMonth, selectedYear, selectedType, barContainerWidth, isCurrentMonth, todayDayNum]);
 
   // Filter transactions by the selected type
   const typeFilteredTransactions = useMemo(() => {
@@ -578,14 +599,33 @@ export default function ChartsScreen() {
 
         {/* ── 3. Daily Trend Bar Chart ────────────────────────────────────── */}
         <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
-          <Text variant="md" weight="bold" style={styles.cardTitle}>
-            {selectedType === 'expense' ? 'Daily Spending Trend' : 'Daily Income Trend'}
-          </Text>
+          <View style={styles.cardHeaderRow}>
+            <Text variant="md" weight="bold">
+              {selectedType === 'expense' ? 'Daily Spending Trend' : 'Daily Income Trend'}
+            </Text>
+            {isCurrentMonth && (
+              <View style={[styles.typeBadge, { backgroundColor: colors.accent.primaryDim }]}>
+                <Text variant="xs" weight="bold" color={colors.accent.primary}>
+                  Today: Day {todayDayNum}
+                </Text>
+              </View>
+            )}
+          </View>
           
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: Spacing.xs }}>
+          <ScrollView 
+            ref={barScrollViewRef}
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            style={{ marginTop: Spacing.xs }}
+            onLayout={(e) => {
+              const width = e.nativeEvent.layout.width;
+              if (width > 0) setBarContainerWidth(width);
+            }}
+          >
             <View style={styles.barChartContainer}>
               {barData.data.map((item) => {
                 const heightPercent = Math.max((item.value / barData.maxVal) * 110, item.value > 0 ? 6 : 2);
+                const isToday = isCurrentMonth && item.day === todayDayNum;
 
                 return (
                   <View key={item.day} style={styles.barColumn}>
@@ -595,12 +635,21 @@ export default function ChartsScreen() {
                           styles.barFill, 
                           { 
                             height: heightPercent, 
-                            backgroundColor: item.value > 0 ? activeThemeColor : colors.border.subtle 
+                            backgroundColor: isToday 
+                              ? colors.accent.primary 
+                              : item.value > 0 
+                              ? activeThemeColor 
+                              : colors.border.subtle 
                           }
                         ]} 
                       />
                     </View>
-                    <Text variant="xs" color={colors.text.tertiary} style={{ marginTop: 4 }}>
+                    <Text 
+                      variant="xs" 
+                      weight={isToday ? "bold" : "regular"}
+                      color={isToday ? colors.accent.primary : colors.text.tertiary} 
+                      style={{ marginTop: 4, fontSize: isToday ? 11 : 10 }}
+                    >
                       {item.day}
                     </Text>
                   </View>
