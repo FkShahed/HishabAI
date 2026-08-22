@@ -151,7 +151,7 @@ export default function ReportsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         
         {/* Monthly Budget Card */}
-        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' }]}>
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
           <View style={styles.cardHeader}>
             <View>
               <Text variant="md" weight="bold">Monthly Budget</Text>
@@ -274,7 +274,7 @@ export default function ReportsScreen() {
         </View>
 
         {/* Individual Category Budgets Breakdown Card */}
-        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', marginTop: Spacing.xs }]}>
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, marginTop: Spacing.xs }]}>
           <View style={styles.cardHeader}>
             <View>
               <Text variant="md" weight="bold">Category Budgets</Text>

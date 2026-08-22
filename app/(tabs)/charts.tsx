@@ -191,6 +191,63 @@ export default function ChartsScreen() {
     return { data, maxVal: maxVal || 1000 };
   }, [calendarData]);
 
+  // 5. Prepare Day of Week Pattern Analysis Data
+  const dayOfWeekData = useMemo(() => {
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayTotals = [0, 0, 0, 0, 0, 0, 0];
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+
+    typeFilteredTransactions.forEach((t) => {
+      const parts = t.transactionDate.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        const dayIdx = d.getDay(); // 0 = Sun, 6 = Sat
+        dayTotals[dayIdx] += t.amount;
+        dayCounts[dayIdx] += 1;
+      }
+    });
+
+    let maxVal = 0;
+    let peakDayIdx = 0;
+    let totalAmt = 0;
+    let weekdayTotal = 0;
+    let weekendTotal = 0;
+
+    dayTotals.forEach((val, idx) => {
+      totalAmt += val;
+      if (val > maxVal) {
+        maxVal = val;
+        peakDayIdx = idx;
+      }
+      if (idx === 0 || idx === 6) {
+        weekendTotal += val;
+      } else {
+        weekdayTotal += val;
+      }
+    });
+
+    const items = dayNames.map((name, idx) => ({
+      name,
+      total: dayTotals[idx],
+      count: dayCounts[idx],
+      percent: totalAmt > 0 ? Math.round((dayTotals[idx] / totalAmt) * 100) : 0,
+      isPeak: idx === peakDayIdx && maxVal > 0,
+    }));
+
+    const weekdayPercent = totalAmt > 0 ? Math.round((weekdayTotal / totalAmt) * 100) : 0;
+    const weekendPercent = totalAmt > 0 ? Math.round((weekendTotal / totalAmt) * 100) : 0;
+
+    return {
+      items,
+      maxVal: maxVal || 1,
+      peakDayName: dayNames[peakDayIdx],
+      peakDayAmount: maxVal,
+      weekdayPercent,
+      weekendPercent,
+      hasData: totalAmt > 0,
+    };
+  }, [typeFilteredTransactions]);
+
   // SVG Donut Chart Math Constants
   const radius = 70;
   const strokeWidth = 22;
@@ -551,6 +608,94 @@ export default function ChartsScreen() {
               })}
             </View>
           </ScrollView>
+        </View>
+
+        {/* ── 4. Day-of-Week Pattern Analysis Chart ────────────────────────────────────── */}
+        <View style={[styles.card, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
+          <View style={styles.cardHeaderRow}>
+            <View>
+              <Text variant="md" weight="bold">
+                Day-of-Week Pattern
+              </Text>
+              <Text variant="xs" color={colors.text.secondary}>
+                {selectedType === 'expense' ? 'Which days do you spend most?' : 'Which days do you earn most?'}
+              </Text>
+            </View>
+
+            {dayOfWeekData.hasData && (
+              <View style={[styles.typeBadge, { backgroundColor: activeDimColor }]}>
+                <Ionicons name="sparkles" size={12} color={activeThemeColor} style={{ marginRight: 4 }} />
+                <Text variant="xs" weight="bold" color={activeThemeColor}>
+                  Peak: {dayOfWeekData.peakDayName}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {dayOfWeekData.hasData ? (
+            <>
+              {/* Day of Week Bars */}
+              <View style={{ marginTop: Spacing.md, gap: Spacing.sm }}>
+                {dayOfWeekData.items.map((item) => {
+                  const barWidthPercent = (item.total / dayOfWeekData.maxVal) * 100;
+                  const isDark = colors.bg.primary === '#080810';
+
+                  return (
+                    <View key={item.name} style={styles.dayOfWeekRow}>
+                      <Text 
+                        variant="xs" 
+                        weight={item.isPeak ? "bold" : "medium"} 
+                        color={item.isPeak ? activeThemeColor : colors.text.secondary}
+                        style={{ width: 34 }}
+                      >
+                        {item.name}
+                      </Text>
+
+                      {/* Bar Fill Track */}
+                      <View style={[styles.dayOfWeekTrack, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}>
+                        <View 
+                          style={[
+                            styles.dayOfWeekFill, 
+                            { 
+                              width: `${Math.max(barWidthPercent, item.total > 0 ? 4 : 0)}%`,
+                              backgroundColor: item.isPeak ? activeThemeColor : (isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)')
+                            }
+                          ]} 
+                        />
+                      </View>
+
+                      {/* Amount & Percent Label */}
+                      <View style={{ minWidth: 75, alignItems: 'flex-end' }}>
+                        <Text variant="xs" weight={item.isPeak ? "bold" : "regular"} color={item.isPeak ? activeThemeColor : colors.text.primary}>
+                          {item.total > 0 ? formatCurrency(item.total, currency) : `${currencySymbol}0`}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+
+              {/* Weekday vs Weekend Comparison Badge */}
+              <View style={[styles.weekComparisonBox, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
+                <View style={styles.weekStatItem}>
+                  <Text variant="xs" color={colors.text.tertiary}>Weekdays (Mon-Fri)</Text>
+                  <Text variant="sm" weight="bold" color={colors.text.primary} style={{ marginTop: 2 }}>{dayOfWeekData.weekdayPercent}%</Text>
+                </View>
+                <View style={{ width: 1, height: 24, backgroundColor: colors.border.subtle }} />
+                <View style={styles.weekStatItem}>
+                  <Text variant="xs" color={colors.text.tertiary}>Weekends (Sat-Sun)</Text>
+                  <Text variant="sm" weight="bold" color={colors.text.primary} style={{ marginTop: 2 }}>{dayOfWeekData.weekendPercent}%</Text>
+                </View>
+              </View>
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="bar-chart-outline" size={36} color={colors.text.tertiary} />
+              <Text variant="sm" color={colors.text.tertiary} style={{ marginTop: Spacing.xs }}>
+                No transaction data available for day-of-week analysis
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* ── 4. Monthly Cash Flow & Savings Ratio Graph ───────────────────── */}
@@ -998,5 +1143,32 @@ const styles = StyleSheet.create({
   barFill: {
     width: '100%',
     borderRadius: 3,
+  },
+  dayOfWeekRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dayOfWeekTrack: {
+    flex: 1,
+    height: 10,
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginHorizontal: Spacing.xs,
+  },
+  dayOfWeekFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  weekComparisonBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    padding: Spacing.xs + 2,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    marginTop: Spacing.sm,
+  },
+  weekStatItem: {
+    alignItems: 'center',
   },
 });
