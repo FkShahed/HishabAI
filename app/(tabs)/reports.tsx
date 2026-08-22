@@ -335,14 +335,8 @@ export default function ReportsScreen() {
           {sortedExpenseCategories.length > 10 ? (
             <TouchableOpacity
               onPress={() => setShowAllCategories(!showAllCategories)}
-              style={[
-                styles.showMoreBtn,
-                {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                }
-              ]}
-              activeOpacity={0.8}
+              style={styles.showMoreBtn}
+              activeOpacity={0.7}
             >
               <Text variant="xs" weight="bold" color={colors.accent.primary}>
                 {showAllCategories ? 'Show Less' : `Show More (${sortedExpenseCategories.length - 10} More Categories)`}
@@ -498,10 +492,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    marginTop: Spacing.md,
+    paddingVertical: Spacing.xs,
+    marginTop: Spacing.xs,
+    backgroundColor: 'transparent',
   },
   emptyState: {
     alignItems: 'center',
