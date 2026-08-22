@@ -237,14 +237,14 @@ export default function ReportsScreen() {
             Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
           ]}>
             <View style={styles.statHeaderRow}>
-              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.35)', borderWidth: 1 }]}>
-                <Ionicons name="arrow-down-circle" size={18} color={colors.semantic.income} />
-              </View>
-              <Text variant="xs" weight="bold" color={colors.text.tertiary} style={{ letterSpacing: 0.6, fontSize: 10 }}>
-                TOTAL INCOME
+              <Text variant="sm" weight="regular" color={colors.text.secondary}>
+                Total Income
               </Text>
+              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.35)', borderWidth: 1 }]}>
+                <Ionicons name="arrow-down-circle" size={16} color={colors.semantic.income} />
+              </View>
             </View>
-            <Text variant="xl" weight="extrabold" color={colors.semantic.income} style={{ marginTop: Spacing.xs }}>
+            <Text variant="lg" weight="medium" color={colors.semantic.income} style={{ marginTop: Spacing.xs }}>
               {formatCurrency(summary.totalIncome, currency)}
             </Text>
           </View>
@@ -260,14 +260,14 @@ export default function ReportsScreen() {
             Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
           ]}>
             <View style={styles.statHeaderRow}>
-              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.35)', borderWidth: 1 }]}>
-                <Ionicons name="arrow-up-circle" size={18} color={colors.semantic.expense} />
-              </View>
-              <Text variant="xs" weight="bold" color={colors.text.tertiary} style={{ letterSpacing: 0.6, fontSize: 10 }}>
-                TOTAL EXPENSE
+              <Text variant="sm" weight="regular" color={colors.text.secondary}>
+                Total Expense
               </Text>
+              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.35)', borderWidth: 1 }]}>
+                <Ionicons name="arrow-up-circle" size={16} color={colors.semantic.expense} />
+              </View>
             </View>
-            <Text variant="xl" weight="extrabold" color={colors.semantic.expense} style={{ marginTop: Spacing.xs }}>
+            <Text variant="lg" weight="medium" color={colors.semantic.expense} style={{ marginTop: Spacing.xs }}>
               {formatCurrency(summary.totalExpense, currency)}
             </Text>
           </View>
