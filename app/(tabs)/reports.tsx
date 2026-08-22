@@ -252,7 +252,7 @@ export default function ReportsScreen() {
               >
                 <View style={styles.catHeaderRow}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                    <CategoryIcon iconName={category.icon} color={category.color} size="sm" />
+                    <CategoryIcon icon={category.icon} color={category.color} size="sm" />
                     <Text variant="sm" weight="semibold" style={{ marginLeft: 8 }}>
                       {category.name}
                     </Text>
@@ -346,7 +346,7 @@ export default function ReportsScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1 }]}>
             {selectedCategoryForBudget ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
-                <CategoryIcon iconName={selectedCategoryForBudget.icon} color={selectedCategoryForBudget.color} size="md" />
+                <CategoryIcon icon={selectedCategoryForBudget.icon} color={selectedCategoryForBudget.color} size="md" />
                 <View style={{ marginLeft: Spacing.sm }}>
                   <Text variant="md" weight="bold">Set {selectedCategoryForBudget.name} Limit</Text>
                   <Text variant="xs" color={colors.text.secondary}>Category budget for this month</Text>
