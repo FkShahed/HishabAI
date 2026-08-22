@@ -280,6 +280,9 @@ export default function ProfileScreen() {
 
 
   const currentCurrencySymbol = getCurrencySymbol(currency);
+  const isDark = colors.bg.primary === '#080810';
+  const sectionBg = isDark ? 'rgba(24, 24, 40, 0.65)' : 'rgba(255, 255, 255, 0.78)';
+  const sectionBorder = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(203, 213, 225, 0.9)';
 
   return (
     <GlassBackground style={styles.container}>
@@ -288,7 +291,7 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         
         {/* Profile / Account Card */}
-        <View style={[styles.profileCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }, Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)]}>
+        <View style={[styles.profileCard, { backgroundColor: sectionBg, borderColor: sectionBorder }, Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)]}>
           <View style={[styles.avatar, { backgroundColor: colors.accent.primary, overflow: 'hidden' }]}>
             {photoUrl ? (
               Platform.OS === 'web' ? (
@@ -351,10 +354,10 @@ export default function ProfileScreen() {
         <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
           PREFERENCES
         </Text>
-        <View style={[styles.settingsGroup, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
+        <View style={[styles.settingsGroup, { backgroundColor: sectionBg, borderColor: sectionBorder }]}>
           {/* User Name */}
           <TouchableOpacity 
-            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
+            style={[styles.settingItem, { borderBottomColor: sectionBorder }]}
             onPress={() => { setNameInput(userName); setNameModalVisible(true); }}
             activeOpacity={0.7}
           >
@@ -374,7 +377,7 @@ export default function ProfileScreen() {
 
           {/* Manage Categories */}
           <TouchableOpacity 
-            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
+            style={[styles.settingItem, { borderBottomColor: sectionBorder }]}
             onPress={() => router.push('/categories' as any)}
             activeOpacity={0.7}
           >
@@ -394,7 +397,7 @@ export default function ProfileScreen() {
 
           {/* Currency Selection */}
           <TouchableOpacity 
-            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
+            style={[styles.settingItem, { borderBottomColor: sectionBorder }]}
             onPress={() => setCurrencyModalVisible(true)}
             activeOpacity={0.7}
           >
@@ -414,7 +417,7 @@ export default function ProfileScreen() {
 
           {/* Theme & Background Appearance */}
           <TouchableOpacity 
-            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
+            style={[styles.settingItem, { borderBottomColor: sectionBorder }]}
             onPress={() => router.push('/theme' as any)}
             activeOpacity={0.7}
           >
@@ -456,7 +459,7 @@ export default function ProfileScreen() {
         <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
           APP UPDATES & VERSION
         </Text>
-        <View style={[styles.settingsGroup, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
+        <View style={[styles.settingsGroup, { backgroundColor: sectionBg, borderColor: sectionBorder }]}>
           {/* Update Available Banner */}
           {updateInfo?.hasUpdate && (
             <View style={[styles.updateBannerCard, { backgroundColor: colors.accent.primaryDim, borderColor: colors.accent.primary }]}>
@@ -500,7 +503,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.bannerActionBtn, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, borderWidth: 1 }]}
+                  style={[styles.bannerActionBtn, { backgroundColor: sectionBg, borderColor: sectionBorder, borderWidth: 1 }]}
                   onPress={() => setUpdateModalVisible(true)}
                   activeOpacity={0.8}
                 >
@@ -514,7 +517,7 @@ export default function ProfileScreen() {
 
           {/* Current Version Item */}
           <TouchableOpacity
-            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
+            style={[styles.settingItem, { borderBottomColor: sectionBorder }]}
             onPress={handleViewVersionInfo}
             activeOpacity={0.7}
           >
@@ -566,9 +569,9 @@ export default function ProfileScreen() {
         <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
           SUPPORT & ACCOUNT
         </Text>
-        <View style={[styles.settingsGroup, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
+        <View style={[styles.settingsGroup, { backgroundColor: sectionBg, borderColor: sectionBorder }]}>
           {currentUser?.email && !currentUser?.isAnonymous ? (
-            <View style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}>
+            <View style={[styles.settingItem, { borderBottomColor: sectionBorder }]}>
               <View style={styles.settingLeft}>
                 <View style={styles.settingIconWrapper}>
                   <Ionicons name="cloud-done-outline" size={20} color={colors.semantic.safe} />
@@ -583,7 +586,7 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <TouchableOpacity 
-              style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]}
+              style={[styles.settingItem, { borderBottomColor: sectionBorder }]}
               onPress={() => router.push('/auth' as any)}
             >
               <View style={styles.settingLeft}>
@@ -621,10 +624,10 @@ export default function ProfileScreen() {
         <Text variant="xs" weight="bold" color={colors.text.tertiary} style={styles.groupTitle}>
           ACCOUNT & DATA CONTROLS
         </Text>
-        <View style={[styles.settingsGroup, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
+        <View style={[styles.settingsGroup, { backgroundColor: sectionBg, borderColor: sectionBorder }]}>
           {/* Delete All Data */}
           <TouchableOpacity 
-            style={[styles.settingItem, { borderBottomColor: colors.bg.glassBorder }]} 
+            style={[styles.settingItem, { borderBottomColor: sectionBorder }]} 
             onPress={() => setDeleteModalVisible(true)}
             activeOpacity={0.7}
           >
@@ -659,7 +662,7 @@ export default function ProfileScreen() {
 
         {currentUser?.email || currentUser?.isAnonymous ? (
           <TouchableOpacity 
-            style={[styles.logoutButton, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder, borderWidth: 1 }]} 
+            style={[styles.logoutButton, { backgroundColor: sectionBg, borderColor: sectionBorder, borderWidth: 1 }]} 
             onPress={handleSignOut}
             activeOpacity={0.8}
           >
