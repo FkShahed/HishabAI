@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { useThemeColors } from '../src/constants/colors';
+import { useUIStore } from '../src/store';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 
@@ -22,10 +23,12 @@ if (Platform.OS === 'web' && typeof __DEV__ !== 'undefined' && __DEV__) {
 
 export default function RootLayout() {
   const colors = useThemeColors();
+  const theme = useUIStore((s) => s.theme);
+  const isDark = theme === 'dark' || colors.bg.primary === '#080810';
 
   return (
     <>
-      <StatusBar style="light" backgroundColor={colors.topbar.bg} />
+      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.topbar.bg} />
       <Stack
         screenOptions={{
           headerStyle: {
