@@ -203,33 +203,6 @@ export default function VoiceAIScreen() {
         <Text variant="sm" color={colors.text.secondary} align="center" style={styles.hintText}>
           {isRecording ? 'Say things like: "Spent 500 taka on groceries today"' : 'Record your income or expense using your voice'}
         </Text>
-
-        {/* Engine Status Badge (Groq vs Gemini indicator) */}
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: engineStatus?.includes('Groq') ? 'rgba(16, 185, 129, 0.12)' : 'rgba(124, 58, 237, 0.12)',
-          borderColor: engineStatus?.includes('Groq') ? colors.semantic.income : colors.accent.primary,
-          borderWidth: 1,
-          paddingHorizontal: Spacing.sm + 4,
-          paddingVertical: 5,
-          borderRadius: Radii.full,
-          marginBottom: Spacing.md,
-        }}>
-          <Ionicons 
-            name={engineStatus?.includes('Groq') ? "flash" : "sparkles"} 
-            size={13} 
-            color={engineStatus?.includes('Groq') ? colors.semantic.income : colors.accent.primary} 
-            style={{ marginRight: 6 }} 
-          />
-          <Text 
-            variant="xs" 
-            weight="bold" 
-            color={engineStatus?.includes('Groq') ? colors.semantic.income : colors.accent.primary}
-          >
-            {engineStatus ? `Engine: ${engineStatus}` : 'Analyzing Engine: Groq (Whisper) / Gemini'}
-          </Text>
-        </View>
         
         <TouchableOpacity 
           style={[
