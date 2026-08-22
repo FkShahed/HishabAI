@@ -11,6 +11,7 @@ import {
   getTodayString,
 } from '../utils/finance';
 import { FirebaseService, auth } from '../services/firebase';
+import { updateProfile } from 'firebase/auth';
 
 // ─── Transaction Store ────────────────────────────────────────────────────────
 
