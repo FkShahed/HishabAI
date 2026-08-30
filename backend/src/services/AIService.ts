@@ -514,6 +514,14 @@ RESPONSE FORMAT — return ONLY valid JSON, no markdown:
         raw.dateSource = 'inferred_today';
       }
 
+      // If date is inferred as today, do not treat it as uncertain (silent default to today's date)
+      if (raw.dateSource === 'inferred_today' && Array.isArray(raw.uncertainFields)) {
+        raw.uncertainFields = raw.uncertainFields.filter((f: string) => f !== 'date');
+        if (raw.uncertainFields.length === 0) {
+          raw.uncertain = false;
+        }
+      }
+
       // Safety: if categoryId is missing or not in user's list, map to a valid fallback and mark uncertain
       if (typeof raw.categoryId !== 'string' || !validCategoryIds.has(raw.categoryId)) {
         console.warn(`[GeminiAIService] AI returned invalid/unknown categoryId: ${raw.categoryId} — mapping to fallback category`);
