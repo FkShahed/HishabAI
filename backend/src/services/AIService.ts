@@ -317,7 +317,7 @@ MANDATORY RULES — violating any of these causes data corruption:
 8. confidence: a number 0-1 representing how certain you are about this transaction.
 9. uncertain: set to true if any field is ambiguous. List ambiguous fields in uncertainFields.
 10. source must always be "voice".
-11. MISSING DETAILS FEEDBACK: If no valid transaction can be extracted (e.g. amount is missing, item/category is missing, or prompt is incomplete/vague), or if fields are uncertain, you MUST state EXACTLY what details are missing in processingNotes.
+11. MISSING DETAILS FEEDBACK: If no valid transaction can be extracted (e.g. amount is missing, item/category is missing, or prompt is incomplete/vague), or if fields are uncertain, you MUST specify EXACTLY which parameters are missing in the processingNotes (e.g., "The transaction amount is missing", "The item description or category is missing"). Do NOT just say 'No transactions found'.
     Examples of clear processingNotes:
     - "Missing amount: You mentioned buying lunch, but did not state how much you spent."
     - "Missing item/category: You mentioned spending 500 BDT, but did not state what it was spent on."
@@ -386,7 +386,7 @@ MANDATORY RULES:
 7. comment must contain the name of the item, store, or person. If there is no specific item, leave it empty.
 8. confidence: a number 0-1 representing certainty.
 9. source must always be "voice".
-10. MISSING DETAILS FEEDBACK: If no valid transaction can be extracted (e.g. amount is missing, item/category is missing, or prompt is incomplete), state EXACTLY what details are missing in processingNotes.
+10. MISSING DETAILS FEEDBACK: If no valid transaction can be extracted (e.g. amount is missing, item/category is missing, or prompt is incomplete), you MUST specify EXACTLY which parameters are missing in the processingNotes (e.g., "The transaction amount is missing", "The item description or category is missing"). Do NOT just say 'No transactions found'.
 
 LANGUAGE: The transcript may be in Bangla, English, or Banglish (mixed).
 

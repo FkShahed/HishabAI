@@ -248,7 +248,9 @@ export default function PreviewScreen() {
                   </Text>
                   {item.uncertain ? (
                     <View style={[styles.uncertainBadge, { backgroundColor: colors.semantic.warningDim }]}>
-                      <Text variant="xs" weight="bold" color={colors.semantic.warning}>Needs Review</Text>
+                      <Text variant="xs" weight="bold" color={colors.semantic.warning}>
+                        Needs Review{item.uncertainFields && item.uncertainFields.length > 0 ? `: ${item.uncertainFields.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join(', ')}` : ''}
+                      </Text>
                     </View>
                   ) : (
                     <Ionicons name="checkmark-circle" size={16} color={colors.semantic.safe} />
