@@ -51,7 +51,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`[HisabAI] Server running on port ${PORT}`);
-    console.log(`[HisabAI] AI Engine: ${process.env.GEMINI_MODEL || 'gemini-3.6-flash'}`);
+    console.log(`[HisabAI] AI Engine: ${process.env.GEMINI_MODEL || 'gemini-2.0-flash'}`);
     console.log(`[HisabAI] OCR Engine: ${process.env.OCR_PROVIDER || 'google_vision'}`);
   });
 }

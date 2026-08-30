@@ -46,7 +46,7 @@ export class GeminiAIService implements IAIService {
 
     this.genAI = new GoogleGenerativeAI(apiKey);
 
-    const modelsEnv = process.env.GEMINI_MODELS || 'gemini-3.6-flash';
+    const modelsEnv = process.env.GEMINI_MODELS || 'gemini-2.0-flash,gemini-1.5-flash';
     const modelNames = modelsEnv.split(',').map(m => m.trim()).filter(Boolean);
 
     for (const name of modelNames) {
