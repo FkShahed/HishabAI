@@ -514,15 +514,24 @@ RESPONSE FORMAT — return ONLY valid JSON, no markdown:
         raw.dateSource = 'inferred_today';
       }
 
-      // Safety: if categoryId not in user's list, mark uncertain
-      if (typeof raw.categoryId === 'string' && !validCategoryIds.has(raw.categoryId)) {
-        console.warn(`[GeminiAIService] AI returned unknown categoryId: ${raw.categoryId} — marking uncertain`);
+      // Safety: if categoryId is missing or not in user's list, map to a valid fallback and mark uncertain
+      if (typeof raw.categoryId !== 'string' || !validCategoryIds.has(raw.categoryId)) {
+        console.warn(`[GeminiAIService] AI returned invalid/unknown categoryId: ${raw.categoryId} — mapping to fallback category`);
         raw.uncertain = true;
-        raw.uncertainFields = [...(raw.uncertainFields ?? []), 'category'];
-        // Try to find a fallback category or drop
-        // For now, drop the transaction to be safe
-        droppedCount++;
-        continue;
+        raw.uncertainFields = Array.from(new Set([...(raw.uncertainFields ?? []), 'category']));
+
+        // Find a fallback category of the same type (expense or income) from user's list
+        const sameTypeFallback = context.categoryList.find(c => c.type === raw.type);
+        const fallback = sameTypeFallback || context.categoryList[0];
+
+        if (fallback) {
+          raw.categoryId = fallback.id;
+          raw.categoryName = fallback.name;
+        } else {
+          // If the user's category list is completely empty, drop the transaction
+          droppedCount++;
+          continue;
+        }
       }
 
       const result = aiTransactionSchema.safeParse(raw);
