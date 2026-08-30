@@ -118,13 +118,13 @@ export default function PreviewScreen() {
 
   const handleDiscard = () => {
     clearPreview();
-    router.back();
+    router.replace('/(tabs)');
   };
 
   if (previewTransactions.length === 0) {
     return (
       <GlassBackground style={styles.container}>
-        <Header title="Review Transactions" onBack={handleDiscard} />
+        <Header title="Review Transactions" showBack={true} onBack={handleDiscard} />
         <View style={styles.emptyContainer}>
           <Ionicons name="checkmark-done-circle-outline" size={64} color={colors.accent.primary} />
           <Text variant="lg" weight="bold" color={colors.text.primary} style={{ marginTop: Spacing.md }}>
@@ -133,7 +133,6 @@ export default function PreviewScreen() {
           <Text variant="sm" color={colors.text.secondary} align="center" style={{ marginTop: Spacing.xs, marginBottom: Spacing.lg }}>
             All extracted items have been saved or cleared.
           </Text>
-          <Button label="Go to Home" onPress={() => router.replace('/(tabs)')} style={{ minWidth: 160 }} />
         </View>
       </GlassBackground>
     );
