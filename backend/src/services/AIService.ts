@@ -151,8 +151,9 @@ export class GeminiAIService implements IAIService {
     context: AIContext
   ): Promise<AIParseResponse> {
     const groq = getGroqSTTService();
+    const useWhisper = context.sttModel === 'whisper';
 
-    if (groq.isConfigured()) {
+    if (useWhisper && groq.isConfigured()) {
       try {
         console.log('[GeminiAIService] Attempting Groq Whisper ultra-fast STT...');
         const audioBuffer = Buffer.from(audioBase64, 'base64');
@@ -170,11 +171,13 @@ export class GeminiAIService implements IAIService {
       } catch (sttErr: any) {
         console.warn('[GeminiAIService] Groq STT failed — falling back to Gemini audio parsing:', sttErr.message);
       }
+    } else if (useWhisper) {
+      console.log('[GeminiAIService] Groq STT requested but GROQ_API_KEY not configured — using direct Gemini audio parsing');
     } else {
-      console.log('[GeminiAIService] GROQ_API_KEY not set — using direct Gemini audio parsing');
+      console.log('[GeminiAIService] Gemini direct audio parsing requested');
     }
 
-    // Fallback path: Direct audio parsing via Gemini Multimodal
+    // Fallback/Default path: Direct audio parsing via Gemini Multimodal
     const systemPrompt = this.buildVoiceSystemPrompt(context);
 
     const audioPart = { inlineData: { data: audioBase64, mimeType } };
@@ -188,7 +191,7 @@ export class GeminiAIService implements IAIService {
     const parsed = this.parseAndValidateResponse(responseText, 'voice', context);
     return {
       ...parsed,
-      engineUsed: 'Direct Gemini Audio (Fallback)',
+      engineUsed: useWhisper ? 'Direct Gemini Audio (Fallback)' : 'Direct Gemini Audio',
       sttEngine: 'gemini',
     };
   }

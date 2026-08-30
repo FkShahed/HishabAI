@@ -45,7 +45,7 @@ router.post('/voice', upload.single('audio'), async (req: Request, res: Response
     }
 
     const { buffer, mimetype } = req.file;
-    const { categoryList } = req.body;
+    const { categoryList, sttModel } = req.body;
 
     const categories = categoryList ? JSON.parse(categoryList) : MOCK_CATEGORIES;
 
@@ -54,6 +54,7 @@ router.post('/voice', upload.single('audio'), async (req: Request, res: Response
       currentDate: req.body.currentDate || new Date().toISOString().split('T')[0],
       currentDateTime: req.body.currentDateTime || new Date().toISOString(),
       categoryList: categories,
+      sttModel: sttModel || 'gemini',
     };
 
     const base64Audio = buffer.toString('base64');
@@ -200,6 +201,71 @@ router.post('/receipt', express.json({ limit: '10mb' }), async (req: Request, re
 
     res.status(500).json({ 
       error: err.message || 'Unable to process receipt. Please try again.',
+      code: err.code || 'INTERNAL_ERROR'
+    });
+  }
+});
+
+/**
+ * POST /api/ai/text
+ * Parse raw text directly using AI.
+ * Expects { text: string, categoryList: [...] }
+ */
+router.post('/text', express.json({ limit: '1mb' }), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { text, categoryList } = req.body;
+
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      res.status(400).json({ error: 'No text provided' });
+      return;
+    }
+
+    const categories = typeof categoryList === 'string'
+      ? JSON.parse(categoryList)
+      : (categoryList || MOCK_CATEGORIES);
+
+    const context = {
+      timezone: req.body.timezone || 'UTC',
+      currentDate: req.body.currentDate || new Date().toISOString().split('T')[0],
+      currentDateTime: req.body.currentDateTime || new Date().toISOString(),
+      categoryList: categories,
+    };
+
+    const startTime = Date.now();
+    const result = await getAIService().parseVoiceText(text, context);
+    console.log(`[AI Route] Raw text parsed in ${Date.now() - startTime}ms`);
+
+    res.json({
+      success: true,
+      transactions: result.transactions,
+      rawTranscript: result.rawTranscript,
+      processingNotes: result.processingNotes,
+    });
+  } catch (error) {
+    const err = error as any;
+    console.error('[AI Route] Text Error:', err.message || err);
+
+    const isQuota = err.status === 429 || err.code === 'AI_ALL_MODELS_UNAVAILABLE' || err.message?.includes('429') || err.message?.includes('Quota');
+    const isBusy = err.status === 503 || err.message?.includes('503') || err.message?.includes('busy');
+
+    if (isQuota) {
+      res.status(429).json({
+        error: 'AI daily request limit reached. Please try again later.',
+        code: 'RATE_LIMIT_EXCEEDED'
+      });
+      return;
+    }
+
+    if (isBusy) {
+      res.status(503).json({
+        error: 'AI service is temporarily busy. Please try again in a few seconds.',
+        code: 'SERVER_BUSY'
+      });
+      return;
+    }
+
+    res.status(500).json({
+      error: err.message || 'Unable to process text. Please try again.',
       code: err.code || 'INTERNAL_ERROR'
     });
   }

@@ -50,7 +50,7 @@ export default function HomeScreen() {
         styles.topbarContainer, 
         { 
           paddingTop: insets.top, 
-          backgroundColor: Platform.OS === 'web' ? colors.topbar.bg : (isDark ? '#080810' : '#F8FAFC'), 
+          backgroundColor: colors.topbar.bg, 
           borderBottomColor: colors.topbar.border 
         },
         Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
@@ -62,8 +62,8 @@ export default function HomeScreen() {
               style={{ width: 26, height: 26, borderRadius: 7, marginRight: 8 }}
               resizeMode="contain"
             />
-            <Text variant="lg" weight="medium" color={colors.topbar.text} style={{ letterSpacing: 0.4 }}>
-              Hisab<Text variant="lg" weight="medium" color={colors.accent.primary} style={{ letterSpacing: 0.4 }}>AI</Text>
+            <Text variant="lg" weight="bold" color={colors.topbar.text} style={{ letterSpacing: 0.4 }}>
+              Hisab<Text variant="lg" weight="bold" color={isDark ? '#A78BFA' : '#FCD34D'} style={{ letterSpacing: 0.4 }}>AI</Text>
             </Text>
           </View>
 

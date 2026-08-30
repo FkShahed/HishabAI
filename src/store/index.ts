@@ -321,6 +321,7 @@ interface UIState {
   userName: string;
   userPhotoUrl: string | null;
   dailyReminderEnabled: boolean;
+  sttModel: 'gemini' | 'whisper';
 
   setSelectedMonth: (month: number, year: number) => void;
   goToPrevMonth: () => void;
@@ -333,6 +334,7 @@ interface UIState {
   setUserName: (name: string) => void;
   setUserPhotoUrl: (url: string | null) => void;
   setDailyReminderEnabled: (enabled: boolean) => void;
+  setSttModel: (model: 'gemini' | 'whisper') => void;
   fetchAndSyncUserProfile: (userId: string) => Promise<void>;
   resetForSignOut: () => void;
 }
@@ -349,6 +351,7 @@ export const useUIStore = create<UIState>()(
       userName: 'Guest User',
       userPhotoUrl: null,
       dailyReminderEnabled: false,
+      sttModel: 'gemini',
 
       setSelectedMonth: (month, year) => set({ selectedMonth: month, selectedYear: year }),
       goToPrevMonth: () => {
@@ -410,6 +413,7 @@ export const useUIStore = create<UIState>()(
           FirebaseService.saveUserProfile(auth.currentUser.uid, { dailyReminderEnabled }).catch(() => {});
         }
       },
+      setSttModel: (sttModel) => set({ sttModel }),
       resetForSignOut: () => {
         set({
           userName: '',
@@ -418,6 +422,7 @@ export const useUIStore = create<UIState>()(
           theme: 'light',
           backgroundPreset: 'aurora',
           dailyReminderEnabled: false,
+          sttModel: 'gemini',
         });
       },
       fetchAndSyncUserProfile: async (userId: string) => {
@@ -465,6 +470,7 @@ export const useUIStore = create<UIState>()(
         userName: state.userName,
         userPhotoUrl: state.userPhotoUrl,
         dailyReminderEnabled: state.dailyReminderEnabled,
+        sttModel: state.sttModel,
       }),
     }
   )

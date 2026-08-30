@@ -12,7 +12,7 @@ const api = axios.create({
 });
 
 if (__DEV__) {
-  console.log('[API] Connected to live backend:', API_BASE_URL);
+  console.log('[API] Connected to backend:', API_BASE_URL);
 }
 
 /**
@@ -65,7 +65,11 @@ export const AIServiceClient = {
   /**
    * Upload audio blob/file for voice parsing
    */
-  async parseVoice(audioUri: string, categories: { id: string; name: string; type: string }[]) {
+  async parseVoice(
+    audioUri: string, 
+    categories: { id: string; name: string; type: string }[], 
+    sttModel?: 'gemini' | 'whisper'
+  ) {
     const formData = new FormData();
     
     if (Platform.OS === 'web') {
@@ -94,6 +98,9 @@ export const AIServiceClient = {
     formData.append('currentDate', todayStr);
     formData.append('timezone', clientTimezone);
     formData.append('currentDateTime', new Date().toISOString());
+    if (sttModel) {
+      formData.append('sttModel', sttModel);
+    }
 
     try {
       const response = await api.post('/ai/voice', formData, {
@@ -105,6 +112,29 @@ export const AIServiceClient = {
     } catch (error: any) {
       const friendlyMsg = getFriendlyErrorMessage(error);
       console.error('[API] parseVoice error:', friendlyMsg);
+      throw new Error(friendlyMsg);
+    }
+  },
+
+  /**
+   * Send raw text note directly for AI parsing (bypassing audio)
+   */
+  async parseText(text: string, categories: { id: string; name: string; type: string }[]) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
+
+    try {
+      const response = await api.post('/ai/text', {
+        text,
+        categoryList: categories,
+        currentDate: todayStr,
+        timezone: clientTimezone,
+        currentDateTime: new Date().toISOString(),
+      });
+      return response.data;
+    } catch (error: any) {
+      const friendlyMsg = getFriendlyErrorMessage(error);
+      console.error('[API] parseText error:', friendlyMsg);
       throw new Error(friendlyMsg);
     }
   },

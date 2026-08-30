@@ -9,7 +9,7 @@ import { Text } from '../../src/components/ui/Text';
 import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { Header } from '../../src/components/ui/Header';
-import { usePreviewStore, useCategoryStore } from '../../src/store';
+import { usePreviewStore, useCategoryStore, useUIStore } from '../../src/store';
 import { AIServiceClient } from '../../src/services/api';
 import { getTodayString } from '../../src/utils/finance';
 
@@ -47,6 +47,8 @@ export default function VoiceAIScreen() {
   
   const setPreview = usePreviewStore(s => s.setPreview);
   const getAICategoryList = useCategoryStore(s => s.getAICategoryList);
+  const sttModel = useUIStore(s => s.sttModel);
+  const setSttModel = useUIStore(s => s.setSttModel);
 
   const handleToggleRecord = async () => {
     try {
@@ -79,7 +81,7 @@ export default function VoiceAIScreen() {
 
         if (audioUri) {
           try {
-            const result = await AIServiceClient.parseVoice(audioUri, categories);
+            const result = await AIServiceClient.parseVoice(audioUri, categories, sttModel);
             transcript = result.rawTranscript || '';
             processingNotes = result.processingNotes || '';
             if (result.engineUsed) {
@@ -204,6 +206,48 @@ export default function VoiceAIScreen() {
           {isRecording ? 'Say things like: "Spent 500 taka on groceries today"' : 'Record your income or expense using your voice'}
         </Text>
         
+        {/* Model Selector */}
+        <View 
+          style={[
+            styles.modelSelectorContainer, 
+            { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder },
+            (isRecording || isProcessing) && { opacity: 0.5 }
+          ]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.modelOption,
+              sttModel === 'gemini' && [styles.modelOptionActive, { backgroundColor: colors.accent.primary }]
+            ]}
+            onPress={() => setSttModel('gemini')}
+            disabled={isRecording || isProcessing}
+          >
+            <Text 
+              variant="xs" 
+              weight={sttModel === 'gemini' ? 'bold' : 'semibold'}
+              color={sttModel === 'gemini' ? '#FFFFFF' : colors.text.primary}
+            >
+              Gemini
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.modelOption,
+              sttModel === 'whisper' && [styles.modelOptionActive, { backgroundColor: colors.accent.primary }]
+            ]}
+            onPress={() => setSttModel('whisper')}
+            disabled={isRecording || isProcessing}
+          >
+            <Text 
+              variant="xs" 
+              weight={sttModel === 'whisper' ? 'bold' : 'semibold'}
+              color={sttModel === 'whisper' ? '#FFFFFF' : colors.text.primary}
+            >
+              Whisper
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity 
           style={[
             styles.recordButton, 
@@ -285,5 +329,28 @@ const styles = StyleSheet.create({
     height: 24,
     backgroundColor: '#FFFFFF',
     borderRadius: 4,
+  },
+  modelSelectorContainer: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    borderRadius: Radii.full,
+    borderWidth: 1,
+    padding: 3,
+    marginBottom: Spacing.xl,
+    width: 200,
+  },
+  modelOption: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: Radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modelOptionActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });

@@ -17,13 +17,13 @@ export default function TabLayout() {
           headerShown: false,
           tabBarStyle: {
             position: 'absolute',
-            bottom: Platform.OS === 'ios' ? 24 : 16,
-            left: 16,
-            right: 16,
-            height: 64,
-            borderRadius: 32,
+            bottom: Platform.OS === 'ios' ? 20 : 12,
+            left: 12,
+            right: 12,
+            height: Platform.OS === 'ios' ? 68 : 64,
+            borderRadius: 34,
             backgroundColor: Platform.OS === 'web'
-              ? (isDark ? 'rgba(15, 15, 26, 0.82)' : 'rgba(255, 255, 255, 0.90)')
+              ? (isDark ? 'rgba(18, 18, 30, 0.88)' : 'rgba(255, 255, 255, 0.95)')
               : (isDark ? '#12121E' : '#FFFFFF'),
             borderWidth: 1,
             borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.70)',
@@ -32,18 +32,21 @@ export default function TabLayout() {
             shadowOffset: { width: 0, height: 8 },
             shadowOpacity: isDark ? 0.45 : 0.12,
             shadowRadius: 16,
-            paddingBottom: Platform.OS === 'ios' ? 8 : 6,
-            paddingTop: 6,
-            paddingHorizontal: 8,
+            paddingBottom: Platform.OS === 'ios' ? 6 : 4,
+            paddingTop: 4,
+            paddingHorizontal: 4,
             overflow: 'visible',
             ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any) : {}),
+          },
+          tabBarItemStyle: {
+            paddingVertical: 2,
           },
           tabBarActiveTintColor: colors.accent.primary,
           tabBarInactiveTintColor: colors.text.tertiary,
           tabBarLabelStyle: {
-            fontSize: 11,
+            fontSize: 10.5,
             fontWeight: '600',
-            marginTop: 2,
+            marginTop: 1,
           },
         }}
       >
@@ -51,8 +54,8 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Home',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={22} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="home" size={21} color={color} />
             ),
           }}
         />
@@ -60,8 +63,8 @@ export default function TabLayout() {
           name="charts"
           options={{
             title: 'Charts',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="pie-chart" size={22} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="pie-chart" size={21} color={color} />
             ),
           }}
         />
@@ -71,7 +74,7 @@ export default function TabLayout() {
             title: 'Add',
             tabBarIcon: () => (
               <View style={[styles.addButton, { backgroundColor: colors.accent.primary, shadowColor: colors.accent.primary }]}>
-                <Ionicons name="add" size={28} color="#FFFFFF" />
+                <Ionicons name="add" size={26} color="#FFFFFF" />
               </View>
             ),
           }}
@@ -86,8 +89,8 @@ export default function TabLayout() {
           name="reports"
           options={{
             title: 'Reports',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="document-text" size={22} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="document-text" size={21} color={color} />
             ),
           }}
         />
@@ -95,8 +98,8 @@ export default function TabLayout() {
           name="profile"
           options={{
             title: 'Settings',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="settings" size={22} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="settings" size={21} color={color} />
             ),
           }}
         />
@@ -113,12 +116,12 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   addButton: {
     backgroundColor: Colors.accent.primary,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 8,
     shadowColor: Colors.accent.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,

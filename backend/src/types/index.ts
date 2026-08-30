@@ -26,6 +26,7 @@ export interface AIContext {
   currentDate: string;       // 'YYYY-MM-DD' from client device
   currentDateTime: string;   // ISO string from client device
   categoryList: CategoryForAI[];
+  sttModel?: 'gemini' | 'whisper';
 }
 
 // ─── Zod Schema for AI Transaction Output ───────────────────────────────────
@@ -111,6 +112,14 @@ export interface IAIService {
   parseVoiceAudio(
     audioBase64: string,
     mimeType: string,
+    context: AIContext
+  ): Promise<AIParseResponse>;
+
+  /**
+   * Parse pre-transcribed text transcript into structured transactions.
+   */
+  parseVoiceText(
+    transcriptText: string,
     context: AIContext
   ): Promise<AIParseResponse>;
 

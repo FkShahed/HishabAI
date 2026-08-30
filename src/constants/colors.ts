@@ -57,12 +57,12 @@ export const DarkColors = {
     strong: '#3A3A58',
   },
 
-  // ── Topbar / Header ───────────────────────────────────────────────────────
+  // ── Topbar / Header (Beguni / Violet Theme) ───────────────────────────────
   topbar: {
-    bg: 'rgba(8, 8, 16, 0.45)',
+    bg: '#1A0C2E',       // Deep Midnight Beguni
     text: '#F0F0FF',
-    subtext: '#8888AA',
-    border: 'rgba(255, 255, 255, 0.10)',
+    subtext: '#A78BFA',
+    border: 'rgba(124, 58, 237, 0.28)',
     icon: '#F0F0FF',
     chevron: '#F0F0FF',
     badgeBg: '#7C3AED',
@@ -167,16 +167,16 @@ export const LightColors: typeof DarkColors = {
     strong: '#94A3B8',
   },
 
-  // ── Topbar / Header (Slightly transparent white, not beguni/purple) ───────
+  // ── Topbar / Header (Rich Beguni / Violet Theme) ──────────────────────────
   topbar: {
-    bg: 'rgba(255, 255, 255, 0.50)',      // slightly transparent white topbar
-    text: '#0F172A',     // crisp slate text
-    subtext: '#475569',
-    border: 'rgba(203, 213, 225, 0.6)',   // soft border
-    icon: '#0F172A',
-    chevron: '#0F172A',
-    badgeBg: 'rgba(124, 58, 237, 0.12)',
-    badgeText: '#7C3AED',
+    bg: '#6D28D9',      // Rich Beguni (Royal Violet)
+    text: '#FFFFFF',    // Crisp white header text
+    subtext: 'rgba(255, 255, 255, 0.85)',
+    border: 'rgba(255, 255, 255, 0.18)',
+    icon: '#FFFFFF',
+    chevron: '#FFFFFF',
+    badgeBg: 'rgba(255, 255, 255, 0.22)',
+    badgeText: '#FFFFFF',
   },
 
   // ── Category Colors ───────────────────────────────────────────────────────

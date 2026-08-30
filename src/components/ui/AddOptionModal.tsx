@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Platform, Animated, Easing, LayoutChangeEvent } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Platform, Animated, Easing, LayoutChangeEvent, TextInput, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,8 @@ import Svg, { Rect, Defs, LinearGradient as SvgGradient, Stop } from 'react-nati
 
 import { Text } from './Text';
 import { Spacing, Radii, Shadows, useThemeColors } from '../../constants/colors';
-import { useUIStore } from '../../store';
+import { useUIStore, usePreviewStore, useCategoryStore } from '../../store';
+import { AIServiceClient } from '../../services/api';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
@@ -123,6 +124,12 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
   const theme = useUIStore((s) => s.theme);
 
   const [cardLayout, setCardLayout] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [isTextInputVisible, setIsTextInputVisible] = useState(false);
+  const [textInput, setTextInput] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const getAICategoryList = useCategoryStore((s) => s.getAICategoryList);
+  const setPreview = usePreviewStore((s) => s.setPreview);
 
   const onCardLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -136,6 +143,32 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
     setTimeout(() => {
       router.push(path as any);
     }, 100);
+  };
+
+  const handleProcessText = async () => {
+    if (!textInput.trim()) return;
+
+    setIsProcessing(true);
+    try {
+      const categories = getAICategoryList();
+      const result = await AIServiceClient.parseText(textInput, categories);
+
+      if (result.success && result.transactions && result.transactions.length > 0) {
+        setPreview(result.transactions, 'voice', result.rawTranscript || textInput, result.processingNotes);
+        setIsTextInputVisible(false);
+        setTextInput('');
+        onClose();
+        router.replace('/transaction-preview');
+      } else {
+        const msg = result.processingNotes || "AI couldn't identify transaction details from the text. Please specify both the amount and item/category (e.g. 'Spent 300 on food').";
+        alert(msg);
+      }
+    } catch (error: any) {
+      console.warn('[AddOptionModal] text parsing failed:', error);
+      alert(error.message || 'Failed to process text. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -261,6 +294,41 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
                   </View>
                 </TouchableOpacity>
 
+                {/* 3. Text AI with Traveling SVG Border Light */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setIsTextInputVisible(true)}
+                >
+                  <View style={[styles.optionCardInner, { backgroundColor: colors.bg.card }]}>
+                    <TravelingBorderGlow 
+                      color1="#EC4899" 
+                      color2="#F472B6" 
+                      width={cardLayout.width} 
+                      height={cardLayout.height} 
+                      visible={visible} 
+                    />
+
+                    <View style={[styles.iconCircle, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}>
+                      <Ionicons name="chatbox-ellipses" size={26} color="#EC4899" />
+                    </View>
+
+                    <View style={styles.optionTextContainer}>
+                      <View style={styles.titleRow}>
+                        <Text variant="md" weight="bold">Text AI Input</Text>
+                        <View style={[styles.aiBadge, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}>
+                          <Ionicons name="sparkles" size={10} color="#EC4899" />
+                          <Text variant="xs" weight="bold" color="#EC4899" style={{ marginLeft: 2 }}>AI Text</Text>
+                        </View>
+                      </View>
+                      <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
+                        Type transaction details directly for AI parsing
+                      </Text>
+                    </View>
+
+                    <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
+                  </View>
+                </TouchableOpacity>
+
                 {/* 3. Manual Entry */}
                 <TouchableOpacity
                   activeOpacity={0.8}
@@ -286,6 +354,80 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+
+      {/* Text AI Input Modal */}
+      <Modal
+        visible={isTextInputVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => {
+          if (!isProcessing) setIsTextInputVisible(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1 }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="sparkles" size={18} color={colors.accent.primary} style={{ marginRight: 6 }} />
+                <Text variant="md" weight="bold">Text AI Input</Text>
+              </View>
+              <TouchableOpacity 
+                onPress={() => {
+                  setIsTextInputVisible(false);
+                  setTextInput('');
+                }}
+                disabled={isProcessing}
+                style={{ padding: Spacing.xs }}
+              >
+                <Ionicons name="close" size={22} color={colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text variant="xs" color={colors.text.secondary} style={{ marginBottom: Spacing.sm }}>
+              Type your income or expense note in English, Bangla, or Banglish:
+            </Text>
+
+            <TextInput
+              style={[
+                styles.textInput,
+                { 
+                  backgroundColor: colors.bg.elevated, 
+                  borderColor: colors.border.medium, 
+                  color: colors.text.primary 
+                }
+              ]}
+              placeholder='e.g., "Spent 500 taka on groceries today"'
+              placeholderTextColor={colors.text.tertiary}
+              multiline
+              numberOfLines={4}
+              value={textInput}
+              onChangeText={setTextInput}
+              editable={!isProcessing}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  { backgroundColor: colors.accent.primary },
+                  (!textInput.trim() || isProcessing) && { opacity: 0.5 }
+                ]}
+                onPress={handleProcessText}
+                disabled={!textInput.trim() || isProcessing}
+              >
+                {isProcessing ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="sparkles" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                    <Text variant="base" weight="bold" color="#FFFFFF">Process with AI</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }
@@ -353,5 +495,53 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
     marginLeft: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(8, 8, 16, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: Radii.lg,
+    padding: Spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    paddingBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  textInput: {
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    padding: Spacing.md,
+    height: 120,
+    textAlignVertical: 'top',
+    fontSize: 15,
+    marginBottom: Spacing.lg,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radii.md,
+    minWidth: 150,
   },
 });
