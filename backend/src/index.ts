@@ -3,7 +3,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import aiRoutes from './routes/ai';
-import versionRoutes, { renderAdminPage, renderDownloadPage } from './routes/version';
+import versionRoutes, { renderAdminPage, renderDownloadPage, renderWelcomePage } from './routes/version';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +12,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Welcome Landing Page
+app.get('/', async (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(await renderWelcomePage());
+});
 
 // Health Check
 app.get('/health', (req, res) => {

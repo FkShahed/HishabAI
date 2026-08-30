@@ -1698,4 +1698,192 @@ ${current.releaseNotes || '• Bug fixes and performance improvements'}
 </html>`;
 }
 
+// ─── 12. Public Welcome Page (/) ────────────────────────────────────────────────
+export async function renderWelcomePage(): Promise<string> {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to HisabAI Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0A0E17;
+      --bg-card: rgba(18, 26, 42, 0.65);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --accent: #6366F1;
+      --accent-glow: rgba(99, 102, 241, 0.35);
+      --emerald: #10B981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 40%);
+      line-height: 1.5;
+    }
+    .welcome-container {
+      width: 100%;
+      max-width: 580px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 40px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+    .logo-container {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 24px var(--accent-glow);
+    }
+    .logo-icon {
+      font-size: 36px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      background: linear-gradient(to right, #FFFFFF, #CBD5E1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 100px;
+      color: var(--emerald);
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--emerald);
+      border-radius: 50px;
+      margin-right: 6px;
+      box-shadow: 0 0 8px var(--emerald);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+    .links-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .link-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+      text-decoration: none;
+      color: var(--text-main);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .link-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.1);
+    }
+    .link-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .link-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    .link-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .footer {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="welcome-container">
+  <div class="badge">
+    <span class="badge-dot"></span>
+    System Online
+  </div>
+  
+  <div class="logo-container">
+    <span class="logo-icon">💰</span>
+  </div>
+
+  <h1>HisabAI Engine</h1>
+  <p class="subtitle">AI-powered Personal Finance Management System. Use the links below to manage releases or download the application.</p>
+
+  <div class="links-grid">
+    <a href="/admin" class="link-card">
+      <span class="link-icon">⚙️</span>
+      <span class="link-title">Admin Dashboard</span>
+      <span class="link-desc">Manage APK versions and releases</span>
+    </a>
+    
+    <a href="/download" class="link-card">
+      <span class="link-icon">📲</span>
+      <span class="link-title">Download App</span>
+      <span class="link-desc">Get the latest Android APK</span>
+    </a>
+  </div>
+
+  <div class="footer">
+    &copy; 2026 HisabAI. All rights reserved.
+  </div>
+</div>
+
+</body>
+</html>`;
+}
+
 export default router;
