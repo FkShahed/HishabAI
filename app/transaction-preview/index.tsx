@@ -124,7 +124,7 @@ export default function PreviewScreen() {
   if (previewTransactions.length === 0) {
     return (
       <GlassBackground style={styles.container}>
-        <Header title="Review Transactions" showBack={true} onBack={handleDiscard} />
+        <Header title="Review Transactions" onBack={handleDiscard} />
         <View style={styles.emptyContainer}>
           <Ionicons name="checkmark-done-circle-outline" size={64} color={colors.accent.primary} />
           <Text variant="lg" weight="bold" color={colors.text.primary} style={{ marginTop: Spacing.md }}>
