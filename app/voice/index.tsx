@@ -145,7 +145,7 @@ export default function VoiceAIScreen() {
         });
 
         const { recording: newRecording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
+          Audio.RecordingOptionsPresets.LOW_QUALITY
         );
         
         setRecording(newRecording);
