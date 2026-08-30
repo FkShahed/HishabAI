@@ -895,11 +895,12 @@ export async function renderAdminPage(): Promise<string> {
             <input type="url" id="apkUrl" name="apkUrl" value="${current.apkUrl || ''}" placeholder="https://expo.dev/artifacts/eas/... or https://..." style="flex:1;" oninput="updateLivePreview()">
             <button type="button" class="btn btn-secondary" onclick="testApkLink()" style="padding: 0 16px;">Test</button>
           </div>
-          <div class="upload-wrapper" style="margin-top: 8px;">
-            <label class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600;">
+          <div class="upload-wrapper" style="margin-top: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <label class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600; margin: 0;">
               📁 Upload APK File
               <input type="file" accept=".apk" style="display: none;" onchange="handleFileSelect(this, 'apkUrl', 'upload-progress')">
             </label>
+            <span style="font-size: 11px; color: var(--text-dim);">or host on <a href="https://github.com/FkShahed/HishabAI/releases" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 600;">GitHub Releases ↗</a> & paste URL</span>
             <div id="upload-progress-container" style="display: none; margin-top: 8px;">
               <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
                 <span>Uploading APK to Firebase Storage...</span>
@@ -1087,11 +1088,12 @@ export async function renderAdminPage(): Promise<string> {
       <div class="form-group">
         <label for="create-apk">APK Download URL</label>
         <input type="url" id="create-apk" placeholder="https://expo.dev/artifacts/eas/... or https://...">
-        <div class="upload-wrapper" style="margin-top: 8px;">
-          <label class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600;">
+        <div class="upload-wrapper" style="margin-top: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <label class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600; margin: 0;">
             📁 Upload APK File
             <input type="file" accept=".apk" style="display: none;" onchange="handleFileSelect(this, 'create-apk', 'create-upload-progress')">
           </label>
+          <span style="font-size: 11px; color: var(--text-dim);">or host on <a href="https://github.com/FkShahed/HishabAI/releases" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 600;">GitHub Releases ↗</a> & paste URL</span>
           <div id="create-upload-progress-container" style="display: none; margin-top: 8px;">
             <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
               <span>Uploading APK to Firebase Storage...</span>
@@ -1171,11 +1173,12 @@ export async function renderAdminPage(): Promise<string> {
       <div class="form-group">
         <label for="edit-apk">APK Download URL</label>
         <input type="url" id="edit-apk">
-        <div class="upload-wrapper" style="margin-top: 8px;">
-          <label class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600;">
+        <div class="upload-wrapper" style="margin-top: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <label class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600; margin: 0;">
             📁 Upload APK File
             <input type="file" accept=".apk" style="display: none;" onchange="handleFileSelect(this, 'edit-apk', 'edit-upload-progress')">
           </label>
+          <span style="font-size: 11px; color: var(--text-dim);">or host on <a href="https://github.com/FkShahed/HishabAI/releases" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 600;">GitHub Releases ↗</a> & paste URL</span>
           <div id="edit-upload-progress-container" style="display: none; margin-top: 8px;">
             <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
               <span>Uploading APK to Firebase Storage...</span>
