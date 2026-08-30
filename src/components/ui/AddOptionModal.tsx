@@ -127,6 +127,7 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
   const [isTextInputVisible, setIsTextInputVisible] = useState(false);
   const [textInput, setTextInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorAlert, setErrorAlert] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
 
   const getAICategoryList = useCategoryStore((s) => s.getAICategoryList);
   const setPreview = usePreviewStore((s) => s.setPreview);
@@ -161,11 +162,19 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
         router.replace('/transaction-preview');
       } else {
         const msg = result.processingNotes || "AI couldn't identify transaction details from the text. Please specify both the amount and item/category (e.g. 'Spent 300 on food').";
-        alert(msg);
+        setErrorAlert({
+          visible: true,
+          title: 'Missing Transaction Data',
+          message: msg
+        });
       }
     } catch (error: any) {
       console.warn('[AddOptionModal] text parsing failed:', error);
-      alert(error.message || 'Failed to process text. Please try again.');
+      setErrorAlert({
+        visible: true,
+        title: 'Error Processing Text',
+        message: error.message || 'Failed to process text. Please try again.'
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -428,6 +437,34 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
           </View>
         </View>
       </Modal>
+
+      {/* Custom Alert Modal */}
+      <Modal
+        visible={errorAlert.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setErrorAlert(p => ({ ...p, visible: false }))}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={[styles.alertContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1 }]}>
+            <View style={styles.alertHeader}>
+              <Ionicons name="alert-circle" size={24} color={colors.semantic.warning} />
+              <Text variant="md" weight="bold" style={{ marginLeft: 8 }}>
+                {errorAlert.title}
+              </Text>
+            </View>
+            <Text variant="sm" color={colors.text.secondary} style={styles.alertMessage}>
+              {errorAlert.message}
+            </Text>
+            <TouchableOpacity
+              style={[styles.alertButton, { backgroundColor: colors.accent.primary }]}
+              onPress={() => setErrorAlert(p => ({ ...p, visible: false }))}
+            >
+              <Text variant="base" weight="bold" color="#FFFFFF">OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }
@@ -543,5 +580,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     borderRadius: Radii.md,
     minWidth: 150,
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(8, 8, 16, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  alertContent: {
+    width: '90%',
+    maxWidth: 320,
+    borderRadius: Radii.lg,
+    padding: Spacing.lg,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  alertHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  alertMessage: {
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+    lineHeight: 20,
+  },
+  alertButton: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.md,
   },
 });
