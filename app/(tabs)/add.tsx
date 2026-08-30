@@ -154,69 +154,72 @@ export default function AddScreen() {
           if (!isProcessing) setIsModalVisible(false);
         }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1 }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="sparkles" size={18} color={colors.accent.primary} style={{ marginRight: 6 }} />
-                <Text variant="md" weight="bold">Text AI Input</Text>
+        {isModalVisible && (
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1 }]}>
+              <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="sparkles" size={18} color={colors.accent.primary} style={{ marginRight: 6 }} />
+                  <Text variant="md" weight="bold">Text AI Input</Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={() => {
+                    setIsModalVisible(false);
+                    setTextInput('');
+                  }}
+                  disabled={isProcessing}
+                  style={{ padding: Spacing.xs }}
+                >
+                  <Ionicons name="close" size={22} color={colors.text.secondary} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity 
-                onPress={() => {
-                  setIsModalVisible(false);
-                  setTextInput('');
-                }}
-                disabled={isProcessing}
-                style={{ padding: Spacing.xs }}
-              >
-                <Ionicons name="close" size={22} color={colors.text.secondary} />
-              </TouchableOpacity>
-            </View>
 
-            <Text variant="xs" color={colors.text.secondary} style={{ marginBottom: Spacing.sm }}>
-              Type your income or expense note in English, Bangla, or Banglish:
-            </Text>
+              <Text variant="xs" color={colors.text.secondary} style={{ marginBottom: Spacing.sm }}>
+                Type your income or expense note in English, Bangla, or Banglish:
+              </Text>
 
-            <TextInput
-              style={[
-                styles.textInput,
-                { 
-                  backgroundColor: colors.bg.elevated, 
-                  borderColor: colors.border.medium, 
-                  color: colors.text.primary 
-                }
-              ]}
-              placeholder='e.g., "Spent 500 taka on groceries today"'
-              placeholderTextColor={colors.text.tertiary}
-              multiline
-              numberOfLines={4}
-              value={textInput}
-              onChangeText={setTextInput}
-              editable={!isProcessing}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
+              <TextInput
+                autoFocus
                 style={[
-                  styles.submitButton,
-                  { backgroundColor: colors.accent.primary },
-                  (!textInput.trim() || isProcessing) && { opacity: 0.5 }
+                  styles.textInput,
+                  { 
+                    backgroundColor: colors.bg.elevated, 
+                    borderColor: colors.border.medium, 
+                    color: colors.text.primary 
+                  }
                 ]}
-                onPress={handleProcessText}
-                disabled={!textInput.trim() || isProcessing}
-              >
-                {isProcessing ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <>
-                    <Ionicons name="sparkles" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                    <Text variant="base" weight="bold" color="#FFFFFF">Process with AI</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                placeholder='e.g., "Spent 500 taka on groceries today"'
+                placeholderTextColor={colors.text.tertiary}
+                multiline
+                numberOfLines={4}
+                value={textInput}
+                onChangeText={setTextInput}
+                editable={!isProcessing}
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.submitButton,
+                    { backgroundColor: colors.accent.primary },
+                    (!textInput.trim() || isProcessing) && { opacity: 0.5 }
+                  ]}
+                  onPress={handleProcessText}
+                  disabled={!textInput.trim() || isProcessing}
+                >
+                  {isProcessing ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Ionicons name="sparkles" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Text variant="base" weight="bold" color="#FFFFFF">Process with AI</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        )}
       </Modal>
 
       {/* Custom Alert Modal */}
