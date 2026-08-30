@@ -258,6 +258,9 @@ export async function renderAdminPage(): Promise<string> {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Firebase compat SDK for client side direct uploads -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
   <style>
     :root {
       --bg-main: #090D16;
@@ -887,10 +890,25 @@ export async function renderAdminPage(): Promise<string> {
         </div>
 
         <div class="form-group">
-          <label for="apkUrl">APK Download Link <span class="hint">(Expo EAS build URL or direct link)</span></label>
+          <label for="apkUrl">APK Download Link <span class="hint">(Expo EAS build URL or upload direct)</span></label>
           <div style="display: flex; gap: 8px;">
             <input type="url" id="apkUrl" name="apkUrl" value="${current.apkUrl || ''}" placeholder="https://expo.dev/artifacts/eas/... or https://..." style="flex:1;" oninput="updateLivePreview()">
             <button type="button" class="btn btn-secondary" onclick="testApkLink()" style="padding: 0 16px;">Test</button>
+          </div>
+          <div class="upload-wrapper" style="margin-top: 8px;">
+            <label class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600;">
+              📁 Upload APK File
+              <input type="file" accept=".apk" style="display: none;" onchange="handleFileSelect(this, 'apkUrl', 'upload-progress')">
+            </label>
+            <div id="upload-progress-container" style="display: none; margin-top: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+                <span>Uploading APK to Firebase Storage...</span>
+                <span id="upload-progress-text">0%</span>
+              </div>
+              <div style="background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; overflow: hidden;">
+                <div id="upload-progress" style="background: var(--emerald); height: 100%; width: 0%; transition: width 0.1s;"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1069,6 +1087,21 @@ export async function renderAdminPage(): Promise<string> {
       <div class="form-group">
         <label for="create-apk">APK Download URL</label>
         <input type="url" id="create-apk" placeholder="https://expo.dev/artifacts/eas/... or https://...">
+        <div class="upload-wrapper" style="margin-top: 8px;">
+          <label class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600;">
+            📁 Upload APK File
+            <input type="file" accept=".apk" style="display: none;" onchange="handleFileSelect(this, 'create-apk', 'create-upload-progress')">
+          </label>
+          <div id="create-upload-progress-container" style="display: none; margin-top: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+              <span>Uploading APK to Firebase Storage...</span>
+              <span id="create-upload-progress-text">0%</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; overflow: hidden;">
+              <div id="create-upload-progress" style="background: var(--emerald); height: 100%; width: 0%; transition: width 0.1s;"></div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1138,6 +1171,21 @@ export async function renderAdminPage(): Promise<string> {
       <div class="form-group">
         <label for="edit-apk">APK Download URL</label>
         <input type="url" id="edit-apk">
+        <div class="upload-wrapper" style="margin-top: 8px;">
+          <label class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 600;">
+            📁 Upload APK File
+            <input type="file" accept=".apk" style="display: none;" onchange="handleFileSelect(this, 'edit-apk', 'edit-upload-progress')">
+          </label>
+          <div id="edit-upload-progress-container" style="display: none; margin-top: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+              <span>Uploading APK to Firebase Storage...</span>
+              <span id="edit-upload-progress-text">0%</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; overflow: hidden;">
+              <div id="edit-upload-progress" style="background: var(--emerald); height: 100%; width: 0%; transition: width 0.1s;"></div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1188,6 +1236,84 @@ export async function renderAdminPage(): Promise<string> {
 <div id="toast">✅ Action Completed!</div>
 
 <script>
+  // Initialize Firebase using project credentials
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHN3fd230CFP2fzxfm2i1jbRCqRoXEc2A",
+    authDomain: "hishab-ai.firebaseapp.com",
+    projectId: "hishab-ai",
+    storageBucket: "hishab-ai.firebasestorage.app",
+    messagingSenderId: "254866158438",
+    appId: "1:254866158438:web:6098db3b66d2c1e5a88ea7"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const storage = firebase.storage();
+
+  function handleFileSelect(inputElement, targetInputId, progressElementId) {
+    const file = inputElement.files[0];
+    if (!file) return;
+    
+    // Safety check: ensure file extension is .apk
+    if (!file.name.endsWith('.apk')) {
+      alert('Only .apk files are supported!');
+      inputElement.value = '';
+      return;
+    }
+
+    uploadApkFile(file, targetInputId, progressElementId);
+  }
+
+  function uploadApkFile(file, targetInputId, progressElementId) {
+    const fileName = 'releases/hisabai-' + Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+    const fileRef = storage.ref().child(fileName);
+
+    const progressContainer = document.getElementById(progressElementId + '-container');
+    const progressBar = document.getElementById(progressElementId);
+    const progressText = document.getElementById(progressElementId + '-text');
+
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.innerText = '0%';
+
+    const uploadTask = fileRef.put(file);
+
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const percentage = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        progressBar.style.width = percentage + '%';
+        progressText.innerText = percentage + '%';
+      }, 
+      (error) => {
+        console.error('Firebase Upload failed:', error);
+        alert('Upload failed: ' + error.message);
+        progressContainer.style.display = 'none';
+      }, 
+      async () => {
+        try {
+          const downloadURL = await fileRef.getDownloadURL();
+          document.getElementById(targetInputId).value = downloadURL;
+          
+          const sizeInMb = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+          
+          if (targetInputId === 'apkUrl') {
+            document.getElementById('fileSize').value = sizeInMb;
+            updateLivePreview();
+          } else if (targetInputId === 'create-apk') {
+            document.getElementById('create-size').value = sizeInMb;
+          } else if (targetInputId === 'edit-apk') {
+            document.getElementById('edit-size').value = sizeInMb;
+          }
+
+          showToast('🎉 APK uploaded and fields auto-filled!');
+        } catch (err) {
+          alert('Failed to retrieve download link: ' + err.message);
+        } finally {
+          progressContainer.style.display = 'none';
+        }
+      }
+    );
+  }
+
   let releasesCache = ${JSON.stringify(history)};
   let activeCache = ${JSON.stringify(current)};
   let currentAdminKey = '';
