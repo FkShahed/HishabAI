@@ -193,151 +193,65 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Persistent Drafts Section */}
+        {/* Persistent Drafts Section (Simple & Clean) */}
         {drafts.length > 0 && (
-          <View style={[styles.draftsCard, { backgroundColor: colors.bg.glass, borderColor: colors.bg.glassBorder }]}>
-            {/* Header */}
-            <View style={styles.draftsCardHeader}>
-              <View style={styles.draftsHeaderLeft}>
-                <View style={[styles.draftsIconBadge, { backgroundColor: colors.accent.primaryDim }]}>
-                  <Ionicons 
-                    name={processingDrafts.length > 0 ? "sync" : "documents"} 
-                    size={17} 
-                    color={colors.accent.primary} 
-                  />
-                </View>
-                <View style={{ marginLeft: Spacing.sm, flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text variant="sm" weight="bold">
-                      {processingDrafts.length > 0 ? 'AI Processing in Background' : 'Pending AI Drafts'}
-                    </Text>
-                    {processingDrafts.length > 0 ? (
-                      <View style={[styles.draftStatusPill, { backgroundColor: colors.accent.primaryDim, borderColor: colors.accent.primary }]}>
-                        <ActivityIndicator size="small" color={colors.accent.primary} style={{ transform: [{ scale: 0.6 }], marginRight: 2 }} />
-                        <Text variant="xs" weight="bold" color={colors.accent.primary} style={{ fontSize: 10 }}>
-                          {processingDrafts.length} running
-                        </Text>
-                      </View>
-                    ) : readyDrafts.length > 0 ? (
-                      <View style={[styles.draftStatusPill, { backgroundColor: colors.semantic.incomeDim, borderColor: colors.semantic.income }]}>
-                        <Text variant="xs" weight="bold" color={colors.semantic.income} style={{ fontSize: 10 }}>
-                          {readyDrafts.length} ready
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
-                    {readyDrafts.length > 0
-                      ? `${totalDraftTxCount} item${totalDraftTxCount > 1 ? 's' : ''} ready to approve • Total ${formatCurrency(totalDraftAmount, currency)}`
-                      : 'AI tasks are processing in background...'}
+          <TouchableOpacity
+            style={[
+              styles.simpleDraftBanner,
+              {
+                backgroundColor: colors.bg.glass,
+                borderColor: colors.bg.glassBorder,
+              },
+            ]}
+            onPress={() => router.push('/drafts' as any)}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.simpleDraftIconBadge, { backgroundColor: colors.accent.primaryDim }]}>
+              {processingDrafts.length > 0 ? (
+                <ActivityIndicator size="small" color={colors.accent.primary} style={{ transform: [{ scale: 0.75 }] }} />
+              ) : (
+                <Ionicons name="sparkles" size={17} color={colors.accent.primary} />
+              )}
+            </View>
+
+            <View style={{ flex: 1, marginLeft: Spacing.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text variant="sm" weight="bold">
+                  Pending AI Drafts
+                </Text>
+                <View
+                  style={[
+                    styles.simpleDraftCountPill,
+                    {
+                      backgroundColor: processingDrafts.length > 0 ? colors.accent.primaryDim : colors.semantic.incomeDim,
+                      borderColor: processingDrafts.length > 0 ? colors.accent.primary : colors.semantic.income,
+                    },
+                  ]}
+                >
+                  <Text
+                    variant="xs"
+                    weight="bold"
+                    color={processingDrafts.length > 0 ? colors.accent.primary : colors.semantic.income}
+                    style={{ fontSize: 10 }}
+                  >
+                    {drafts.length}
                   </Text>
                 </View>
               </View>
+              <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }} numberOfLines={1}>
+                {processingDrafts.length > 0
+                  ? 'AI tasks are processing in background...'
+                  : `${readyDrafts.length} ready to review${totalDraftAmount > 0 ? ` • ${formatCurrency(totalDraftAmount, currency)}` : ''}`}
+              </Text>
             </View>
 
-            {/* Compact Preview List of Drafts */}
-            <View style={[styles.draftsListContainer, { borderColor: colors.border.subtle, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)' }]}>
-              {drafts.slice(0, 2).map((d, index) => {
-                const draftTotal = d.previewTransactions.reduce((acc, t) => acc + (t.amount || 0), 0);
-                const isLast = index === Math.min(drafts.length, 2) - 1;
-                return (
-                  <TouchableOpacity
-                    key={d.id}
-                    style={[
-                      styles.draftItemRow,
-                      !isLast && { borderBottomColor: colors.border.subtle, borderBottomWidth: 1 }
-                    ]}
-                    onPress={() => router.push('/drafts' as any)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.draftItemLeft}>
-                      <View style={[
-                        styles.draftSourceIconCircle,
-                        { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)' }
-                      ]}>
-                        <Ionicons 
-                          name={d.source === 'voice' ? 'mic' : d.source === 'receipt' ? 'receipt' : 'chatbox-ellipses'} 
-                          size={13} 
-                          color={d.status === 'failed' ? colors.semantic.danger : colors.accent.primary} 
-                        />
-                      </View>
-                      <View style={{ marginLeft: 10, flex: 1 }}>
-                        <Text variant="xs" weight="semibold" numberOfLines={1}>
-                          {d.title}
-                        </Text>
-                        <Text variant="xs" color={colors.text.tertiary} style={{ fontSize: 10, marginTop: 1 }}>
-                          {format(new Date(d.createdAt), 'hh:mm a')} • {d.previewTransactions.length} item{d.previewTransactions.length === 1 ? '' : 's'}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.draftItemRight}>
-                      {d.status === 'processing' ? (
-                        <ActivityIndicator size="small" color={colors.accent.primary} style={{ transform: [{ scale: 0.7 }] }} />
-                      ) : d.status === 'ready' ? (
-                        <Text variant="xs" weight="bold" color={colors.text.primary}>
-                          {formatCurrency(draftTotal, currency)}
-                        </Text>
-                      ) : (
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Ionicons name="alert-circle" size={14} color={colors.semantic.danger} />
-                          <Text variant="xs" color={colors.semantic.danger} style={{ fontSize: 10, marginLeft: 2 }}>Failed</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-              {drafts.length > 2 && (
-                <TouchableOpacity 
-                  style={[styles.draftMoreNotice, { borderTopColor: colors.border.subtle }]}
-                  onPress={() => router.push('/drafts' as any)}
-                  activeOpacity={0.7}
-                >
-                  <Text variant="xs" color={colors.accent.primary} weight="medium" style={{ fontSize: 11 }}>
-                    +{drafts.length - 2} more draft{drafts.length - 2 > 1 ? 's' : ''} in review queue
-                  </Text>
-                  <Ionicons name="chevron-forward" size={12} color={colors.accent.primary} />
-                </TouchableOpacity>
-              )}
+            <View style={styles.simpleDraftRight}>
+              <Text variant="xs" weight="bold" color={colors.accent.primary}>
+                Review
+              </Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.accent.primary} style={{ marginLeft: 2 }} />
             </View>
-
-            {/* Action Bar */}
-            <View style={styles.draftsActionsRow}>
-              {readyDrafts.length > 0 && (
-                <TouchableOpacity
-                  style={[
-                    styles.draftQuickApproveBtn,
-                    { borderColor: colors.semantic.income, backgroundColor: colors.semantic.incomeDim }
-                  ]}
-                  onPress={() => {
-                    const count = approveAllReadyDrafts();
-                    alert(`Approved and saved ${count} transaction${count > 1 ? 's' : ''} to your records!`);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="checkmark-circle-outline" size={14} color={colors.semantic.income} />
-                  <Text variant="xs" weight="bold" color={colors.semantic.income} style={{ marginLeft: 4 }}>
-                    Approve All ({readyDrafts.length})
-                  </Text>
-                </TouchableOpacity>
-              )}
-
-              <TouchableOpacity
-                style={[
-                  styles.draftReviewBtn,
-                  { backgroundColor: colors.accent.primary, flex: readyDrafts.length > 0 ? 1 : undefined, width: readyDrafts.length > 0 ? undefined : '100%' }
-                ]}
-                onPress={() => router.push('/drafts' as any)}
-                activeOpacity={0.8}
-              >
-                <Text variant="xs" weight="bold" color="#FFFFFF">
-                  Review & Edit
-                </Text>
-                <Ionicons name="chevron-forward" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
-              </TouchableOpacity>
-            </View>
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Daily Grouped Transactions List */}
@@ -519,99 +433,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
-  draftsCard: {
+  simpleDraftBanner: {
     marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
     borderRadius: Radii.lg,
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
-  draftsCardHeader: {
-    marginBottom: Spacing.sm,
-  },
-  draftsHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  draftsIconBadge: {
+  simpleDraftIconBadge: {
     width: 36,
     height: 36,
     borderRadius: Radii.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  draftStatusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+  simpleDraftCountPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
     borderRadius: Radii.full,
     borderWidth: 1,
     marginLeft: 6,
   },
-  draftsListContainer: {
-    borderRadius: Radii.md,
-    borderWidth: 1,
-    overflow: 'hidden',
-    marginBottom: Spacing.sm,
-  },
-  draftItemRow: {
+  simpleDraftRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  draftItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  draftSourceIconCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  draftItemRight: {
-    alignItems: 'flex-end',
-    marginLeft: 8,
-  },
-  draftMoreNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderTopWidth: 1,
-  },
-  draftsActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: 2,
-  },
-  draftQuickApproveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 8,
-    borderRadius: Radii.md,
-    borderWidth: 1,
-  },
-  draftReviewBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 8,
-    borderRadius: Radii.md,
+    marginLeft: Spacing.sm,
   },
 });
