@@ -112,7 +112,7 @@ export const AIServiceClient = {
           currentDate: todayStr,
           timezone: clientTimezone,
           currentDateTime: new Date().toISOString(),
-          sttModel: sttModel || 'gemini',
+          sttModel: sttModel || 'whisper',
         });
         return response.data;
       } catch (jsonErr: any) {
@@ -143,9 +143,7 @@ export const AIServiceClient = {
     formData.append('currentDate', todayStr);
     formData.append('timezone', clientTimezone);
     formData.append('currentDateTime', new Date().toISOString());
-    if (sttModel) {
-      formData.append('sttModel', sttModel);
-    }
+    formData.append('sttModel', sttModel || 'whisper');
 
     try {
       // NOTE: Do NOT set 'Content-Type': 'multipart/form-data' explicitly in Axios!

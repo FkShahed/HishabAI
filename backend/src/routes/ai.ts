@@ -70,13 +70,17 @@ router.post('/voice', upload.single('audio'), async (req: Request, res: Response
       sttModel: sttModel || 'gemini',
     };
 
+    const startTime = Date.now();
     const result = await getAIService().parseVoiceAudio(base64Audio, effectiveMime, context);
+    const durationMs = Date.now() - startTime;
     
     res.json({
       success: true,
       transactions: result.transactions,
       rawTranscript: result.rawTranscript,
       processingNotes: result.processingNotes,
+      durationMs,
+      engineUsed: result.engineUsed,
     });
   } catch (error) {
     const err = error as any;
@@ -168,6 +172,8 @@ router.post('/receipt', express.json({ limit: '10mb' }), async (req: Request, re
         transactions: result.transactions,
         processingNotes: result.processingNotes,
         confidence: confidence ?? 0.9,
+        durationMs: Date.now() - geminiStartTime,
+        engineUsed: result.engineUsed,
       });
       return;
     }
@@ -183,6 +189,8 @@ router.post('/receipt', express.json({ limit: '10mb' }), async (req: Request, re
       transactions: result.transactions,
       processingNotes: result.processingNotes,
       confidence: confidence ?? 0.9,
+      durationMs: Date.now() - geminiVisionStartTime,
+      engineUsed: result.engineUsed,
     });
   } catch (error) {
     const err = error as any;
@@ -241,13 +249,16 @@ router.post('/text', express.json({ limit: '1mb' }), async (req: Request, res: R
 
     const startTime = Date.now();
     const result = await getAIService().parseVoiceText(text, context);
-    console.log(`[AI Route] Raw text parsed in ${Date.now() - startTime}ms`);
+    const durationMs = Date.now() - startTime;
+    console.log(`[AI Route] Raw text parsed in ${durationMs}ms via ${result.engineUsed || 'default'}`);
 
     res.json({
       success: true,
       transactions: result.transactions,
       rawTranscript: result.rawTranscript,
       processingNotes: result.processingNotes,
+      durationMs,
+      engineUsed: result.engineUsed,
     });
   } catch (error) {
     const err = error as any;
@@ -306,13 +317,16 @@ router.post('/receipt-text', express.json({ limit: '1mb' }), async (req: Request
 
     const startTime = Date.now();
     const result = await getAIService().parseReceiptText(ocrText, context);
-    console.log(`[AI Route] Fast receipt-text parsed in ${Date.now() - startTime}ms`);
+    const durationMs = Date.now() - startTime;
+    console.log(`[AI Route] Fast receipt-text parsed in ${durationMs}ms via ${result.engineUsed || 'default'}`);
 
     res.json({
       success: true,
       transactions: result.transactions,
       processingNotes: result.processingNotes,
       confidence: 0.95,
+      durationMs,
+      engineUsed: result.engineUsed,
     });
   } catch (error) {
     const err = error as any;

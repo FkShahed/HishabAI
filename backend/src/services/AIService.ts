@@ -46,7 +46,7 @@ export class GeminiAIService implements IAIService {
 
     this.genAI = new GoogleGenerativeAI(apiKey);
 
-    const modelsEnv = process.env.GEMINI_MODELS || 'gemini-2.0-flash,gemini-1.5-flash';
+    const modelsEnv = process.env.GEMINI_MODELS || 'gemini-1.5-flash,gemini-2.0-flash,gemini-1.5-pro';
     const modelNames = modelsEnv.split(',').map(m => m.trim()).filter(Boolean);
 
     for (const name of modelNames) {
@@ -74,14 +74,14 @@ export class GeminiAIService implements IAIService {
 
   /**
    * Executes a function with model fallback support.
-   * - Retries 503 errors on the same model up to 4 times.
+   * - Retries transient 503 errors quickly up to 2 times.
    * - Immediately falls back to the next model on 429 quota exhaustion.
    */
   private async executeWithModelFallback<T>(
     fn: (model: GenerativeModel) => Promise<T>,
     label: string
-  ): Promise<T> {
-    const MAX_RETRIES = 4;
+  ): Promise<{ result: T; modelName: string }> {
+    const MAX_RETRIES = 2;
     
     for (let modelIdx = 0; modelIdx < this.models.length; modelIdx++) {
       const currentModel = this.models[modelIdx];
@@ -99,7 +99,7 @@ export class GeminiAIService implements IAIService {
           if (modelIdx > 0) {
             console.log(`[GeminiAIService] Success using model: ${currentModel.name}`);
           }
-          return result;
+          return { result, modelName: currentModel.name };
         } catch (error: any) {
           lastError = error;
 
@@ -109,9 +109,9 @@ export class GeminiAIService implements IAIService {
             break; // Break the attempt loop to move to the next model
           }
 
-          // 2. Transient Errors (503) -> Exponential Backoff
+          // 2. Transient Errors (503) -> Fast Backoff
           if (isTransient(error) && attempt < MAX_RETRIES) {
-            const delay = Math.pow(2, attempt - 1) * 1000;
+            const delay = Math.min(attempt * 400, 1000);
             console.warn(`[GeminiAIService] ${label} got transient error on ${currentModel.name} (attempt ${attempt}/${MAX_RETRIES}) — retrying in ${delay}ms...`);
             await new Promise(resolve => setTimeout(resolve, delay));
           } else if (attempt === MAX_RETRIES) {
@@ -151,30 +151,31 @@ export class GeminiAIService implements IAIService {
     context: AIContext
   ): Promise<AIParseResponse> {
     const groq = getGroqSTTService();
-    const useWhisper = context.sttModel === 'whisper';
+    // Auto-Whisper whenever Groq is configured unless explicitly set to gemini
+    const canUseWhisper = groq.isConfigured() && context.sttModel !== 'gemini';
 
-    if (useWhisper && groq.isConfigured()) {
+    if (canUseWhisper) {
       try {
-        console.log('[GeminiAIService] Attempting Groq Whisper ultra-fast STT...');
+        console.log('[GeminiAIService] Attempting Groq Whisper ultra-fast STT (~200ms)...');
         const audioBuffer = Buffer.from(audioBase64, 'base64');
         const transcript = await groq.transcribeAudio(audioBuffer, mimeType);
 
         if (transcript && transcript.trim().length > 0) {
-          console.log('[GeminiAIService] Groq STT successful. Parsing transcript text with Gemini...');
+          console.log('[GeminiAIService] Groq STT successful. Parsing transcript text...');
           const res = await this.parseVoiceText(transcript, context);
           return {
             ...res,
-            engineUsed: 'Groq (Whisper) + Gemini',
+            engineUsed: res.engineUsed ? `Groq Whisper + ${res.engineUsed}` : 'Groq Whisper + AI',
             sttEngine: 'groq',
           };
         }
       } catch (sttErr: any) {
-        console.warn('[GeminiAIService] Groq STT failed — falling back to Gemini audio parsing:', sttErr.message);
+        console.warn('[GeminiAIService] Groq STT failed — falling back to Gemini direct audio parsing:', sttErr.message);
       }
-    } else if (useWhisper) {
+    } else if (context.sttModel === 'whisper') {
       console.log('[GeminiAIService] Groq STT requested but GROQ_API_KEY not configured — using direct Gemini audio parsing');
     } else {
-      console.log('[GeminiAIService] Gemini direct audio parsing requested');
+      console.log('[GeminiAIService] Direct Gemini audio parsing requested');
     }
 
     // Fallback/Default path: Direct audio parsing via Gemini Multimodal
@@ -183,7 +184,7 @@ export class GeminiAIService implements IAIService {
     const audioPart = { inlineData: { data: audioBase64, mimeType } };
     const textPart  = { text: systemPrompt };
 
-    const result = await this.executeWithModelFallback(
+    const { result, modelName } = await this.executeWithModelFallback(
       (m) => m.generateContent([audioPart, textPart]),
       'parseVoiceAudio'
     );
@@ -191,13 +192,14 @@ export class GeminiAIService implements IAIService {
     const parsed = this.parseAndValidateResponse(responseText, 'voice', context);
     return {
       ...parsed,
-      engineUsed: useWhisper ? 'Direct Gemini Audio (Fallback)' : 'Direct Gemini Audio',
+      engineUsed: `Direct Gemini Audio (${modelName})`,
       sttEngine: 'gemini',
     };
   }
 
   /**
-   * Fast path: Parse pre-transcribed text transcript into structured transactions.
+   * Fast path: Parse text transcript into structured transactions.
+   * Uses ultra-fast Groq LLM first (~300-500ms), then falls back to Gemini.
    */
   async parseVoiceText(
     transcriptText: string,
@@ -205,7 +207,28 @@ export class GeminiAIService implements IAIService {
   ): Promise<AIParseResponse> {
     const systemPrompt = this.buildVoiceTextSystemPrompt(transcriptText, context);
 
-    const result = await this.executeWithModelFallback(
+    // 1. Ultra-fast Groq LLM Path (~300ms)
+    const groq = getGroqSTTService();
+    if (groq.isConfigured()) {
+      try {
+        const groqStart = Date.now();
+        const jsonContent = await groq.parseTransactionPrompt(systemPrompt, transcriptText);
+        if (jsonContent && jsonContent.trim().length > 0) {
+          const parsed = this.parseAndValidateResponse(jsonContent, 'voice', context);
+          console.log(`[AIService] Ultra-fast Groq text parse completed in ${Date.now() - groqStart}ms (${parsed.transactions.length} txns)`);
+          return {
+            ...parsed,
+            rawTranscript: parsed.rawTranscript || transcriptText,
+            engineUsed: 'Groq (openai/gpt-oss-20b)',
+          };
+        }
+      } catch (groqErr: any) {
+        console.warn('[AIService] Groq text parse error, falling back to Gemini:', groqErr.message || groqErr);
+      }
+    }
+
+    // 2. Gemini Fallback Path
+    const { result, modelName } = await this.executeWithModelFallback(
       (m) => m.generateContent(systemPrompt),
       'parseVoiceText'
     );
@@ -215,6 +238,7 @@ export class GeminiAIService implements IAIService {
     return {
       ...parsed,
       rawTranscript: parsed.rawTranscript || transcriptText,
+      engineUsed: `Gemini (${modelName})`,
     };
   }
 
@@ -227,6 +251,27 @@ export class GeminiAIService implements IAIService {
   ): Promise<AIParseResponse> {
     const systemPrompt = this.buildReceiptSystemPrompt(ocrText, context);
 
+    // 1. If text-only path (no image attached), try ultra-fast Groq first (~300ms)
+    if (!receiptImageBase64 && ocrText && ocrText.trim().length > 0) {
+      const groq = getGroqSTTService();
+      if (groq.isConfigured()) {
+        try {
+          const groqStart = Date.now();
+          const jsonContent = await groq.parseTransactionPrompt(systemPrompt, ocrText);
+          if (jsonContent && jsonContent.trim().length > 0) {
+            const parsed = this.parseAndValidateResponse(jsonContent, 'receipt', context);
+            console.log(`[AIService] Ultra-fast Groq receipt parse completed in ${Date.now() - groqStart}ms (${parsed.transactions.length} txns)`);
+            return {
+              ...parsed,
+              engineUsed: 'Groq (openai/gpt-oss-20b)',
+            };
+          }
+        } catch (groqErr: any) {
+          console.warn('[AIService] Groq receipt parse error, falling back to Gemini:', groqErr.message || groqErr);
+        }
+      }
+    }
+
     const parts: any[] = [{ text: systemPrompt }];
 
     // If image is available, include it for better accuracy (multimodal)
@@ -236,12 +281,16 @@ export class GeminiAIService implements IAIService {
       } as any);
     }
 
-    const result = await this.executeWithModelFallback(
+    const { result, modelName } = await this.executeWithModelFallback(
       (m) => m.generateContent(parts as any),
       'parseReceiptText'
     );
     const responseText = result.response.text();
-    return this.parseAndValidateResponse(responseText, 'receipt', context);
+    const parsed = this.parseAndValidateResponse(responseText, 'receipt', context);
+    return {
+      ...parsed,
+      engineUsed: receiptImageBase64 ? `Gemini Multimodal (${modelName})` : `Gemini Text (${modelName})`,
+    };
   }
 
   // ─── Insights Generation ────────────────────────────────────────────────────
@@ -267,7 +316,7 @@ Return a JSON array of strings: ["insight 1", "insight 2", ...]
 Do not include markdown. Do not invent numbers not in the data.`;
 
     try {
-      const result = await this.executeWithModelFallback(
+      const { result } = await this.executeWithModelFallback(
         (m) => m.generateContent(prompt),
         'generateInsights'
       );

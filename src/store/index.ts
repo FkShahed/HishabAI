@@ -354,7 +354,7 @@ export const useUIStore = create<UIState>()(
       userName: 'Guest User',
       userPhotoUrl: null,
       dailyReminderEnabled: false,
-      sttModel: 'gemini',
+      sttModel: 'whisper',
       transactionTitleMode: 'note',
 
       setSelectedMonth: (month, year) => set({ selectedMonth: month, selectedYear: year }),
@@ -432,7 +432,7 @@ export const useUIStore = create<UIState>()(
           theme: 'light',
           backgroundPreset: 'aurora',
           dailyReminderEnabled: false,
-          sttModel: 'gemini',
+          sttModel: 'whisper',
           transactionTitleMode: 'note',
         });
       },
