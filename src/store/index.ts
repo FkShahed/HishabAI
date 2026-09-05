@@ -319,6 +319,7 @@ interface UIState {
   isFirstLaunch: boolean;
   theme: 'dark' | 'light';
   backgroundPreset: BackgroundPreset;
+  backgroundOpacity: number;
   userName: string;
   userPhotoUrl: string | null;
   dailyReminderEnabled: boolean;
@@ -332,6 +333,7 @@ interface UIState {
   setFirstLaunch: (value: boolean) => void;
   setTheme: (theme: 'dark' | 'light') => void;
   setBackgroundPreset: (preset: BackgroundPreset) => void;
+  setBackgroundOpacity: (opacity: number) => void;
   toggleTheme: () => void;
   setUserName: (name: string) => void;
   setUserPhotoUrl: (url: string | null) => void;
@@ -351,6 +353,7 @@ export const useUIStore = create<UIState>()(
       isFirstLaunch: true,
       theme: 'light',
       backgroundPreset: 'aurora',
+      backgroundOpacity: 1.0,
       userName: 'Guest User',
       userPhotoUrl: null,
       dailyReminderEnabled: false,
@@ -393,6 +396,12 @@ export const useUIStore = create<UIState>()(
           FirebaseService.saveUserProfile(auth.currentUser.uid, { backgroundPreset }).catch(() => {});
         }
       },
+      setBackgroundOpacity: (backgroundOpacity) => {
+        set({ backgroundOpacity });
+        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
+          FirebaseService.saveUserProfile(auth.currentUser.uid, { backgroundOpacity }).catch(() => {});
+        }
+      },
       toggleTheme: () => {
         const next = get().theme === 'dark' ? 'light' : 'dark';
         get().setTheme(next);
@@ -431,6 +440,7 @@ export const useUIStore = create<UIState>()(
           currency: 'BDT',
           theme: 'light',
           backgroundPreset: 'aurora',
+          backgroundOpacity: 1.0,
           dailyReminderEnabled: false,
           sttModel: 'whisper',
           transactionTitleMode: 'note',
@@ -458,6 +468,7 @@ export const useUIStore = create<UIState>()(
             if (profile.currency) set({ currency: profile.currency });
             if (profile.theme) set({ theme: profile.theme as 'dark' | 'light' });
             if (profile.backgroundPreset) set({ backgroundPreset: profile.backgroundPreset as BackgroundPreset });
+            if (profile.backgroundOpacity !== undefined) set({ backgroundOpacity: profile.backgroundOpacity });
             if (profile.dailyReminderEnabled !== undefined) set({ dailyReminderEnabled: profile.dailyReminderEnabled });
             if ((profile as any).transactionTitleMode) set({ transactionTitleMode: (profile as any).transactionTitleMode as TransactionTitleMode });
           } else if (auth.currentUser) {
@@ -479,6 +490,7 @@ export const useUIStore = create<UIState>()(
         isFirstLaunch: state.isFirstLaunch,
         theme: state.theme,
         backgroundPreset: state.backgroundPreset,
+        backgroundOpacity: state.backgroundOpacity,
         userName: state.userName,
         userPhotoUrl: state.userPhotoUrl,
         dailyReminderEnabled: state.dailyReminderEnabled,

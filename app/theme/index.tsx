@@ -16,7 +16,6 @@ const { width } = Dimensions.get('window');
 interface PresetOption {
   id: BackgroundPreset;
   name: string;
-  designStyle: string;
   subtitle: string;
   colors: [string, string, string];
 }
@@ -25,45 +24,47 @@ const PRESET_OPTIONS: PresetOption[] = [
   {
     id: 'aurora',
     name: 'Aurora Orbs',
-    designStyle: '3-Orb Floating (Default)',
-    subtitle: 'Classic organic floating circular orbs with diffuse glow',
+    subtitle: 'Luminous floating organic glass orbs with atmospheric glow',
     colors: ['#7C3AED', '#06B6D4', '#EC4899'],
   },
   {
     id: 'nebula',
     name: 'Cosmic Nebula',
-    designStyle: 'Diagonal Light Sweeps',
-    subtitle: '45° luminous galactic beam & deep indigo twilight pool',
+    subtitle: '35° sweeping galactic light beam with deep indigo twilight pool',
     colors: ['#8B5CF6', '#6366F1', '#D946EF'],
   },
   {
     id: 'emerald',
     name: 'Emerald Oasis',
-    designStyle: 'Center Focus Spotlight',
-    subtitle: 'Soft radiant central halo focused directly behind cards',
+    subtitle: 'Breathing radiant central spotlight halo & calm ocean horizon',
     colors: ['#10B981', '#14B8A6', '#0284C7'],
   },
   {
     id: 'sunset',
     name: 'Sunset Glow',
-    designStyle: '4-Corner Fluid Mesh',
-    subtitle: 'Four-point fluid mesh gradient with warm golden corners',
+    subtitle: 'Warm golden hour 4-corner fluid mesh gradient & evening rose',
     colors: ['#F59E0B', '#F97316', '#F43F5E'],
   },
   {
     id: 'cyberpunk',
     name: 'Cyberpunk Neon',
-    designStyle: 'Horizon Laser Stage',
-    subtitle: 'Top-down cyan laser bar with bottom violet stage dome',
-    colors: ['#3B82F6', '#06B6D4', '#A855F7'],
+    subtitle: 'Top-down cyan laser beam with bottom ultraviolet stage dome',
+    colors: ['#06B6D4', '#3B82F6', '#A855F7'],
   },
   {
     id: 'midnight',
     name: 'Midnight Velvet',
-    designStyle: 'Eclipse Arch & Crescent',
-    subtitle: 'Curved top astronomical arch & lower midnight crescent',
-    colors: ['#475569', '#4338CA', '#581C87'],
+    subtitle: 'Astronomical celestial arch with deep royal twilight crescent',
+    colors: ['#4338CA', '#581C87', '#475569'],
   },
+];
+
+const OPACITY_LEVELS = [
+  { label: '0%', title: 'Off', value: 0.0 },
+  { label: '25%', title: 'Subtle', value: 0.25 },
+  { label: '50%', title: 'Soft', value: 0.50 },
+  { label: '75%', title: 'Vibrant', value: 0.75 },
+  { label: '100%', title: 'Full (Default)', isDefault: true, value: 1.0 },
 ];
 
 export default function ThemeSettingsScreen() {
@@ -73,7 +74,12 @@ export default function ThemeSettingsScreen() {
   const setTheme = useUIStore((s) => s.setTheme);
   const backgroundPreset = useUIStore((s) => s.backgroundPreset);
   const setBackgroundPreset = useUIStore((s) => s.setBackgroundPreset);
+  const backgroundOpacity = useUIStore((s) => s.backgroundOpacity);
+  const setBackgroundOpacity = useUIStore((s) => s.setBackgroundOpacity);
   const isDark = colors.bg.primary === '#080810';
+
+  const currentOpacity = typeof backgroundOpacity === 'number' ? backgroundOpacity : 1.0;
+  const activePresetOption = PRESET_OPTIONS.find((p) => p.id === (backgroundPreset || 'aurora')) || PRESET_OPTIONS[0];
 
   return (
     <GlassBackground style={styles.container}>
@@ -154,7 +160,114 @@ export default function ThemeSettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Section 2: Ambient Background Designs */}
+        {/* Section 2: Background Design Opacity Control */}
+        <View style={[styles.sectionHeader, { marginTop: Spacing.xl, justifyContent: 'space-between' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="sparkles-outline" size={18} color={colors.accent.primary} />
+            <Text variant="md" weight="bold" style={{ marginLeft: 6 }}>
+              Background Intensity
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.opacityValuePill,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                borderColor: colors.border.subtle,
+              },
+            ]}
+          >
+            <Text variant="xs" weight="bold" color={colors.accent.primary}>
+              {Math.round(currentOpacity * 100)}%{currentOpacity === 1.0 ? ' • Default' : ''}
+            </Text>
+          </View>
+        </View>
+        <Text variant="xs" color={colors.text.secondary} style={{ marginBottom: Spacing.md }}>
+          Adjust the glow brightness and visibility of ambient background artwork across the app.
+        </Text>
+
+        <View
+          style={[
+            styles.opacityCard,
+            {
+              backgroundColor: colors.bg.glass,
+              borderColor: colors.bg.glassBorder,
+            },
+            Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
+          ]}
+        >
+          {/* Interactive Stepper Pills */}
+          <View style={styles.opacityRow}>
+            {OPACITY_LEVELS.map((lvl) => {
+              const isSelected = Math.abs(currentOpacity - lvl.value) < 0.05;
+              return (
+                <TouchableOpacity
+                  key={lvl.label}
+                  style={[
+                    styles.opacityPill,
+                    isSelected && {
+                      backgroundColor: colors.accent.primary,
+                      borderColor: colors.accent.primary,
+                      shadowColor: colors.accent.primary,
+                      shadowOpacity: 0.35,
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowRadius: 4,
+                      elevation: 3,
+                    },
+                    !isSelected && {
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                    },
+                  ]}
+                  onPress={() => setBackgroundOpacity(lvl.value)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    variant="xs"
+                    weight="bold"
+                    color={isSelected ? '#FFFFFF' : colors.text.primary}
+                  >
+                    {lvl.label}
+                  </Text>
+                  <Text
+                    variant="xs"
+                    weight={isSelected ? 'semibold' : 'regular'}
+                    color={isSelected ? 'rgba(255, 255, 255, 0.9)' : colors.text.secondary}
+                    style={{ fontSize: 9.5, marginTop: 2, includeFontPadding: false }}
+                  >
+                    {lvl.isDefault ? 'Default' : lvl.title}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Visual Glow Meter Bar */}
+          <View style={styles.meterContainer}>
+            <View
+              style={[
+                styles.meterTrack,
+                { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' },
+              ]}
+            >
+              <LinearGradient
+                colors={
+                  activePresetOption?.colors
+                    ? [activePresetOption.colors[0], activePresetOption.colors[1]]
+                    : [colors.accent.primary, '#06B6D4']
+                }
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={[
+                  styles.meterFill,
+                  { width: `${Math.round(currentOpacity * 100)}%` },
+                ]}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Section 3: Ambient Background Designs */}
         <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>
           <Ionicons name="image-outline" size={18} color={colors.accent.primary} />
           <Text variant="md" weight="bold" style={{ marginLeft: 6 }}>
@@ -173,7 +286,10 @@ export default function ThemeSettingsScreen() {
                 key={item.id}
                 style={[
                   styles.presetCard,
-                  { backgroundColor: colors.bg.glass, borderColor: isSelected ? colors.accent.primary : colors.bg.glassBorder },
+                  { 
+                    backgroundColor: colors.bg.glass, 
+                    borderColor: isSelected ? colors.accent.primary : colors.bg.glassBorder 
+                  },
                   isSelected && styles.selectedPresetCard,
                   Platform.OS === 'web' && ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
                 ]}
@@ -193,9 +309,9 @@ export default function ThemeSettingsScreen() {
                   {/* 1. Aurora: 3 Floating Micro-Orbs */}
                   {item.id === 'aurora' && (
                     <View style={StyleSheet.absoluteFill}>
-                      <View style={[styles.miniOrb, { top: 3, right: 3, width: 17, height: 17, backgroundColor: item.colors[0] }]} />
-                      <View style={[styles.miniOrb, { top: '36%', left: 2, width: 15, height: 15, backgroundColor: item.colors[1] }]} />
-                      <View style={[styles.miniOrb, { bottom: 3, right: 4, width: 16, height: 16, backgroundColor: item.colors[2] }]} />
+                      <View style={[styles.miniOrb, { top: 2, right: 2, width: 19, height: 19, backgroundColor: item.colors[0] }]} />
+                      <View style={[styles.miniOrb, { top: '35%', left: 1, width: 17, height: 17, backgroundColor: item.colors[1] }]} />
+                      <View style={[styles.miniOrb, { bottom: 2, right: 3, width: 18, height: 18, backgroundColor: item.colors[2] }]} />
                     </View>
                   )}
 
@@ -208,8 +324,8 @@ export default function ThemeSettingsScreen() {
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                       />
-                      <View style={[styles.miniOrb, { top: 2, right: 2, width: 14, height: 14, backgroundColor: item.colors[2] }]} />
-                      <View style={[styles.miniOrb, { bottom: -3, left: 4, width: 26, height: 14, borderRadius: 7, backgroundColor: item.colors[1] }]} />
+                      <View style={[styles.miniOrb, { top: 2, right: 2, width: 15, height: 15, backgroundColor: item.colors[2] }]} />
+                      <View style={[styles.miniOrb, { bottom: -3, left: 3, width: 28, height: 15, borderRadius: 7.5, backgroundColor: item.colors[1] }]} />
                     </View>
                   )}
 
@@ -218,6 +334,7 @@ export default function ThemeSettingsScreen() {
                     <View style={StyleSheet.absoluteFill}>
                       <View style={[styles.miniHorizon, { backgroundColor: item.colors[2] }]} />
                       <View style={[styles.miniHalo, { backgroundColor: item.colors[0] }]} />
+                      <View style={[styles.miniCorner, { bottom: -2, left: -2, backgroundColor: '#34D399' }]} />
                     </View>
                   )}
 
@@ -234,49 +351,26 @@ export default function ThemeSettingsScreen() {
                   {/* 5. Cyberpunk: Top Laser Bar & Bottom Stage Dome */}
                   {item.id === 'cyberpunk' && (
                     <View style={StyleSheet.absoluteFill}>
-                      <View style={[styles.miniLaserBar, { backgroundColor: item.colors[1] }]} />
+                      <View style={[styles.miniLaserBar, { backgroundColor: item.colors[0] }]} />
                       <View style={[styles.miniStageDome, { backgroundColor: item.colors[2] }]} />
-                      <View style={[styles.miniLaserAccent, { backgroundColor: item.colors[0] }]} />
+                      <View style={[styles.miniLaserAccent, { backgroundColor: item.colors[1] }]} />
                     </View>
                   )}
 
                   {/* 6. Midnight: Curved Astronomical Eclipse Arch & Crescent */}
                   {item.id === 'midnight' && (
                     <View style={StyleSheet.absoluteFill}>
-                      <View style={[styles.miniArch, { backgroundColor: item.colors[1] }]} />
-                      <View style={[styles.miniCrescent, { backgroundColor: item.colors[0] }]} />
+                      <View style={[styles.miniArch, { backgroundColor: item.colors[0] }]} />
+                      <View style={[styles.miniCrescent, { backgroundColor: item.colors[1] }]} />
                     </View>
                   )}
                 </View>
 
+                {/* Clean Preset Title & Subtitle (Without Badges) */}
                 <View style={styles.presetTextContainer}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                    <Text variant="sm" weight="bold">
-                      {item.name}
-                    </Text>
-                    <View
-                      style={[
-                        styles.styleBadge,
-                        {
-                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-                          borderColor: isSelected
-                            ? colors.accent.primary
-                            : isDark
-                            ? 'rgba(255, 255, 255, 0.12)'
-                            : 'rgba(0, 0, 0, 0.08)',
-                        },
-                      ]}
-                    >
-                      <Text
-                        variant="xs"
-                        weight="semibold"
-                        color={isSelected ? colors.accent.primary : colors.text.secondary}
-                        style={{ fontSize: 9.5, includeFontPadding: false }}
-                      >
-                        {item.designStyle}
-                      </Text>
-                    </View>
-                  </View>
+                  <Text variant="sm" weight="bold">
+                    {item.name}
+                  </Text>
                   <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 3 }}>
                     {item.subtitle}
                   </Text>
@@ -349,6 +443,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
   },
+
+  // Opacity Control Section
+  opacityValuePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: Radii.full,
+    borderWidth: 1,
+  },
+  opacityCard: {
+    padding: Spacing.md,
+    borderRadius: Radii.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.xs,
+  },
+  opacityRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  opacityPill: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+  },
+  meterContainer: {
+    marginTop: Spacing.md,
+  },
+  meterTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  meterFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+
+  // Presets Grid
   presetGrid: {
     gap: Spacing.sm,
   },
@@ -375,12 +510,6 @@ const styles = StyleSheet.create({
   presetTextContainer: {
     marginLeft: Spacing.md,
     flex: 1,
-  },
-  styleBadge: {
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 4,
-    borderWidth: 0.5,
   },
   activeBadge: {
     width: 24,
