@@ -252,9 +252,9 @@ export default function HomeScreen() {
                   ]}
                 >
                   <Text
-                    weight="bold"
+                    weight="semibold"
                     color={hasError ? colors.semantic.danger : (isDark ? '#A1A1AA' : '#64748B')}
-                    style={{ fontSize: 9.5, lineHeight: 12, textAlign: 'center', includeFontPadding: false }}
+                    style={{ fontSize: 8, lineHeight: 10, textAlign: 'center', includeFontPadding: false }}
                   >
                     {drafts.length}
                   </Text>
@@ -498,13 +498,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   simpleDraftCountPill: {
-    minWidth: 17,
-    height: 17,
-    borderRadius: 8.5,
-    paddingHorizontal: 4,
+    minWidth: 14,
+    height: 14,
+    borderRadius: 7,
+    paddingHorizontal: 2.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 6,
+    marginLeft: 5,
     borderWidth: 0.5,
   },
   simpleDraftReviewBtn: {
