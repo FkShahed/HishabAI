@@ -353,7 +353,12 @@ ${categoryListStr}
 MANDATORY RULES — violating any of these causes data corruption:
 1. Extract ONLY transactions clearly mentioned in the audio. Never invent a transaction.
 2. Extract ONLY amounts clearly stated in the audio. Never guess or estimate an amount.
-3. categoryId MUST be one of the IDs from the AVAILABLE CATEGORIES list above. Never use a categoryId not in this list.
+3. CATEGORY ASSIGNMENT & USER DIRECTIVE OVERRIDE (CRITICAL - HIGHEST PRIORITY):
+   - USER DIRECTIVE OVERRIDES DEFAULT CLASSIFICATION: If the user explicitly asks, commands, or mentions to assign, add, or put transactions into a specific category (e.g. "eguala home e add kore daw", "home e rekho", "add to home", "হোম-এ যোগ করো", "shopping e dhoro", "under transportation"), you MUST assign categoryId and categoryName to that requested category from AVAILABLE CATEGORIES (e.g. id: "home", name: "Home").
+   - Even if items semantically belong to another category (such as fish or vegetables which are food), if the user instructed "eguala home e add kore daw" or "add to home", you MUST set categoryId to "home", NOT "food".
+   - If the user specifies different categories for different items (e.g. "মাছ food e ar boi education e"), assign each item to its respective specified category.
+   - If no explicit category directive is given, infer the most appropriate categoryId from AVAILABLE CATEGORIES based on the item description (e.g., burger -> food, bus fare -> transportation).
+   - categoryId MUST be one of the IDs from the AVAILABLE CATEGORIES list above. Never use a categoryId not in this list.
 4. transactionDate MUST be resolved to YYYY-MM-DD using the TODAY'S DATE and USER TIMEZONE above.
    - "আজকে" / "আজ" / "today" → ${context.currentDate}
    - "গতকাল" / "গতকালকে" / "yesterday" → one day before ${context.currentDate}
@@ -362,7 +367,7 @@ MANDATORY RULES — violating any of these causes data corruption:
    - Specific dates like "আগস্ট ৫" / "August 5" → use the year from ${context.currentDate}
 5. If the date is not explicitly specified or is ambiguous in the audio, you MUST default transactionDate to "${context.currentDate}" (today's date) and set dateSource to "inferred_today".
 6. If the amount is unclear or ambiguous, OMIT the transaction entirely (do not include it).
-7. comment must contain the name of the item, store, or person. If there is no specific item, leave it empty.
+7. comment must contain the clean name of the item, store, or person. Do NOT include routing instructions (such as "eguala home e add kore daw", "add to home", "হোমে যোগ করো", etc.) in the comment. If there is no specific item, leave it empty.
 8. confidence: a number 0-1 representing how certain you are about this transaction.
 9. uncertain: set to true if any field is ambiguous. List ambiguous fields in uncertainFields.
 10. source must always be "voice".
@@ -424,7 +429,12 @@ ${categoryListStr}
 MANDATORY RULES:
 1. Extract ONLY transactions clearly mentioned in the voice transcript. Never invent a transaction.
 2. Extract ONLY amounts clearly stated in the transcript. Never guess or estimate an amount.
-3. categoryId MUST be one of the IDs from the AVAILABLE CATEGORIES list above.
+3. CATEGORY ASSIGNMENT & USER DIRECTIVE OVERRIDE (CRITICAL - HIGHEST PRIORITY):
+   - USER DIRECTIVE OVERRIDES DEFAULT CLASSIFICATION: If the user explicitly asks, commands, or mentions to assign, add, or put transactions into a specific category (e.g. "eguala home e add kore daw", "home e rekho", "add to home", "হোম-এ যোগ করো", "shopping e dhoro", "under transportation"), you MUST assign categoryId and categoryName to that requested category from AVAILABLE CATEGORIES (e.g. id: "home", name: "Home").
+   - Even if items semantically belong to another category (such as fish or vegetables which are food), if the user instructed "eguala home e add kore daw" or "add to home", you MUST set categoryId to "home", NOT "food".
+   - If the user specifies different categories for different items (e.g. "মাছ food e ar boi education e"), assign each item to its respective specified category.
+   - If no explicit category directive is given, infer the most appropriate categoryId from AVAILABLE CATEGORIES based on the item description (e.g., burger -> food, bus fare -> transportation).
+   - categoryId MUST be one of the IDs from the AVAILABLE CATEGORIES list above.
 4. transactionDate MUST be resolved to YYYY-MM-DD using TODAY'S DATE:
    - "আজকে" / "আজ" / "today" → ${context.currentDate}
    - "গতকাল" / "yesterday" → one day before ${context.currentDate}
@@ -432,7 +442,7 @@ MANDATORY RULES:
    - "গত শুক্রবার" / "last Friday" → resolve to the most recent Friday before ${context.currentDate}
 5. If date is not specified, default transactionDate to "${context.currentDate}" and set dateSource to "inferred_today".
 6. If the amount is unclear or ambiguous, OMIT the transaction.
-7. comment must contain the name of the item, store, or person. If there is no specific item, leave it empty.
+7. comment must contain the clean name of the item, store, or person. Do NOT include routing instructions (such as "eguala home e add kore daw", "add to home", "হোমে যোগ করো", etc.) in the comment. If there is no specific item, leave it empty.
 8. confidence: a number 0-1 representing certainty.
 9. source must always be "voice".
 10. MISSING DETAILS FEEDBACK: If no valid transaction can be extracted (e.g. amount is missing, item/category is missing, or prompt is incomplete), you MUST specify EXACTLY which parameters are missing in the processingNotes (e.g., "The transaction amount is missing", "The item description or category is missing"). Do NOT just say 'No transactions found'.
@@ -571,8 +581,21 @@ RESPONSE FORMAT — return ONLY valid JSON, no markdown:
         }
       }
 
-      // Safety: if categoryId is missing or not in user's list, map to a valid fallback and mark uncertain
-      if (typeof raw.categoryId !== 'string' || !validCategoryIds.has(raw.categoryId)) {
+      // Category normalization: check exact ID match, case-insensitive ID match, or name match
+      let matchedCategory = context.categoryList.find(c => c.id === raw.categoryId);
+      if (!matchedCategory && typeof raw.categoryId === 'string') {
+        const lowerId = raw.categoryId.trim().toLowerCase();
+        matchedCategory = context.categoryList.find(c => c.id.toLowerCase() === lowerId || c.name.toLowerCase() === lowerId);
+      }
+      if (!matchedCategory && typeof raw.categoryName === 'string') {
+        const lowerName = raw.categoryName.trim().toLowerCase();
+        matchedCategory = context.categoryList.find(c => c.name.toLowerCase() === lowerName || c.id.toLowerCase() === lowerName);
+      }
+
+      if (matchedCategory) {
+        raw.categoryId = matchedCategory.id;
+        raw.categoryName = matchedCategory.name;
+      } else {
         console.warn(`[GeminiAIService] AI returned invalid/unknown categoryId: ${raw.categoryId} — mapping to fallback category`);
         raw.uncertain = true;
         raw.uncertainFields = Array.from(new Set([...(raw.uncertainFields ?? []), 'category']));

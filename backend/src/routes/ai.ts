@@ -25,11 +25,15 @@ function getOCRService() {
   return ocrServiceInstance;
 }
 
-// Temporary mock category list for AI context
+// Default categories fallback for AI context
 const MOCK_CATEGORIES = [
-  { id: 'food', name: 'Food & Dining', type: 'expense' as const },
+  { id: 'home', name: 'Home', type: 'expense' as const },
   { id: 'transportation', name: 'Transportation', type: 'expense' as const },
+  { id: 'adda', name: 'Adda', type: 'expense' as const },
+  { id: 'food', name: 'Food', type: 'expense' as const },
   { id: 'shopping', name: 'Shopping', type: 'expense' as const },
+  { id: 'restaurant', name: 'Restaurant', type: 'expense' as const },
+  { id: 'entertainment', name: 'Entertainment', type: 'expense' as const },
   { id: 'salary', name: 'Salary', type: 'income' as const },
 ];
 
