@@ -558,7 +558,7 @@ export default function ProfileScreen() {
             <View style={[styles.updateBannerCard, { backgroundColor: colors.accent.primaryDim, borderColor: colors.accent.primary }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.xs }}>
                 <View style={[styles.updateIconBadge, { backgroundColor: colors.accent.primary }]}>
-                  <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+                  <Ionicons name="arrow-up-circle" size={14} color="#FFFFFF" />
                 </View>
                 <View style={{ marginLeft: Spacing.sm, flex: 1 }}>
                   <Text variant="sm" weight="bold" color={colors.text.primary}>

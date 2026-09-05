@@ -293,8 +293,8 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
                       <View style={styles.titleRow}>
                         <Text variant="md" weight="bold">Voice AI</Text>
                         <View style={[styles.aiBadge, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
-                          <Ionicons name="sparkles" size={10} color="#10B981" />
-                          <Text variant="xs" weight="bold" color="#10B981" style={{ marginLeft: 2 }}>AI Instant</Text>
+                          <Ionicons name="hardware-chip" size={10} color="#10B981" />
+                          <Text variant="xs" weight="bold" color="#10B981" style={{ marginLeft: 3 }}>AI Instant</Text>
                         </View>
                       </View>
                       <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
@@ -328,8 +328,8 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
                       <View style={styles.titleRow}>
                         <Text variant="md" weight="bold">Scan Receipt AI</Text>
                         <View style={[styles.aiBadge, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
-                          <Ionicons name="sparkles" size={10} color="#6366F1" />
-                          <Text variant="xs" weight="bold" color="#6366F1" style={{ marginLeft: 2 }}>OCR Fast</Text>
+                          <Ionicons name="hardware-chip" size={10} color="#6366F1" />
+                          <Text variant="xs" weight="bold" color="#6366F1" style={{ marginLeft: 3 }}>OCR Fast</Text>
                         </View>
                       </View>
                       <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
@@ -363,8 +363,8 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
                       <View style={styles.titleRow}>
                         <Text variant="md" weight="bold">Text AI Input</Text>
                         <View style={[styles.aiBadge, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}>
-                          <Ionicons name="sparkles" size={10} color="#EC4899" />
-                          <Text variant="xs" weight="bold" color="#EC4899" style={{ marginLeft: 2 }}>AI Text</Text>
+                          <Ionicons name="hardware-chip" size={10} color="#EC4899" />
+                          <Text variant="xs" weight="bold" color="#EC4899" style={{ marginLeft: 3 }}>AI Text</Text>
                         </View>
                       </View>
                       <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
@@ -416,7 +416,7 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
             <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1 }]}>
               <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="sparkles" size={18} color={colors.accent.primary} style={{ marginRight: 6 }} />
+                  <Ionicons name="hardware-chip" size={18} color={colors.accent.primary} style={{ marginRight: 6 }} />
                   <Text variant="md" weight="bold">Text AI Input</Text>
                 </View>
                 <TouchableOpacity 
@@ -481,7 +481,7 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <>
-                      <Ionicons name="sparkles" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Ionicons name="hardware-chip" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
                       <Text variant="base" weight="bold" color="#FFFFFF">Process Now</Text>
                     </>
                   )}

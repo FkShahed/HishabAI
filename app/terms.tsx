@@ -104,7 +104,7 @@ export default function TermsAndPrivacyScreen() {
             <View style={[styles.card, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
               <View style={styles.cardHeader}>
                 <View style={[styles.iconBadge, { backgroundColor: colors.accent.primaryDim }]}>
-                  <Ionicons name="sparkles" size={16} color={colors.accent.primary} />
+                  <Ionicons name="hardware-chip" size={16} color={colors.accent.primary} />
                 </View>
                 <Text variant="md" weight="bold" style={{ marginLeft: Spacing.sm }}>
                   2. Service Description & AI Features

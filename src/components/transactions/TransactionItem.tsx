@@ -77,7 +77,7 @@ export function TransactionItem({ transaction, onPress, showDate = false, isLast
       <View style={styles.right}>
         {sourceIcon && (
           <View style={styles.sourceBadge}>
-            <Ionicons name="sparkles" size={11} color={colors.accent.primary} />
+            <Ionicons name="hardware-chip" size={10} color={colors.accent.primary} />
           </View>
         )}
         <Text

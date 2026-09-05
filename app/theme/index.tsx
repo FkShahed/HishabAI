@@ -163,7 +163,7 @@ export default function ThemeSettingsScreen() {
         {/* Section 2: Background Design Opacity Control */}
         <View style={[styles.sectionHeader, { marginTop: Spacing.xl, justifyContent: 'space-between' }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="sparkles-outline" size={18} color={colors.accent.primary} />
+            <Ionicons name="contrast-outline" size={18} color={colors.accent.primary} />
             <Text variant="md" weight="bold" style={{ marginLeft: 6 }}>
               Background Intensity
             </Text>
@@ -240,30 +240,6 @@ export default function ThemeSettingsScreen() {
                 </TouchableOpacity>
               );
             })}
-          </View>
-
-          {/* Visual Glow Meter Bar */}
-          <View style={styles.meterContainer}>
-            <View
-              style={[
-                styles.meterTrack,
-                { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' },
-              ]}
-            >
-              <LinearGradient
-                colors={
-                  activePresetOption?.colors
-                    ? [activePresetOption.colors[0], activePresetOption.colors[1]]
-                    : [colors.accent.primary, '#06B6D4']
-                }
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                style={[
-                  styles.meterFill,
-                  { width: `${Math.round(currentOpacity * 100)}%` },
-                ]}
-              />
-            </View>
           </View>
         </View>
 
@@ -468,19 +444,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: Radii.md,
     borderWidth: 1,
-  },
-  meterContainer: {
-    marginTop: Spacing.md,
-  },
-  meterTrack: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  meterFill: {
-    height: '100%',
-    borderRadius: 3,
   },
 
   // Presets Grid

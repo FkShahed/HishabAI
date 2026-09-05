@@ -123,8 +123,8 @@ export default function AddScreen() {
             <View style={styles.titleRow}>
               <Text variant="lg" weight="bold">Voice AI</Text>
               <View style={[styles.sparkleBadge, { backgroundColor: colors.semantic.incomeDim }]}>
-                <Ionicons name="sparkles" size={10} color={colors.semantic.income} />
-                <Text variant="xs" weight="bold" color={colors.semantic.income} style={{ marginLeft: 2 }}>AI</Text>
+                <Ionicons name="hardware-chip" size={10} color={colors.semantic.income} />
+                <Text variant="xs" weight="bold" color={colors.semantic.income} style={{ marginLeft: 3 }}>AI</Text>
               </View>
             </View>
             <Text variant="sm" color={colors.text.secondary}>Tell HisabAI what you spent</Text>
@@ -145,8 +145,8 @@ export default function AddScreen() {
             <View style={styles.titleRow}>
               <Text variant="lg" weight="bold">Text AI</Text>
               <View style={[styles.sparkleBadgeAmber, { backgroundColor: colors.semantic.warningDim }]}>
-                <Ionicons name="sparkles" size={10} color={colors.semantic.warning} />
-                <Text variant="xs" weight="bold" color={colors.semantic.warning} style={{ marginLeft: 2 }}>AI</Text>
+                <Ionicons name="hardware-chip" size={10} color={colors.semantic.warning} />
+                <Text variant="xs" weight="bold" color={colors.semantic.warning} style={{ marginLeft: 3 }}>AI</Text>
               </View>
             </View>
             <Text variant="sm" color={colors.text.secondary}>Type your transactions directly</Text>
@@ -167,8 +167,8 @@ export default function AddScreen() {
             <View style={styles.titleRow}>
               <Text variant="lg" weight="bold">Receipt AI</Text>
               <View style={[styles.sparkleBadgeBlue, { backgroundColor: colors.accent.secondaryDim }]}>
-                <Ionicons name="sparkles" size={10} color={colors.accent.secondary} />
-                <Text variant="xs" weight="bold" color={colors.accent.secondary} style={{ marginLeft: 2 }}>AI</Text>
+                <Ionicons name="hardware-chip" size={10} color={colors.accent.secondary} />
+                <Text variant="xs" weight="bold" color={colors.accent.secondary} style={{ marginLeft: 3 }}>AI</Text>
               </View>
             </View>
             <Text variant="sm" color={colors.text.secondary}>Scan a receipt</Text>
@@ -192,7 +192,7 @@ export default function AddScreen() {
             <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, borderWidth: 1 }]}>
               <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="sparkles" size={18} color={colors.accent.primary} style={{ marginRight: 6 }} />
+                  <Ionicons name="hardware-chip" size={18} color={colors.accent.primary} style={{ marginRight: 6 }} />
                   <Text variant="md" weight="bold">Text AI Input</Text>
                 </View>
                 <TouchableOpacity 
@@ -257,7 +257,7 @@ export default function AddScreen() {
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <>
-                      <Ionicons name="sparkles" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Ionicons name="hardware-chip" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
                       <Text variant="base" weight="bold" color="#FFFFFF">Process Now</Text>
                     </>
                   )}
