@@ -34,7 +34,7 @@ const EMOJI_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   '🚗': 'car-sport',
   '🍺': 'beer',
   '✈️': 'airplane',
-  '🏥': 'medical',
+  '🏥': 'medkit',
   '🐾': 'paw',
   '🔧': 'construct',
   '🏘️': 'business',
@@ -57,7 +57,7 @@ const EMOJI_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   '💡': 'bulb',
   '⛽': 'car',
   '🚕': 'car-sport',
-  '💊': 'fitness',
+  '💊': 'medkit',
   '🎓': 'school',
   '🎧': 'headset',
   '🎸': 'musical-notes',
@@ -167,7 +167,9 @@ export function CategoryIcon({ icon, color, size = 'md', live = false, liveStatu
       >
         {/* Semantic Icon Glyph or Fallback Emoji */}
         {vectorName ? (
-          <Ionicons name={vectorName} size={dim.iconSize} color={effectiveIconColor} />
+          <View style={vectorName === 'airplane' ? styles.flyPlane : undefined}>
+            <Ionicons name={vectorName} size={dim.iconSize} color={effectiveIconColor} />
+          </View>
         ) : (
           <Text style={{ fontSize: dim.font, textAlign: 'center', includeFontPadding: false }}>
             {icon || '🏷️'}
@@ -210,5 +212,8 @@ const styles = StyleSheet.create({
     top: -1,
     right: -1,
     borderWidth: 1.5,
+  },
+  flyPlane: {
+    transform: [{ rotate: '-45deg' }],
   },
 });
