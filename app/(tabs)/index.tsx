@@ -204,9 +204,6 @@ export default function HomeScreen() {
                 backgroundColor: isDark 
                   ? (Platform.OS === 'web' ? 'rgba(19, 19, 31, 0.65)' : '#13131F')
                   : (hasError ? 'rgba(254, 242, 242, 0.95)' : (Platform.OS === 'web' ? 'rgba(255, 255, 255, 0.85)' : '#FFFFFF')),
-                borderColor: hasError 
-                  ? colors.semantic.danger 
-                  : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.65)'),
               },
             ]}
             onPress={() => router.push('/drafts' as any)}
@@ -475,9 +472,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 0,
     overflow: 'hidden',
     position: 'relative',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
   },
   draftLeftAccentStrip: {
     position: 'absolute',
