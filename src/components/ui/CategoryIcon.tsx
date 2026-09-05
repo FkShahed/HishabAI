@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Text';
 import { useThemeColors } from '../../constants/colors';
 
@@ -8,88 +9,106 @@ export interface CategoryIconProps {
   icon: string;
   color: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  live?: boolean;
+  liveStatus?: 'active' | 'warning' | 'danger';
+  style?: ViewStyle;
 }
 
 const EMOJI_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
-  '🏠': 'home-outline',
-  '🚌': 'bus-outline',
-  '🎮': 'game-controller-outline',
-  '🍔': 'fast-food-outline',
-  '🛍️': 'bag-handle-outline',
-  '🍽️': 'restaurant-outline',
-  '🎬': 'film-outline',
-  '📱': 'phone-portrait-outline',
-  '💸': 'cash-outline',
-  '🎁': 'gift-outline',
-  '🚬': 'flame-outline',
-  '💻': 'laptop-outline',
-  '📚': 'book-outline',
-  '💇': 'sparkles-outline',
-  '⚽': 'football-outline',
-  '👥': 'people-outline',
-  '👗': 'shirt-outline',
-  '🚗': 'car-sport-outline',
-  '🍺': 'beer-outline',
-  '✈️': 'airplane-outline',
-  '🏥': 'medical-outline',
-  '🐾': 'paw-outline',
-  '🔧': 'construct-outline',
-  '🏘️': 'business-outline',
-  '❤️': 'heart-outline',
-  '🎲': 'trophy-outline',
-  '🍟': 'pizza-outline',
-  '🧒': 'happy-outline',
-  '💰': 'wallet-outline',
-  '🏢': 'briefcase-outline',
-  '📈': 'trending-up-outline',
-  '↩️': 'refresh-outline',
-  '🎉': 'star-outline',
-  '💹': 'stats-chart-outline',
-  '➕': 'add-circle-outline',
-  '☕': 'cafe-outline',
-  '🍕': 'pizza-outline',
-  '🍰': 'nutrition-outline',
-  '🛒': 'cart-outline',
-  '💳': 'card-outline',
-  '💡': 'bulb-outline',
-  '⛽': 'car-outline',
-  '🚕': 'car-outline',
-  '💊': 'fitness-outline',
-  '🎓': 'school-outline',
-  '🎧': 'headset-outline',
-  '🎸': 'musical-notes-outline',
-  '🍿': 'film-outline',
-  '🏕️': 'compass-outline',
-  '🏋️': 'barbell-outline',
-  '🚲': 'bicycle-outline',
-  '🎨': 'color-palette-outline',
-  '💼': 'briefcase-outline',
-  '📊': 'analytics-outline',
-  '🏧': 'card-outline',
-  '🏦': 'storefront-outline',
-  '💎': 'diamond-outline',
-  '🔑': 'key-outline',
-  '🧾': 'receipt-outline',
-  '🧼': 'water-outline',
-  '👕': 'shirt-outline',
-  '👠': 'shirt-outline',
-  '⌚': 'watch-outline',
-  '🎟️': 'ticket-outline',
-  '🏷️': 'pricetag-outline',
+  '🏠': 'home',
+  '🚌': 'bus',
+  '🎮': 'game-controller',
+  '🍔': 'fast-food',
+  '🛍️': 'bag-handle',
+  '🍽️': 'restaurant',
+  '🎬': 'film',
+  '📱': 'phone-portrait',
+  '💸': 'cash',
+  '🎁': 'gift',
+  '🚬': 'flame',
+  '💻': 'laptop',
+  '📚': 'book',
+  '💇': 'cut',
+  '⚽': 'football',
+  '👥': 'people',
+  '👗': 'shirt',
+  '🚗': 'car-sport',
+  '🍺': 'beer',
+  '✈️': 'airplane',
+  '🏥': 'medical',
+  '🐾': 'paw',
+  '🔧': 'construct',
+  '🏘️': 'business',
+  '❤️': 'heart',
+  '🎲': 'trophy',
+  '🍟': 'pizza',
+  '🧒': 'happy',
+  '💰': 'wallet',
+  '🏢': 'business',
+  '📈': 'trending-up',
+  '↩️': 'arrow-undo',
+  '🎉': 'ribbon',
+  '💹': 'stats-chart',
+  '➕': 'add-circle',
+  '☕': 'cafe',
+  '🍕': 'pizza',
+  '🍰': 'nutrition',
+  '🛒': 'cart',
+  '💳': 'card',
+  '💡': 'bulb',
+  '⛽': 'car',
+  '🚕': 'car-sport',
+  '💊': 'fitness',
+  '🎓': 'school',
+  '🎧': 'headset',
+  '🎸': 'musical-notes',
+  '🍿': 'film',
+  '🏕️': 'compass',
+  '🏋️': 'barbell',
+  '🚲': 'bicycle',
+  '🎨': 'color-palette',
+  '💼': 'briefcase',
+  '📊': 'analytics',
+  '🏧': 'card',
+  '🏦': 'business',
+  '💎': 'diamond',
+  '🔑': 'key',
+  '🧾': 'receipt',
+  '🧼': 'water',
+  '👕': 'shirt',
+  '👠': 'shirt',
+  '⌚': 'watch',
+  '🎟️': 'ticket',
+  '🏷️': 'pricetag',
+  '💵': 'cash',
+  '🏆': 'trophy',
+  '🥇': 'medal',
+  '🤝': 'people',
+  '🪙': 'wallet',
+  '⚡': 'flash',
+  '🚀': 'rocket',
+  '⭐': 'star',
+  '✨': 'sparkles',
+  '🧘': 'fitness',
+  '🩺': 'medkit',
+  '🔬': 'flask',
+  '🏨': 'bed',
+  '🏖️': 'sunny',
+  '🎯': 'locate',
 };
 
-export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
+export function CategoryIcon({ icon, color, size = 'md', live = false, liveStatus = 'active', style }: CategoryIconProps) {
   const colors = useThemeColors();
   const isDark = colors.bg.primary === '#080810';
   const activeColor = color || '#7C3AED';
 
   const getDimensions = () => {
     switch (size) {
-      case 'sm': return { container: 30, iconSize: 17, font: 15, radius: 15 };
-      case 'md': return { container: 36, iconSize: 20, font: 18, radius: 18 };
-      case 'lg': return { container: 48, iconSize: 28, font: 25, radius: 24 };
-      case 'xl': return { container: 64, iconSize: 38, font: 34, radius: 32 };
-      default: return { container: 36, iconSize: 20, font: 18, radius: 18 };
+      case 'sm': return { container: 30, iconSize: 16, font: 14, radius: 9, pip: 6 };
+      case 'md': return { container: 40, iconSize: 21, font: 18, radius: 12, pip: 7.5 };
+      case 'lg': return { container: 52, iconSize: 28, font: 25, radius: 16, pip: 9 };
+      case 'xl': return { container: 68, iconSize: 38, font: 34, radius: 20, pip: 11 };
+      default: return { container: 40, iconSize: 21, font: 18, radius: 12, pip: 7.5 };
     }
   };
 
@@ -119,39 +138,123 @@ export function CategoryIcon({ icon, color, size = 'md' }: CategoryIconProps) {
     vectorName = EMOJI_TO_IONICON[icon];
   }
 
-  // Adjust yellow/faint colors in Light mode for crisp contrast & high visibility
+  // Adjust faint/pastel colors in Light mode for crisp contrast & high readability
   const hexLower = activeColor.toLowerCase();
-  const isTooLight = hexLower === '#fde68a' || hexLower === '#fcd34d' || hexLower === '#eab308' || hexLower === '#ffffff';
+  const isTooLight = hexLower === '#fde68a' || hexLower === '#fcd34d' || hexLower === '#eab308' || hexLower === '#ffffff' || hexLower === '#fef08a';
   const effectiveIconColor = (!isDark && isTooLight) ? '#D97706' : activeColor;
+
+  const topBorder = getRgba(effectiveIconColor, isDark ? 0.55 : 0.42);
+  const bottomBorder = getRgba(effectiveIconColor, isDark ? 0.22 : 0.16);
+  const sideBorder = getRgba(effectiveIconColor, isDark ? 0.38 : 0.28);
+
+  const pipColor =
+    liveStatus === 'danger'
+      ? colors.semantic.danger
+      : liveStatus === 'warning'
+      ? colors.semantic.warning
+      : colors.semantic.income;
 
   return (
     <View
       style={[
-        styles.container,
+        styles.outerWrapper,
         {
           width: dim.container,
           height: dim.container,
-          borderRadius: dim.radius,
-          backgroundColor: getRgba(effectiveIconColor, isDark ? 0.22 : 0.16),
-          borderColor: getRgba(effectiveIconColor, isDark ? 0.48 : 0.38),
-          borderWidth: 1,
+          shadowColor: effectiveIconColor,
+          shadowOpacity: isDark ? 0.34 : 0.18,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 3,
         },
+        style,
       ]}
     >
-      {vectorName ? (
-        <Ionicons name={vectorName} size={dim.iconSize} color={effectiveIconColor} />
-      ) : (
-        <Text style={{ fontSize: dim.font, textAlign: 'center', includeFontPadding: false }}>
-          {icon || '🏷️'}
-        </Text>
+      {/* Luminous Frosted Squircle with Angled Gradient */}
+      <LinearGradient
+        colors={
+          isDark
+            ? [getRgba(effectiveIconColor, 0.28), getRgba(effectiveIconColor, 0.11)]
+            : [getRgba(effectiveIconColor, 0.20), getRgba(effectiveIconColor, 0.07)]
+        }
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.85, y: 1 }}
+        style={[
+          styles.container,
+          {
+            width: dim.container,
+            height: dim.container,
+            borderRadius: dim.radius,
+            borderTopColor: topBorder,
+            borderBottomColor: bottomBorder,
+            borderLeftColor: sideBorder,
+            borderRightColor: sideBorder,
+            borderWidth: 1,
+          },
+        ]}
+      >
+        {/* Specular Top-Edge Reflection Highlight */}
+        <View
+          style={[
+            styles.specularHighlight,
+            {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.42)',
+            },
+          ]}
+        />
+
+        {/* Semantic Icon Glyph or Fallback Emoji */}
+        {vectorName ? (
+          <Ionicons name={vectorName} size={dim.iconSize} color={effectiveIconColor} />
+        ) : (
+          <Text style={{ fontSize: dim.font, textAlign: 'center', includeFontPadding: false }}>
+            {icon || '🏷️'}
+          </Text>
+        )}
+      </LinearGradient>
+
+      {/* Live Activity / Connection Pip */}
+      {live && (
+        <View
+          style={[
+            styles.livePip,
+            {
+              width: dim.pip,
+              height: dim.pip,
+              borderRadius: dim.pip / 2,
+              backgroundColor: pipColor,
+              borderColor: isDark ? '#080810' : '#FFFFFF',
+            },
+          ]}
+        />
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outerWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  specularHighlight: {
+    position: 'absolute',
+    top: 1,
+    width: '55%',
+    height: 1.5,
+    borderRadius: 1,
+  },
+  livePip: {
+    position: 'absolute',
+    top: -1,
+    right: -1,
+    borderWidth: 1.5,
   },
 });
