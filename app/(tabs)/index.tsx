@@ -201,18 +201,31 @@ export default function HomeScreen() {
             style={[
               styles.simpleDraftBanner,
               {
-                backgroundColor: colors.bg.glass,
-                borderColor: colors.bg.glassBorder,
-                borderLeftColor: hasError
-                  ? colors.semantic.danger
-                  : processingDrafts.length > 0
-                  ? colors.accent.primary
-                  : colors.semantic.income,
+                backgroundColor: isDark 
+                  ? (Platform.OS === 'web' ? 'rgba(19, 19, 31, 0.65)' : '#13131F')
+                  : (hasError ? 'rgba(254, 242, 242, 0.95)' : (Platform.OS === 'web' ? 'rgba(255, 255, 255, 0.85)' : '#FFFFFF')),
+                borderColor: hasError 
+                  ? colors.semantic.danger 
+                  : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.65)'),
               },
             ]}
             onPress={() => router.push('/drafts' as any)}
             activeOpacity={0.75}
           >
+            {/* Clean Left Accent Strip (eliminates Android native multi-color border artifacts) */}
+            <View 
+              style={[
+                styles.draftLeftAccentStrip,
+                {
+                  backgroundColor: hasError
+                    ? colors.semantic.danger
+                    : processingDrafts.length > 0
+                    ? colors.accent.primary
+                    : colors.semantic.income,
+                }
+              ]} 
+            />
+
             {/* Status indicator: red dot for error, activity spinner for processing, emerald dot for ready */}
             <View style={styles.draftIndicatorWrapper}>
               {hasError ? (
@@ -234,7 +247,7 @@ export default function HomeScreen() {
                     styles.simpleDraftCountPill,
                     {
                       backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                      borderColor: hasError ? colors.semantic.danger : colors.border.subtle,
+                      borderColor: hasError ? colors.semantic.danger : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.65)'),
                     },
                   ]}
                 >
@@ -264,7 +277,7 @@ export default function HomeScreen() {
                 styles.simpleDraftReviewBtn,
                 {
                   backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                  borderColor: colors.border.subtle,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.65)',
                 },
               ]}
             >
@@ -456,7 +469,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   simpleDraftBanner: {
-    marginHorizontal: Spacing.lg,
+    marginHorizontal: Spacing.md,
     marginBottom: Spacing.md,
     borderRadius: Radii.md,
     paddingHorizontal: Spacing.md,
@@ -464,12 +477,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderLeftWidth: 3.5,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  draftLeftAccentStrip: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3.5,
   },
   draftIndicatorWrapper: {
     width: 20,
