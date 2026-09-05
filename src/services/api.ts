@@ -21,21 +21,12 @@ if (__DEV__) {
  */
 export function getFriendlyErrorMessage(error: any): string {
   if (!error) return 'An unknown error occurred. Please try again.';
-
-  // 1. Network Disconnection / Offline
-  if (error.message === 'Network Error' || !error.response) {
-    return 'Network connection issue. Please check your internet connection and try again.';
-  }
-
-  // 2. Timeout
-  if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-    return 'Connection timed out. Please check your internet and try again.';
-  }
+  if (typeof error === 'string') return error;
 
   const status = error.response?.status;
-  const serverMsg = error.response?.data?.error;
+  const serverMsg = error.response?.data?.error || error.response?.data?.message;
 
-  // 3. Quota / Rate Limit Exceeded
+  // 1. Quota / Rate Limit Exceeded
   if (
     status === 429 || 
     error.response?.data?.code === 'RATE_LIMIT_EXCEEDED' ||
@@ -45,7 +36,7 @@ export function getFriendlyErrorMessage(error: any): string {
     return 'AI daily usage limit reached. Please try again later.';
   }
 
-  // 4. Server Busy / 503
+  // 2. Server Busy / 503
   if (
     status === 503 || 
     error.response?.data?.code === 'SERVER_BUSY' ||
@@ -54,12 +45,83 @@ export function getFriendlyErrorMessage(error: any): string {
     return 'AI service is temporarily busy. Please try again in a few seconds.';
   }
 
-  // 5. Returned backend error string
-  if (typeof serverMsg === 'string' && serverMsg.length > 0) {
-    return serverMsg;
+  // 3. Returned backend error string
+  if (typeof serverMsg === 'string' && serverMsg.trim().length > 0) {
+    return serverMsg.trim();
   }
 
-  return error.message || 'Something went wrong. Please try again.';
+  // 4. Timeout
+  if (error.code === 'ECONNABORTED' || error.message?.toLowerCase().includes('timeout')) {
+    return 'Connection timed out. Please check your internet and try again.';
+  }
+
+  // 5. Explicit Network Disconnection / Offline
+  const isExplicitNetworkError = 
+    error.message === 'Network Error' || 
+    error.code === 'ERR_NETWORK' ||
+    error.message?.toLowerCase().includes('network error') ||
+    error.message?.toLowerCase().includes('failed to fetch');
+
+  if (isExplicitNetworkError) {
+    return 'Network connection issue. Please check your internet connection and try again.';
+  }
+
+  // 6. Return existing error message if available
+  if (error.message && typeof error.message === 'string' && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return 'Something went wrong. Please try again.';
+}
+
+/**
+ * Resilient POST helper: attempts Axios first, and seamlessly falls back to native fetch
+ * if Axios experiences an Android socket reset or Network Error.
+ */
+async function postWithResilience(endpoint: string, body: any, timeoutMs = 35000): Promise<any> {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const fullUrl = `${API_BASE_URL}${cleanEndpoint}`;
+
+  // 1. Primary: Axios
+  try {
+    const response = await api.post(cleanEndpoint, body, { timeout: timeoutMs });
+    return response.data;
+  } catch (axiosErr: any) {
+    // If it's a real HTTP status response from server (400, 429, 500), don't retry, throw directly
+    if (axiosErr.response?.status) {
+      throw new Error(getFriendlyErrorMessage(axiosErr));
+    }
+
+    console.warn(`[API] Axios ${cleanEndpoint} network hiccup (${axiosErr.message}) — attempting native fetch fallback...`);
+  }
+
+  // 2. Fallback: Native fetch (uses native OS HTTP stack directly)
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const fetchRes = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (!fetchRes.ok) {
+      const errJson = await fetchRes.json().catch(() => null);
+      const errMsg = errJson?.error || errJson?.message || `Server returned ${fetchRes.status}`;
+      throw new Error(errMsg);
+    }
+
+    return await fetchRes.json();
+  } catch (fetchErr: any) {
+    console.error(`[API] Resilient fetch also failed for ${cleanEndpoint}:`, fetchErr.message);
+    throw new Error(getFriendlyErrorMessage(fetchErr));
+  }
 }
 
 export const AIServiceClient = {
@@ -104,27 +166,28 @@ export const AIServiceClient = {
     }
 
     if (base64Audio) {
+      const voicePayload = {
+        audioBase64: base64Audio,
+        mimeType,
+        categoryList: categories,
+        currentDate: todayStr,
+        timezone: clientTimezone,
+        currentDateTime: new Date().toISOString(),
+        sttModel: sttModel || 'whisper',
+      };
+
       try {
-        const response = await api.post('/ai/voice', {
-          audioBase64: base64Audio,
-          mimeType,
-          categoryList: categories,
-          currentDate: todayStr,
-          timezone: clientTimezone,
-          currentDateTime: new Date().toISOString(),
-          sttModel: sttModel || 'whisper',
-        });
-        return response.data;
+        return await postWithResilience('/ai/voice', voicePayload, 45000);
       } catch (jsonErr: any) {
-        console.warn('[API] JSON voice upload error, checking fallback:', jsonErr?.message);
-        if (jsonErr.response?.status && jsonErr.response.status !== 400 && jsonErr.response.status !== 404) {
-          const friendlyMsg = getFriendlyErrorMessage(jsonErr);
-          throw new Error(friendlyMsg);
+        console.warn('[API] Resilient JSON voice upload error, trying FormData fallback:', jsonErr?.message);
+        // If server responded with a definitive business error, throw it
+        if (jsonErr.message && !jsonErr.message.toLowerCase().includes('network')) {
+          throw jsonErr;
         }
       }
     }
 
-    // 2. Fallback: FormData (without explicit Content-Type to allow runtime boundary insertion)
+    // 2. Fallback: FormData
     const formData = new FormData();
     if (Platform.OS === 'web') {
       const res = await fetch(audioUri);
@@ -146,9 +209,9 @@ export const AIServiceClient = {
     formData.append('sttModel', sttModel || 'whisper');
 
     try {
-      // NOTE: Do NOT set 'Content-Type': 'multipart/form-data' explicitly in Axios!
       const response = await api.post('/ai/voice', formData, {
         transformRequest: (data) => data,
+        timeout: 45000,
       });
       return response.data;
     } catch (error: any) {
@@ -165,20 +228,15 @@ export const AIServiceClient = {
     const todayStr = new Date().toISOString().split('T')[0];
     const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
 
-    try {
-      const response = await api.post('/ai/text', {
-        text,
-        categoryList: categories,
-        currentDate: todayStr,
-        timezone: clientTimezone,
-        currentDateTime: new Date().toISOString(),
-      });
-      return response.data;
-    } catch (error: any) {
-      const friendlyMsg = getFriendlyErrorMessage(error);
-      console.error('[API] parseText error:', friendlyMsg);
-      throw new Error(friendlyMsg);
-    }
+    const payload = {
+      text,
+      categoryList: categories,
+      currentDate: todayStr,
+      timezone: clientTimezone,
+      currentDateTime: new Date().toISOString(),
+    };
+
+    return await postWithResilience('/ai/text', payload, 35000);
   },
 
   /**
@@ -188,21 +246,16 @@ export const AIServiceClient = {
     const todayStr = new Date().toISOString().split('T')[0];
     const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
 
-    try {
-      const response = await api.post('/ai/receipt', {
-        imageBase64,
-        mimeType: 'image/jpeg',
-        categoryList: categories,
-        currentDate: todayStr,
-        timezone: clientTimezone,
-        currentDateTime: new Date().toISOString(),
-      });
-      return response.data;
-    } catch (error: any) {
-      const friendlyMsg = getFriendlyErrorMessage(error);
-      console.error('[API] parseReceipt error:', friendlyMsg);
-      throw new Error(friendlyMsg);
-    }
+    const payload = {
+      imageBase64,
+      mimeType: 'image/jpeg',
+      categoryList: categories,
+      currentDate: todayStr,
+      timezone: clientTimezone,
+      currentDateTime: new Date().toISOString(),
+    };
+
+    return await postWithResilience('/ai/receipt', payload, 45000);
   },
 
   /**
@@ -212,20 +265,15 @@ export const AIServiceClient = {
     const todayStr = new Date().toISOString().split('T')[0];
     const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
 
-    try {
-      const response = await api.post('/ai/receipt-text', {
-        ocrText,
-        categoryList: categories,
-        currentDate: todayStr,
-        timezone: clientTimezone,
-        currentDateTime: new Date().toISOString(),
-      });
-      return response.data;
-    } catch (error: any) {
-      const friendlyMsg = getFriendlyErrorMessage(error);
-      console.error('[API] parseReceiptText error:', friendlyMsg);
-      throw new Error(friendlyMsg);
-    }
+    const payload = {
+      ocrText,
+      categoryList: categories,
+      currentDate: todayStr,
+      timezone: clientTimezone,
+      currentDateTime: new Date().toISOString(),
+    };
+
+    return await postWithResilience('/ai/receipt-text', payload, 25000);
   }
 };
 

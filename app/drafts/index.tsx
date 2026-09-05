@@ -26,6 +26,7 @@ import { formatCurrency, getTodayString, formatDateDisplay } from '../../src/uti
 export default function DraftsScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const isDark = colors.bg.primary === '#080810';
 
   const {
     drafts,
@@ -53,6 +54,19 @@ export default function DraftsScreen() {
     transactionDate: '',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{
+    visible: boolean;
+    title: string;
+    description: string;
+    actionLabel: string;
+    onConfirm: () => void;
+  }>({
+    visible: false,
+    title: '',
+    description: '',
+    actionLabel: 'Discard',
+    onConfirm: () => {},
+  });
 
   const readyDrafts = drafts.filter((d) => d.status === 'ready' && d.previewTransactions.length > 0);
   const totalReadyCount = readyDrafts.reduce((sum, d) => sum + d.previewTransactions.length, 0);
@@ -103,29 +117,46 @@ export default function DraftsScreen() {
   };
 
   const confirmDiscardDraft = (draftId: string) => {
-    if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm('Are you sure you want to discard this draft? This cannot be undone.')) {
+    setDeleteModal({
+      visible: true,
+      title: 'Discard Draft?',
+      description: 'Are you sure you want to discard this pending draft? All transactions in it will be permanently deleted.',
+      actionLabel: 'Discard',
+      onConfirm: () => {
         deleteDraft(draftId);
-      }
-    } else {
-      Alert.alert('Discard Draft', 'Are you sure you want to discard this draft? This cannot be undone.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Discard', style: 'destructive', onPress: () => deleteDraft(draftId) },
-      ]);
-    }
+        setDeleteModal((prev) => ({ ...prev, visible: false }));
+      },
+    });
   };
 
   const confirmClearAll = () => {
-    if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm('Are you sure you want to discard all saved drafts?')) {
+    setDeleteModal({
+      visible: true,
+      title: 'Clear All Drafts?',
+      description: 'Are you sure you want to discard all saved drafts? This action cannot be undone.',
+      actionLabel: 'Clear All',
+      onConfirm: () => {
         clearAllDrafts();
-      }
-    } else {
-      Alert.alert('Clear All Drafts', 'Are you sure you want to discard all saved drafts?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Clear All', style: 'destructive', onPress: clearAllDrafts },
-      ]);
-    }
+        setDeleteModal((prev) => ({ ...prev, visible: false }));
+      },
+    });
+  };
+
+  const confirmRemoveItem = (draftId: string, tempId: string) => {
+    setDeleteModal({
+      visible: true,
+      title: 'Remove Item?',
+      description: 'Are you sure you want to delete this transaction item from the draft?',
+      actionLabel: 'Delete',
+      onConfirm: () => {
+        removeDraftItem(draftId, tempId);
+        if (editingItem?.tempId === tempId) {
+          setEditingItem(null);
+          setEditingDraftId(null);
+        }
+        setDeleteModal((prev) => ({ ...prev, visible: false }));
+      },
+    });
   };
 
   const handleApproveDraft = (draftId: string) => {
@@ -365,7 +396,7 @@ export default function DraftsScreen() {
                                 <Ionicons name="pencil" size={15} color={colors.accent.primary} />
                               </TouchableOpacity>
                               <TouchableOpacity
-                                onPress={() => removeDraftItem(draft.id, item.tempId)}
+                                onPress={() => confirmRemoveItem(draft.id, item.tempId)}
                                 style={[styles.itemActionIcon, { marginLeft: 8 }]}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                               >
@@ -511,9 +542,7 @@ export default function DraftsScreen() {
                     style={[styles.modalDeleteBtn, { borderColor: colors.semantic.danger }]}
                     onPress={() => {
                       if (editingDraftId && editingItem) {
-                        removeDraftItem(editingDraftId, editingItem.tempId);
-                        setEditingItem(null);
-                        setEditingDraftId(null);
+                        confirmRemoveItem(editingDraftId, editingItem.tempId);
                       }
                     }}
                   >
@@ -542,6 +571,77 @@ export default function DraftsScreen() {
                 </View>
               </>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Custom Confirmation Alert Modal for Discard / Delete */}
+      <Modal
+        visible={deleteModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteModal((prev) => ({ ...prev, visible: false }))}
+      >
+        <View style={styles.customAlertOverlay}>
+          <View
+            style={[
+              styles.customAlertContent,
+              {
+                backgroundColor: colors.bg.modal,
+                borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.2)',
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.customAlertIconWrap,
+                { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2' },
+              ]}
+            >
+              <Ionicons name="trash-outline" size={24} color={colors.semantic.danger} />
+            </View>
+
+            <Text variant="md" weight="bold" color={colors.text.primary} align="center">
+              {deleteModal.title}
+            </Text>
+
+            <Text
+              variant="xs"
+              color={colors.text.secondary}
+              align="center"
+              style={{ marginTop: Spacing.xs, lineHeight: 18 }}
+            >
+              {deleteModal.description}
+            </Text>
+
+            <View style={styles.customAlertActions}>
+              <TouchableOpacity
+                style={[
+                  styles.customAlertCancelBtn,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                    borderColor: colors.border.subtle,
+                  },
+                ]}
+                onPress={() => setDeleteModal((prev) => ({ ...prev, visible: false }))}
+                activeOpacity={0.7}
+              >
+                <Text variant="sm" weight="semibold" color={colors.text.secondary}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.customAlertConfirmBtn, { backgroundColor: colors.semantic.danger }]}
+                onPress={deleteModal.onConfirm}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="trash" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
+                <Text variant="sm" weight="bold" color="#FFFFFF">
+                  {deleteModal.actionLabel}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -787,5 +887,55 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     borderRadius: Radii.md,
+  },
+  customAlertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  customAlertContent: {
+    width: '100%',
+    maxWidth: 330,
+    borderRadius: Radii.lg,
+    padding: Spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+  },
+  customAlertIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  customAlertActions: {
+    flexDirection: 'row',
+    width: '100%',
+    marginTop: Spacing.lg,
+    gap: 10,
+  },
+  customAlertCancelBtn: {
+    flex: 1,
+    paddingVertical: 11,
+    borderRadius: Radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  customAlertConfirmBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 11,
+    borderRadius: Radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

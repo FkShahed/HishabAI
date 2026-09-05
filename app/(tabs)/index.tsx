@@ -246,16 +246,15 @@ export default function HomeScreen() {
                   style={[
                     styles.simpleDraftCountPill,
                     {
-                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                      borderColor: hasError ? colors.semantic.danger : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.65)'),
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      borderColor: hasError ? colors.semantic.danger : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.6)'),
                     },
                   ]}
                 >
                   <Text
-                    variant="xs"
                     weight="bold"
-                    color={hasError ? colors.semantic.danger : colors.text.secondary}
-                    style={{ fontSize: 10 }}
+                    color={hasError ? colors.semantic.danger : (isDark ? '#A1A1AA' : '#64748B')}
+                    style={{ fontSize: 9.5, lineHeight: 12, textAlign: 'center', includeFontPadding: false }}
                   >
                     {drafts.length}
                   </Text>
@@ -499,11 +498,14 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   simpleDraftCountPill: {
-    paddingHorizontal: 7,
-    paddingVertical: 1,
-    borderRadius: Radii.full,
-    borderWidth: 1,
-    marginLeft: 7,
+    minWidth: 17,
+    height: 17,
+    borderRadius: 8.5,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+    borderWidth: 0.5,
   },
   simpleDraftReviewBtn: {
     flexDirection: 'row',
