@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import * as FileSystem from 'expo-file-system';
 
 // Production Backend URL hosted on Vercel (or from environment variable)
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://hishab-ai-backend.vercel.app/api';
@@ -93,7 +94,6 @@ export const AIServiceClient = {
           reader.readAsDataURL(blob);
         });
       } else {
-        const FileSystem = await import('expo-file-system');
         base64Audio = await FileSystem.readAsStringAsync(audioUri, {
           encoding: FileSystem.EncodingType.Base64,
         });
