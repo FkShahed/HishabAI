@@ -193,7 +193,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Persistent Drafts Section (Simple & Clean) */}
+        {/* Persistent Drafts Section (Clean & Professional) */}
         {drafts.length > 0 && (
           <TouchableOpacity
             style={[
@@ -201,37 +201,39 @@ export default function HomeScreen() {
               {
                 backgroundColor: colors.bg.glass,
                 borderColor: colors.bg.glassBorder,
+                borderLeftColor: processingDrafts.length > 0 ? colors.accent.primary : colors.semantic.income,
               },
             ]}
             onPress={() => router.push('/drafts' as any)}
-            activeOpacity={0.8}
+            activeOpacity={0.75}
           >
-            <View style={[styles.simpleDraftIconBadge, { backgroundColor: colors.accent.primaryDim }]}>
+            {/* Status indicator: clean activity spinner or emerald status dot */}
+            <View style={styles.draftIndicatorWrapper}>
               {processingDrafts.length > 0 ? (
                 <ActivityIndicator size="small" color={colors.accent.primary} style={{ transform: [{ scale: 0.75 }] }} />
               ) : (
-                <Ionicons name="sparkles" size={17} color={colors.accent.primary} />
+                <View style={[styles.draftStatusDot, { backgroundColor: colors.semantic.income }]} />
               )}
             </View>
 
-            <View style={{ flex: 1, marginLeft: Spacing.sm }}>
+            <View style={{ flex: 1, paddingRight: Spacing.xs }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text variant="sm" weight="bold">
+                <Text variant="sm" weight="semibold" color={colors.text.primary}>
                   Pending AI Drafts
                 </Text>
                 <View
                   style={[
                     styles.simpleDraftCountPill,
                     {
-                      backgroundColor: processingDrafts.length > 0 ? colors.accent.primaryDim : colors.semantic.incomeDim,
-                      borderColor: processingDrafts.length > 0 ? colors.accent.primary : colors.semantic.income,
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                      borderColor: colors.border.subtle,
                     },
                   ]}
                 >
                   <Text
                     variant="xs"
                     weight="bold"
-                    color={processingDrafts.length > 0 ? colors.accent.primary : colors.semantic.income}
+                    color={colors.text.secondary}
                     style={{ fontSize: 10 }}
                   >
                     {drafts.length}
@@ -245,11 +247,19 @@ export default function HomeScreen() {
               </Text>
             </View>
 
-            <View style={styles.simpleDraftRight}>
-              <Text variant="xs" weight="bold" color={colors.accent.primary}>
+            <View
+              style={[
+                styles.simpleDraftReviewBtn,
+                {
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                  borderColor: colors.border.subtle,
+                },
+              ]}
+            >
+              <Text variant="xs" weight="semibold" color={colors.text.primary} style={{ fontSize: 11 }}>
                 Review
               </Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.accent.primary} style={{ marginLeft: 2 }} />
+              <Ionicons name="chevron-forward" size={11} color={colors.text.tertiary} style={{ marginLeft: 3 }} />
             </View>
           </TouchableOpacity>
         )}
@@ -436,35 +446,44 @@ const styles = StyleSheet.create({
   simpleDraftBanner: {
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
-    borderRadius: Radii.lg,
+    borderRadius: Radii.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
+    borderLeftWidth: 3.5,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
   },
-  simpleDraftIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: Radii.md,
+  draftIndicatorWrapper: {
+    width: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 10,
+  },
+  draftStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   simpleDraftCountPill: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 7,
     paddingVertical: 1,
     borderRadius: Radii.full,
     borderWidth: 1,
-    marginLeft: 6,
+    marginLeft: 7,
   },
-  simpleDraftRight: {
+  simpleDraftReviewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: Spacing.sm,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    marginLeft: Spacing.xs,
   },
 });
