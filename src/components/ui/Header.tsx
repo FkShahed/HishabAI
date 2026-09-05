@@ -32,7 +32,7 @@ export function Header({ title, showBack = false, onBack, rightElement }: Header
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               activeOpacity={0.7}
             >
-              <Ionicons name="chevron-back" size={24} color={colors.topbar.icon} />
+              <Ionicons name="chevron-back" size={22} color={colors.topbar.icon} />
             </TouchableOpacity>
           )}
         </View>
@@ -40,7 +40,7 @@ export function Header({ title, showBack = false, onBack, rightElement }: Header
         {/* Title: Takes maximum available width and scales gracefully */}
         <View style={styles.titleWrapper}>
           <Text 
-            variant="lg" 
+            variant="base" 
             weight="bold" 
             color={colors.topbar.text}
             style={styles.title} 

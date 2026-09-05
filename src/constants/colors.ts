@@ -306,5 +306,5 @@ export const Gradients = {
 } as const;
 
 export const TAB_BAR_HEIGHT = 72;
-export const HEADER_HEIGHT = 60;
+export const HEADER_HEIGHT = 48;
 

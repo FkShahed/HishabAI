@@ -82,11 +82,11 @@ export default function HomeScreen() {
           <View style={styles.headerLeft}>
             <Image
               source={require('../../assets/images/icon.png')}
-              style={{ width: 26, height: 26, borderRadius: 7, marginRight: 8 }}
+              style={{ width: 22, height: 22, borderRadius: 6, marginRight: 7 }}
               resizeMode="contain"
             />
-            <Text variant="lg" weight="bold" color={colors.topbar.text} style={{ letterSpacing: 0.4 }}>
-              Hisab<Text variant="lg" weight="bold" color={isDark ? '#A78BFA' : '#FCD34D'} style={{ letterSpacing: 0.4 }}>AI</Text>
+            <Text variant="base" weight="bold" color={colors.topbar.text} style={{ letterSpacing: 0.4 }}>
+              Hisab<Text variant="base" weight="bold" color={isDark ? '#A78BFA' : '#FCD34D'} style={{ letterSpacing: 0.4 }}>AI</Text>
             </Text>
           </View>
 
@@ -100,13 +100,13 @@ export default function HomeScreen() {
                 <img 
                   src={photoUrl} 
                   referrerPolicy="no-referrer" 
-                  style={{ width: 32, height: 32, borderRadius: 16, objectFit: 'cover' }} 
+                  style={{ width: 28, height: 28, borderRadius: 14, objectFit: 'cover' }} 
                   onError={() => setImageFailed(true)}
                 />
               ) : (
                 <Image 
                   source={{ uri: photoUrl }} 
-                  style={{ width: 32, height: 32, borderRadius: 16 }} 
+                  style={{ width: 28, height: 28, borderRadius: 14 }} 
                   onError={() => setImageFailed(true)}
                 />
               )
@@ -373,24 +373,22 @@ const styles = StyleSheet.create({
   },
   topbarContainer: {
     borderBottomWidth: 1,
-    paddingBottom: 2,
   },
   header: {
+    height: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.xs,
-    paddingBottom: Spacing.xs,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   profileBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
