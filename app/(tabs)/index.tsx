@@ -33,6 +33,8 @@ export default function HomeScreen() {
 
   const readyDrafts = drafts.filter((d) => d.status === 'ready');
   const processingDrafts = drafts.filter((d) => d.status === 'processing');
+  const failedDrafts = drafts.filter((d) => d.status === 'failed');
+  const hasError = failedDrafts.length > 0;
   const totalDraftTxCount = readyDrafts.reduce((acc, d) => acc + d.previewTransactions.length, 0);
   const totalDraftAmount = useMemo(() => {
     return readyDrafts.reduce((sum, d) => {
@@ -201,15 +203,21 @@ export default function HomeScreen() {
               {
                 backgroundColor: colors.bg.glass,
                 borderColor: colors.bg.glassBorder,
-                borderLeftColor: processingDrafts.length > 0 ? colors.accent.primary : colors.semantic.income,
+                borderLeftColor: hasError
+                  ? colors.semantic.danger
+                  : processingDrafts.length > 0
+                  ? colors.accent.primary
+                  : colors.semantic.income,
               },
             ]}
             onPress={() => router.push('/drafts' as any)}
             activeOpacity={0.75}
           >
-            {/* Status indicator: clean activity spinner or emerald status dot */}
+            {/* Status indicator: red dot for error, activity spinner for processing, emerald dot for ready */}
             <View style={styles.draftIndicatorWrapper}>
-              {processingDrafts.length > 0 ? (
+              {hasError ? (
+                <View style={[styles.draftStatusDot, { backgroundColor: colors.semantic.danger }]} />
+              ) : processingDrafts.length > 0 ? (
                 <ActivityIndicator size="small" color={colors.accent.primary} style={{ transform: [{ scale: 0.75 }] }} />
               ) : (
                 <View style={[styles.draftStatusDot, { backgroundColor: colors.semantic.income }]} />
@@ -226,22 +234,26 @@ export default function HomeScreen() {
                     styles.simpleDraftCountPill,
                     {
                       backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                      borderColor: colors.border.subtle,
+                      borderColor: hasError ? colors.semantic.danger : colors.border.subtle,
                     },
                   ]}
                 >
                   <Text
                     variant="xs"
                     weight="bold"
-                    color={colors.text.secondary}
+                    color={hasError ? colors.semantic.danger : colors.text.secondary}
                     style={{ fontSize: 10 }}
                   >
                     {drafts.length}
                   </Text>
                 </View>
               </View>
-              <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }} numberOfLines={1}>
-                {processingDrafts.length > 0
+              <Text variant="xs" color={hasError ? colors.semantic.danger : colors.text.secondary} style={{ marginTop: 2 }} numberOfLines={1}>
+                {hasError
+                  ? (readyDrafts.length > 0
+                      ? `${failedDrafts.length} failed • ${readyDrafts.length} ready to review`
+                      : `${failedDrafts.length} task${failedDrafts.length > 1 ? 's' : ''} failed • Tap to retry`)
+                  : processingDrafts.length > 0
                   ? 'AI tasks are processing in background...'
                   : `${readyDrafts.length} ready to review${totalDraftAmount > 0 ? ` • ${formatCurrency(totalDraftAmount, currency)}` : ''}`}
               </Text>
