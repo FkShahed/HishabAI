@@ -2,9 +2,9 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// Live Production Backend URL hosted on Vercel
-export const BACKEND_URL = 'https://hishab-ai-backend.vercel.app';
-export const API_BASE_URL = `${BACKEND_URL}/api`;
+// Production Backend URL hosted on Vercel (or from environment variable)
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://hishab-ai-backend.vercel.app/api';
+export const BACKEND_URL = API_BASE_URL.replace(/\/api\/?$/, '');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -70,18 +70,66 @@ export const AIServiceClient = {
     categories: { id: string; name: string; type: string }[], 
     sttModel?: 'gemini' | 'whisper'
   ) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
+
+    let base64Audio = '';
+    let mimeType = 'audio/m4a';
+
+    // 1. Convert audio to Base64 for fast, reliable JSON upload (avoids Axios RN boundary bugs on mobile)
+    try {
+      if (Platform.OS === 'web') {
+        const res = await fetch(audioUri);
+        const blob = await res.blob();
+        mimeType = blob.type || 'audio/webm';
+        base64Audio = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            const b64 = result.includes(',') ? result.split(',')[1] : result;
+            resolve(b64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } else {
+        const FileSystem = await import('expo-file-system');
+        base64Audio = await FileSystem.readAsStringAsync(audioUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        mimeType = 'audio/m4a';
+      }
+    } catch (readErr) {
+      console.warn('[API] Could not read audio as base64, will use FormData:', readErr);
+    }
+
+    if (base64Audio) {
+      try {
+        const response = await api.post('/ai/voice', {
+          audioBase64: base64Audio,
+          mimeType,
+          categoryList: categories,
+          currentDate: todayStr,
+          timezone: clientTimezone,
+          currentDateTime: new Date().toISOString(),
+          sttModel: sttModel || 'gemini',
+        });
+        return response.data;
+      } catch (jsonErr: any) {
+        console.warn('[API] JSON voice upload error, checking fallback:', jsonErr?.message);
+        if (jsonErr.response?.status && jsonErr.response.status !== 400 && jsonErr.response.status !== 404) {
+          const friendlyMsg = getFriendlyErrorMessage(jsonErr);
+          throw new Error(friendlyMsg);
+        }
+      }
+    }
+
+    // 2. Fallback: FormData (without explicit Content-Type to allow runtime boundary insertion)
     const formData = new FormData();
-    
     if (Platform.OS === 'web') {
       const res = await fetch(audioUri);
       const blob = await res.blob();
-      console.log('[Web Upload] Fetched blob size:', blob.size, 'type:', blob.type);
-      
-      // Explicitly construct a File to ensure the MIME type is correctly set
-      const file = new File([blob], 'voice_recording.webm', { 
-        type: blob.type || 'audio/webm' 
-      });
-      
+      const file = new File([blob], 'voice_recording.webm', { type: blob.type || 'audio/webm' });
       formData.append('audio', file);
     } else {
       formData.append('audio', {
@@ -90,9 +138,6 @@ export const AIServiceClient = {
         name: 'voice_recording.m4a',
       } as any);
     }
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
 
     formData.append('categoryList', JSON.stringify(categories));
     formData.append('currentDate', todayStr);
@@ -103,10 +148,9 @@ export const AIServiceClient = {
     }
 
     try {
+      // NOTE: Do NOT set 'Content-Type': 'multipart/form-data' explicitly in Axios!
       const response = await api.post('/ai/voice', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        transformRequest: (data) => data,
       });
       return response.data;
     } catch (error: any) {

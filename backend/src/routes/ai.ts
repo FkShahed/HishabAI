@@ -39,29 +39,37 @@ const MOCK_CATEGORIES = [
  */
 router.post('/voice', upload.single('audio'), async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.file) {
-      res.status(400).json({ error: 'No audio file provided' });
+    let base64Audio = '';
+    let effectiveMime = 'audio/mp4';
+
+    if (req.file) {
+      const { buffer, mimetype } = req.file;
+      base64Audio = buffer.toString('base64');
+      effectiveMime = mimetype || 'audio/mp4';
+      if (effectiveMime === 'application/octet-stream') {
+        effectiveMime = 'audio/mp4';
+      }
+    } else if (req.body?.audioBase64) {
+      base64Audio = req.body.audioBase64.replace(/^data:audio\/\w+;base64,/, '');
+      effectiveMime = req.body.mimeType || 'audio/mp4';
+    } else {
+      res.status(400).json({ error: 'No audio file or audioBase64 provided' });
       return;
     }
 
-    const { buffer, mimetype } = req.file;
     const { categoryList, sttModel } = req.body;
-
-    const categories = categoryList ? JSON.parse(categoryList) : MOCK_CATEGORIES;
+    const categories = typeof categoryList === 'string' 
+      ? JSON.parse(categoryList) 
+      : (categoryList || MOCK_CATEGORIES);
 
     const context = {
-      timezone: req.body.timezone || 'UTC',
-      currentDate: req.body.currentDate || new Date().toISOString().split('T')[0],
-      currentDateTime: req.body.currentDateTime || new Date().toISOString(),
+      timezone: req.body?.timezone || 'UTC',
+      currentDate: req.body?.currentDate || new Date().toISOString().split('T')[0],
+      currentDateTime: req.body?.currentDateTime || new Date().toISOString(),
       categoryList: categories,
       sttModel: sttModel || 'gemini',
     };
 
-    const base64Audio = buffer.toString('base64');
-    let effectiveMime = mimetype;
-    if (!effectiveMime || effectiveMime === 'application/octet-stream') {
-      effectiveMime = 'audio/mp4';
-    }
     const result = await getAIService().parseVoiceAudio(base64Audio, effectiveMime, context);
     
     res.json({
