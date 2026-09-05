@@ -14,7 +14,7 @@ export interface GlassBackgroundProps {
 export function GlassBackground({ children, style }: GlassBackgroundProps) {
   const colors = useThemeColors();
   const rawPreset = useUIStore((s) => s.backgroundPreset) || 'aurora';
-  const backgroundOpacity = useUIStore((s) => s.backgroundOpacity ?? 1.0);
+  const backgroundOpacity = useUIStore((s) => s.backgroundOpacity ?? 0.5);
   const isDark = colors.bg.primary === '#080810';
 
   // Backwards compatibility normalization

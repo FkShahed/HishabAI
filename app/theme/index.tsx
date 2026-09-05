@@ -62,9 +62,9 @@ const PRESET_OPTIONS: PresetOption[] = [
 const OPACITY_LEVELS = [
   { label: '0%', title: 'Off', value: 0.0 },
   { label: '25%', title: 'Subtle', value: 0.25 },
-  { label: '50%', title: 'Soft', value: 0.50 },
+  { label: '50%', title: 'Soft', isDefault: true, value: 0.50 },
   { label: '75%', title: 'Vibrant', value: 0.75 },
-  { label: '100%', title: 'Full (Default)', isDefault: true, value: 1.0 },
+  { label: '100%', title: 'Full', value: 1.0 },
 ];
 
 export default function ThemeSettingsScreen() {
@@ -78,7 +78,7 @@ export default function ThemeSettingsScreen() {
   const setBackgroundOpacity = useUIStore((s) => s.setBackgroundOpacity);
   const isDark = colors.bg.primary === '#080810';
 
-  const currentOpacity = typeof backgroundOpacity === 'number' ? backgroundOpacity : 1.0;
+  const currentOpacity = typeof backgroundOpacity === 'number' ? backgroundOpacity : 0.5;
   const activePresetOption = PRESET_OPTIONS.find((p) => p.id === (backgroundPreset || 'aurora')) || PRESET_OPTIONS[0];
 
   return (
@@ -178,7 +178,7 @@ export default function ThemeSettingsScreen() {
             ]}
           >
             <Text variant="xs" weight="bold" color={colors.accent.primary}>
-              {Math.round(currentOpacity * 100)}%{currentOpacity === 1.0 ? ' • Default' : ''}
+              {Math.round(currentOpacity * 100)}%{Math.abs(currentOpacity - 0.5) < 0.05 ? ' • Default' : ''}
             </Text>
           </View>
         </View>
