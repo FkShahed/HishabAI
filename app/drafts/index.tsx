@@ -129,17 +129,11 @@ export default function DraftsScreen() {
   };
 
   const handleApproveDraft = (draftId: string) => {
-    const success = approveDraft(draftId);
-    if (success) {
-      alert('Draft approved and transactions saved!');
-    }
+    approveDraft(draftId);
   };
 
   const handleApproveAll = () => {
-    const count = approveAllReadyDrafts();
-    if (count > 0) {
-      alert(`Approved and saved ${count} transaction${count > 1 ? 's' : ''}!`);
-    }
+    approveAllReadyDrafts();
   };
 
   return (
