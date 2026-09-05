@@ -34,7 +34,15 @@ export default function HomeScreen() {
   const readyDrafts = drafts.filter((d) => d.status === 'ready');
   const processingDrafts = drafts.filter((d) => d.status === 'processing');
   const failedDrafts = drafts.filter((d) => d.status === 'failed');
-  const hasError = failedDrafts.length > 0;
+  const isDraftValid = (d: typeof drafts[0]) => {
+    if (d.status === 'failed' || Boolean(d.error)) return false;
+    if (d.status === 'ready') {
+      if (!d.previewTransactions || d.previewTransactions.length === 0) return false;
+      return !d.previewTransactions.some((t) => t.uncertain || !t.amount || t.amount <= 0 || !t.categoryId);
+    }
+    return true;
+  };
+  const hasInvalidDraft = drafts.some((d) => !isDraftValid(d));
   const totalDraftTxCount = readyDrafts.reduce((acc, d) => acc + d.previewTransactions.length, 0);
   const totalDraftAmount = useMemo(() => {
     return readyDrafts.reduce((sum, d) => {
@@ -202,20 +210,20 @@ export default function HomeScreen() {
               styles.simpleDraftBanner,
               {
                 backgroundColor: isDark 
-                  ? (Platform.OS === 'web' ? 'rgba(19, 19, 31, 0.65)' : '#13131F')
-                  : (hasError ? 'rgba(254, 242, 242, 0.95)' : (Platform.OS === 'web' ? 'rgba(255, 255, 255, 0.85)' : '#FFFFFF')),
+                  ? (hasInvalidDraft ? 'rgba(245, 158, 11, 0.08)' : (Platform.OS === 'web' ? 'rgba(19, 19, 31, 0.65)' : '#13131F'))
+                  : (hasInvalidDraft ? 'rgba(254, 243, 199, 0.65)' : (Platform.OS === 'web' ? 'rgba(255, 255, 255, 0.85)' : '#FFFFFF')),
               },
             ]}
             onPress={() => router.push('/drafts' as any)}
             activeOpacity={0.75}
           >
-            {/* Clean Left Accent Strip (eliminates Android native multi-color border artifacts) */}
+            {/* Clean Left Accent Strip (only left side border shows) */}
             <View 
               style={[
                 styles.draftLeftAccentStrip,
                 {
-                  backgroundColor: hasError
-                    ? colors.semantic.danger
+                  backgroundColor: hasInvalidDraft
+                    ? colors.semantic.warning
                     : processingDrafts.length > 0
                     ? colors.accent.primary
                     : colors.semantic.income,
@@ -223,10 +231,10 @@ export default function HomeScreen() {
               ]} 
             />
 
-            {/* Status indicator: red dot for error, activity spinner for processing, emerald dot for ready */}
+            {/* Status indicator: warning dot for invalid, activity spinner for processing, emerald dot for ready */}
             <View style={styles.draftIndicatorWrapper}>
-              {hasError ? (
-                <View style={[styles.draftStatusDot, { backgroundColor: colors.semantic.danger }]} />
+              {hasInvalidDraft ? (
+                <View style={[styles.draftStatusDot, { backgroundColor: colors.semantic.warning }]} />
               ) : processingDrafts.length > 0 ? (
                 <ActivityIndicator size="small" color={colors.accent.primary} style={{ transform: [{ scale: 0.75 }] }} />
               ) : (
@@ -244,24 +252,24 @@ export default function HomeScreen() {
                     styles.simpleDraftCountPill,
                     {
                       backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-                      borderColor: hasError ? colors.semantic.danger : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.6)'),
+                      borderColor: hasInvalidDraft ? colors.semantic.warning : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.6)'),
                     },
                   ]}
                 >
                   <Text
                     weight="semibold"
-                    color={hasError ? colors.semantic.danger : (isDark ? '#A1A1AA' : '#64748B')}
+                    color={hasInvalidDraft ? colors.semantic.warning : (isDark ? '#A1A1AA' : '#64748B')}
                     style={{ fontSize: 8, lineHeight: 10, textAlign: 'center', includeFontPadding: false }}
                   >
                     {drafts.length}
                   </Text>
                 </View>
               </View>
-              <Text variant="xs" color={hasError ? colors.semantic.danger : colors.text.secondary} style={{ marginTop: 2 }} numberOfLines={1}>
-                {hasError
-                  ? (readyDrafts.length > 0
-                      ? `${failedDrafts.length} failed • ${readyDrafts.length} ready to review`
-                      : `${failedDrafts.length} task${failedDrafts.length > 1 ? 's' : ''} failed • Tap to retry`)
+              <Text variant="xs" color={hasInvalidDraft ? colors.semantic.warning : colors.text.secondary} style={{ marginTop: 2 }} numberOfLines={1}>
+                {hasInvalidDraft
+                  ? (failedDrafts.length > 0
+                      ? `${failedDrafts.length} task${failedDrafts.length > 1 ? 's' : ''} failed • Tap to review`
+                      : `Requires review • Tap to check drafts`)
                   : processingDrafts.length > 0
                   ? 'AI tasks are processing in background...'
                   : `${readyDrafts.length} ready to review${totalDraftAmount > 0 ? ` • ${formatCurrency(totalDraftAmount, currency)}` : ''}`}
@@ -272,15 +280,19 @@ export default function HomeScreen() {
               style={[
                 styles.simpleDraftReviewBtn,
                 {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.65)',
+                  backgroundColor: hasInvalidDraft
+                    ? (isDark ? 'rgba(245, 158, 11, 0.12)' : 'rgba(245, 158, 11, 0.10)')
+                    : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)'),
+                  borderColor: hasInvalidDraft
+                    ? colors.semantic.warning
+                    : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.65)'),
                 },
               ]}
             >
-              <Text variant="xs" weight="semibold" color={colors.text.primary} style={{ fontSize: 11 }}>
+              <Text variant="xs" weight="semibold" color={hasInvalidDraft ? colors.semantic.warning : colors.text.primary} style={{ fontSize: 11 }}>
                 Review
               </Text>
-              <Ionicons name="chevron-forward" size={11} color={colors.text.tertiary} style={{ marginLeft: 3 }} />
+              <Ionicons name="chevron-forward" size={11} color={hasInvalidDraft ? colors.semantic.warning : colors.text.tertiary} style={{ marginLeft: 3 }} />
             </View>
           </TouchableOpacity>
         )}

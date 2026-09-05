@@ -245,7 +245,15 @@ export default function DraftsScreen() {
                 ? colors.accent.secondary
                 : '#EC4899';
 
-            const totalAmount = draft.previewTransactions.reduce((acc, t) => acc + t.amount, 0);
+            const isInvalid =
+              draft.status === 'failed' ||
+              Boolean(draft.error) ||
+              (draft.status === 'ready' &&
+                (!draft.previewTransactions ||
+                  draft.previewTransactions.length === 0 ||
+                  draft.previewTransactions.some((t) => t.uncertain || !t.amount || t.amount <= 0 || !t.categoryId)));
+
+            const totalAmount = draft.previewTransactions?.reduce((acc, t) => acc + (t.amount || 0), 0) || 0;
 
             return (
               <View
@@ -254,19 +262,19 @@ export default function DraftsScreen() {
                   styles.draftCard,
                   {
                     backgroundColor: colors.bg.card,
-                    borderColor: isFailed
-                      ? colors.semantic.danger
-                      : isReady
-                      ? colors.border.subtle
-                      : colors.accent.primary,
+                    borderColor: isInvalid
+                      ? colors.semantic.warning
+                      : isProcessing
+                      ? colors.accent.primary
+                      : colors.border.subtle,
                   },
                 ]}
               >
                 {/* Draft Card Top Header */}
                 <View style={styles.cardHeader}>
                   <View style={styles.cardTitleRow}>
-                    <View style={[styles.sourceIconBadge, { backgroundColor: colors.bg.glass, borderColor: sourceBadgeColor }]}>
-                      <Ionicons name={sourceIcon} size={16} color={sourceBadgeColor} />
+                    <View style={[styles.sourceIconBadge, { backgroundColor: colors.bg.glass, borderColor: isInvalid ? colors.semantic.warning : sourceBadgeColor }]}>
+                      <Ionicons name={sourceIcon} size={16} color={isInvalid ? colors.semantic.warning : sourceBadgeColor} />
                     </View>
                     <View style={{ flex: 1, marginLeft: 10 }}>
                       <Text variant="base" weight="bold" numberOfLines={1}>
@@ -303,14 +311,14 @@ export default function DraftsScreen() {
                 )}
 
                 {isFailed && (
-                  <View style={[styles.statusBanner, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
-                    <Ionicons name="alert-circle" size={16} color={colors.semantic.danger} style={{ marginRight: 8 }} />
-                    <Text variant="xs" weight="medium" color={colors.semantic.danger} style={{ flex: 1 }}>
+                  <View style={[styles.statusBanner, { backgroundColor: colors.semantic.warningDim }]}>
+                    <Ionicons name="alert-circle" size={16} color={colors.semantic.warning} style={{ marginRight: 8 }} />
+                    <Text variant="xs" weight="medium" color={colors.semantic.warning} style={{ flex: 1 }}>
                       {draft.error || 'Failed to process AI input.'}
                     </Text>
                     {draft.retryPayload && (
                       <TouchableOpacity
-                        style={[styles.retryBtn, { backgroundColor: colors.semantic.danger }]}
+                        style={[styles.retryBtn, { backgroundColor: colors.semantic.warning }]}
                         onPress={() => handleRetry(draft.id)}
                         disabled={isProcessing}
                       >
@@ -319,6 +327,17 @@ export default function DraftsScreen() {
                         </Text>
                       </TouchableOpacity>
                     )}
+                  </View>
+                )}
+
+                {isReady && isInvalid && (
+                  <View style={[styles.statusBanner, { backgroundColor: colors.semantic.warningDim }]}>
+                    <Ionicons name="alert-circle" size={16} color={colors.semantic.warning} style={{ marginRight: 8 }} />
+                    <Text variant="xs" weight="medium" color={colors.semantic.warning} style={{ flex: 1 }}>
+                      {draft.previewTransactions.length === 0
+                        ? 'No valid transactions detected. You can discard or retry.'
+                        : 'Some items require your review before approval.'}
+                    </Text>
                   </View>
                 )}
 
