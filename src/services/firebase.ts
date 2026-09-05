@@ -330,7 +330,7 @@ export const FirebaseService = {
     }
   },
 
-  async saveUserProfile(userId: string, profile: { userName?: string; userPhotoUrl?: string | null; currency?: string; theme?: string; dailyReminderEnabled?: boolean; backgroundPreset?: string }) {
+  async saveUserProfile(userId: string, profile: { userName?: string; userPhotoUrl?: string | null; currency?: string; theme?: string; dailyReminderEnabled?: boolean; backgroundPreset?: string; transactionTitleMode?: string }) {
     if (userId === 'mock-local-user') return true;
     try {
       const cleanProfile: any = {};

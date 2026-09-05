@@ -310,6 +310,7 @@ export const useBudgetStore = create<BudgetState>()(
 // ─── UI Store ─────────────────────────────────────────────────────────────────
 
 export type BackgroundPreset = 'aurora' | 'nebula' | 'emerald' | 'sunset' | 'cyberpunk' | 'midnight';
+export type TransactionTitleMode = 'note' | 'category';
 
 interface UIState {
   selectedMonth: number;
@@ -322,6 +323,7 @@ interface UIState {
   userPhotoUrl: string | null;
   dailyReminderEnabled: boolean;
   sttModel: 'gemini' | 'whisper';
+  transactionTitleMode: TransactionTitleMode;
 
   setSelectedMonth: (month: number, year: number) => void;
   goToPrevMonth: () => void;
@@ -335,6 +337,7 @@ interface UIState {
   setUserPhotoUrl: (url: string | null) => void;
   setDailyReminderEnabled: (enabled: boolean) => void;
   setSttModel: (model: 'gemini' | 'whisper') => void;
+  setTransactionTitleMode: (mode: TransactionTitleMode) => void;
   fetchAndSyncUserProfile: (userId: string) => Promise<void>;
   resetForSignOut: () => void;
 }
@@ -352,6 +355,7 @@ export const useUIStore = create<UIState>()(
       userPhotoUrl: null,
       dailyReminderEnabled: false,
       sttModel: 'gemini',
+      transactionTitleMode: 'note',
 
       setSelectedMonth: (month, year) => set({ selectedMonth: month, selectedYear: year }),
       goToPrevMonth: () => {
@@ -414,6 +418,12 @@ export const useUIStore = create<UIState>()(
         }
       },
       setSttModel: (sttModel) => set({ sttModel }),
+      setTransactionTitleMode: (transactionTitleMode) => {
+        set({ transactionTitleMode });
+        if (auth?.currentUser && !auth.currentUser.isAnonymous) {
+          FirebaseService.saveUserProfile(auth.currentUser.uid, { transactionTitleMode }).catch(() => {});
+        }
+      },
       resetForSignOut: () => {
         set({
           userName: '',
@@ -423,6 +433,7 @@ export const useUIStore = create<UIState>()(
           backgroundPreset: 'aurora',
           dailyReminderEnabled: false,
           sttModel: 'gemini',
+          transactionTitleMode: 'note',
         });
       },
       fetchAndSyncUserProfile: async (userId: string) => {
@@ -448,6 +459,7 @@ export const useUIStore = create<UIState>()(
             if (profile.theme) set({ theme: profile.theme as 'dark' | 'light' });
             if (profile.backgroundPreset) set({ backgroundPreset: profile.backgroundPreset as BackgroundPreset });
             if (profile.dailyReminderEnabled !== undefined) set({ dailyReminderEnabled: profile.dailyReminderEnabled });
+            if ((profile as any).transactionTitleMode) set({ transactionTitleMode: (profile as any).transactionTitleMode as TransactionTitleMode });
           } else if (auth.currentUser) {
             const initialName = hasCustomLocalName ? localName : (auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'User');
             const initialPhoto = auth.currentUser.photoURL || auth.currentUser.providerData?.[0]?.photoURL || null;
@@ -471,6 +483,7 @@ export const useUIStore = create<UIState>()(
         userPhotoUrl: state.userPhotoUrl,
         dailyReminderEnabled: state.dailyReminderEnabled,
         sttModel: state.sttModel,
+        transactionTitleMode: state.transactionTitleMode,
       }),
     }
   )
@@ -544,3 +557,5 @@ export const usePreviewStore = create<PreviewState>((set) => ({
   clearPreview: () =>
     set({ previewTransactions: [], source: null, rawTranscript: null, processingNotes: null }),
 }));
+
+export { useDraftStore } from './draftStore';

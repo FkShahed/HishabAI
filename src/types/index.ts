@@ -214,6 +214,33 @@ export interface PreviewTransaction extends AITransaction {
   resolvedCategory?: Category;
 }
 
+// ─── Draft & Background Processing Types ─────────────────────────────────────
+
+export type DraftSource = 'voice' | 'receipt' | 'text';
+export type DraftStatus = 'processing' | 'ready' | 'failed';
+
+export interface DraftPayload {
+  type: DraftSource;
+  input: string; // audioUri, imageBase64, or text string
+  categories: { id: string; name: string; type: string }[];
+  sttModel?: 'gemini' | 'whisper';
+  rawText?: string;
+}
+
+export interface DraftItem {
+  id: string;
+  title: string;
+  source: DraftSource;
+  status: DraftStatus;
+  createdAt: string; // ISO
+  completedAt?: string; // ISO
+  rawInput?: string; // summary of text, transcript, or image
+  previewTransactions: PreviewTransaction[];
+  processingNotes?: string;
+  error?: string;
+  retryPayload?: DraftPayload;
+}
+
 // ─── Summary Types ───────────────────────────────────────────────────────────
 
 export interface MonthlySummary {

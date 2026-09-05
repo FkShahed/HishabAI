@@ -215,6 +215,7 @@ export default function ChartsScreen() {
   // 5. Prepare Day of Week Pattern Analysis Data
   const dayOfWeekData = useMemo(() => {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const fullDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayTotals = [0, 0, 0, 0, 0, 0, 0];
     const dayCounts = [0, 0, 0, 0, 0, 0, 0];
 
@@ -249,6 +250,8 @@ export default function ChartsScreen() {
 
     const items = dayNames.map((name, idx) => ({
       name,
+      fullName: fullDayNames[idx],
+      dayIdx: idx,
       total: dayTotals[idx],
       count: dayCounts[idx],
       percent: totalAmt > 0 ? Math.round((dayTotals[idx] / totalAmt) * 100) : 0,
@@ -605,7 +608,7 @@ export default function ChartsScreen() {
                 Day-of-Week Pattern
               </Text>
               <Text variant="xs" color={colors.text.secondary}>
-                {selectedType === 'expense' ? 'Which days do you spend most?' : 'Which days do you earn most?'}
+                {selectedType === 'expense' ? 'Tap any day to see its transactions' : 'Tap any day to see its transactions'}
               </Text>
             </View>
 
@@ -627,7 +630,29 @@ export default function ChartsScreen() {
                   const isDark = colors.bg.primary === '#080810';
 
                   return (
-                    <View key={item.name} style={styles.dayOfWeekRow}>
+                    <TouchableOpacity 
+                      key={item.name} 
+                      style={[
+                        styles.dayOfWeekRow,
+                        {
+                          paddingVertical: 3,
+                        }
+                      ]}
+                      onPress={() => {
+                        router.push({
+                          pathname: '/day-pattern-detail/[day]' as any,
+                          params: {
+                            day: String(item.dayIdx),
+                            dayName: item.name,
+                            fullName: item.fullName,
+                            type: selectedType,
+                            month: String(selectedMonth),
+                            year: String(selectedYear),
+                          }
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
                       <Text 
                         variant="xs" 
                         weight={item.isPeak ? "bold" : "medium"} 
@@ -650,13 +675,18 @@ export default function ChartsScreen() {
                         />
                       </View>
 
-                      {/* Amount & Percent Label */}
-                      <View style={{ minWidth: 75, alignItems: 'flex-end' }}>
-                        <Text variant="xs" weight={item.isPeak ? "bold" : "regular"} color={item.isPeak ? activeThemeColor : colors.text.primary}>
+                      {/* Amount & Percent Label + Navigation Chevron */}
+                      <View style={{ minWidth: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' }}>
+                        <Text variant="xs" weight={item.isPeak ? "bold" : "regular"} color={item.isPeak ? activeThemeColor : colors.text.primary} style={{ marginRight: 4 }}>
                           {item.total > 0 ? formatCurrency(item.total, currency) : `${currencySymbol}0`}
                         </Text>
+                        <Ionicons 
+                          name="chevron-forward" 
+                          size={14} 
+                          color={colors.text.tertiary} 
+                        />
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   );
                 })}
               </View>

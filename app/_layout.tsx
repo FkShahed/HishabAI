@@ -67,6 +67,14 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="drafts/index"
+          options={{
+            title: 'AI Drafts',
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="voice/index"
           options={{
             title: 'Voice AI',
@@ -110,6 +118,12 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="category-detail/[id]"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="day-pattern-detail/[day]"
           options={{
             headerShown: false,
           }}

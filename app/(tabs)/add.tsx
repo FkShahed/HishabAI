@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../../src/components/ui/Text';
 import { Header } from '../../src/components/ui/Header';
 import { Spacing, Radii, Shadows, useThemeColors } from '../../src/constants/colors';
-import { usePreviewStore, useCategoryStore } from '../../src/store';
+import { usePreviewStore, useCategoryStore, useDraftStore } from '../../src/store';
 import { AIServiceClient } from '../../src/services/api';
 
 export default function AddScreen() {
@@ -18,17 +18,22 @@ export default function AddScreen() {
   const [textInput, setTextInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorAlert, setErrorAlert] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
+  const isSwitchedToBackgroundRef = useRef(false);
 
   const getAICategoryList = useCategoryStore((s) => s.getAICategoryList);
   const setPreview = usePreviewStore((s) => s.setPreview);
+  const queueDraft = useDraftStore((s) => s.queueDraft);
 
   const handleProcessText = async () => {
     if (!textInput.trim()) return;
 
+    isSwitchedToBackgroundRef.current = false;
     setIsProcessing(true);
     try {
       const categories = getAICategoryList();
       const result = await AIServiceClient.parseText(textInput, categories);
+
+      if (isSwitchedToBackgroundRef.current) return;
 
       if (result.success && result.transactions && result.transactions.length > 0) {
         setPreview(result.transactions, 'voice', result.rawTranscript || textInput, result.processingNotes);
@@ -44,6 +49,7 @@ export default function AddScreen() {
         });
       }
     } catch (error: any) {
+      if (isSwitchedToBackgroundRef.current) return;
       console.warn('[AddScreen] text parsing failed:', error);
       setErrorAlert({
         visible: true,
@@ -51,7 +57,34 @@ export default function AddScreen() {
         message: error.message || 'Failed to process text. Please try again.'
       });
     } finally {
-      setIsProcessing(false);
+      if (!isSwitchedToBackgroundRef.current) {
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  const handleProcessInBackground = () => {
+    if (!textInput.trim()) return;
+    isSwitchedToBackgroundRef.current = true;
+    setIsProcessing(false);
+
+    try {
+      const categories = getAICategoryList();
+      const trimmed = textInput.trim();
+      const snippet = trimmed.length > 25 ? `${trimmed.substring(0, 25)}...` : trimmed;
+
+      queueDraft(`Note: ${snippet}`, 'text', {
+        type: 'text',
+        input: trimmed,
+        categories,
+        rawText: trimmed,
+      });
+
+      setIsModalVisible(false);
+      setTextInput('');
+    } catch (e: any) {
+      console.error('Background text processing error:', e);
+      alert('Failed to start background process: ' + e.message);
     }
   };
 
@@ -200,6 +233,19 @@ export default function AddScreen() {
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[
+                    styles.backgroundButton,
+                    { backgroundColor: colors.bg.glass, borderColor: colors.accent.primary },
+                    !textInput.trim() && { opacity: 0.5 }
+                  ]}
+                  onPress={handleProcessInBackground}
+                  disabled={!textInput.trim()}
+                >
+                  <Ionicons name="flash" size={16} color={colors.accent.primary} style={{ marginRight: 6 }} />
+                  <Text variant="sm" weight="bold" color={colors.accent.primary}>In Background</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
                     styles.submitButton,
                     { backgroundColor: colors.accent.primary },
                     (!textInput.trim() || isProcessing) && { opacity: 0.5 }
@@ -212,7 +258,7 @@ export default function AddScreen() {
                   ) : (
                     <>
                       <Ionicons name="sparkles" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                      <Text variant="base" weight="bold" color="#FFFFFF">Process with AI</Text>
+                      <Text variant="base" weight="bold" color="#FFFFFF">Process Now</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -346,15 +392,24 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    gap: Spacing.sm,
+  },
+  backgroundButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radii.md,
+    borderWidth: 1.5,
   },
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
     borderRadius: Radii.md,
-    minWidth: 150,
   },
   alertOverlay: {
     flex: 1,

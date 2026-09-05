@@ -10,7 +10,7 @@ import { Text } from '../../src/components/ui/Text';
 import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { MonthSelector } from '../../src/components/ui/MonthSelector';
 import { TransactionItem } from '../../src/components/transactions/TransactionItem';
-import { useTransactionStore, useUIStore, useBudgetStore } from '../../src/store';
+import { useTransactionStore, useUIStore, useBudgetStore, useDraftStore } from '../../src/store';
 import { Colors, Spacing, Radii, Gradients, useThemeColors } from '../../src/constants/colors';
 import { formatCurrency } from '../../src/utils/finance';
 import { auth } from '../../src/services/firebase';
@@ -27,6 +27,13 @@ export default function HomeScreen() {
 
   const { selectedMonth, selectedYear, goToPrevMonth, goToNextMonth, currency, userName, userPhotoUrl } = useUIStore();
   const { getMonthlySummary, getDailyGroups, isLoading } = useTransactionStore();
+  const drafts = useDraftStore((s) => s.drafts);
+  const approveAllReadyDrafts = useDraftStore((s) => s.approveAllReadyDrafts);
+
+  const readyDrafts = drafts.filter((d) => d.status === 'ready');
+  const processingDrafts = drafts.filter((d) => d.status === 'processing');
+  const totalDraftTxCount = readyDrafts.reduce((acc, d) => acc + d.previewTransactions.length, 0);
+
   const summary = getMonthlySummary(selectedMonth, selectedYear);
   const dailyGroups = getDailyGroups(selectedMonth, selectedYear);
   const budgets = useBudgetStore((s) => s.budgets); // subscribe to force re-render
@@ -180,7 +187,113 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Persistent Drafts Section */}
+        {drafts.length > 0 && (
+          <View
+            style={[
+              styles.draftsCard,
+              {
+                backgroundColor: Platform.OS === 'web'
+                  ? (isDark ? 'rgba(23, 19, 44, 0.7)' : 'rgba(245, 243, 255, 0.85)')
+                  : (isDark ? '#16132C' : '#F5F3FF'),
+                borderColor: isDark ? 'rgba(167, 139, 250, 0.35)' : 'rgba(124, 58, 237, 0.35)',
+              }
+            ]}
+          >
+            <View style={styles.draftsCardHeader}>
+              <View style={styles.draftsTitleContainer}>
+                <View style={[styles.draftsBadge, { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.12)' }]}>
+                  {processingDrafts.length > 0 && (
+                    <ActivityIndicator size="small" color={colors.accent.primary} style={{ marginRight: 6 }} />
+                  )}
+                  <Text variant="xs" weight="bold" color={colors.accent.primary}>
+                    {processingDrafts.length > 0
+                      ? `${processingDrafts.length} AI Task${processingDrafts.length > 1 ? 's' : ''} Processing...`
+                      : `${drafts.length} Saved AI Draft${drafts.length > 1 ? 's' : ''}`}
+                  </Text>
+                </View>
+                {readyDrafts.length > 0 && (
+                  <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 4 }}>
+                    {totalDraftTxCount} transaction{totalDraftTxCount > 1 ? 's' : ''} ready to approve
+                  </Text>
+                )}
+              </View>
 
+              {readyDrafts.length > 0 && (
+                <TouchableOpacity
+                  style={[
+                    styles.quickApproveBtn,
+                    { backgroundColor: colors.semantic.incomeDim, borderColor: colors.semantic.income, borderWidth: 1 }
+                  ]}
+                  onPress={() => {
+                    const count = approveAllReadyDrafts();
+                    alert(`Approved and saved ${count} transaction${count > 1 ? 's' : ''} to your records!`);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="checkmark-done" size={14} color={colors.semantic.income} />
+                  <Text variant="xs" weight="bold" color={colors.semantic.income} style={{ marginLeft: 4 }}>
+                    Approve All
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Snippet list of drafts */}
+            <View style={styles.draftsListSnippet}>
+              {drafts.slice(0, 3).map((d) => (
+                <View 
+                  key={d.id} 
+                  style={[
+                    styles.draftPill, 
+                    { 
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
+                      borderColor: colors.border.subtle 
+                    }
+                  ]}
+                >
+                  <Ionicons 
+                    name={d.source === 'voice' ? 'mic' : d.source === 'receipt' ? 'receipt' : 'chatbox-ellipses'} 
+                    size={13} 
+                    color={d.status === 'failed' ? colors.semantic.danger : d.status === 'processing' ? colors.accent.primary : colors.text.secondary} 
+                  />
+                  <Text variant="xs" weight="medium" color={colors.text.primary} numberOfLines={1} style={{ marginHorizontal: 6, flexShrink: 1, fontSize: 11 }}>
+                    {d.title}
+                  </Text>
+                  {d.status === 'processing' ? (
+                    <ActivityIndicator size="small" color={colors.accent.primary} style={{ transform: [{ scale: 0.6 }] }} />
+                  ) : d.status === 'ready' ? (
+                    <View style={[styles.miniStatusBadge, { backgroundColor: colors.semantic.incomeDim }]}>
+                      <Text variant="xs" weight="bold" color={colors.semantic.income} style={{ fontSize: 9 }}>
+                        {d.previewTransactions.length}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Ionicons name="alert-circle" size={13} color={colors.semantic.danger} />
+                  )}
+                </View>
+              ))}
+              {drafts.length > 3 && (
+                <Text variant="xs" color={colors.text.tertiary} style={{ alignSelf: 'center', marginLeft: 4, fontSize: 11 }}>
+                  +{drafts.length - 3} more
+                </Text>
+              )}
+            </View>
+
+            {/* Review Button */}
+            <TouchableOpacity
+              style={[styles.reviewDraftsButton, { backgroundColor: colors.accent.primary }]}
+              onPress={() => router.push('/drafts' as any)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="eye-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text variant="xs" weight="bold" color="#FFFFFF">
+                Review & Edit Drafts ({drafts.length})
+              </Text>
+              <Ionicons name="chevron-forward" size={14} color="#FFFFFF" style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Daily Grouped Transactions List */}
         {dailyGroups.length === 0 ? (
@@ -360,5 +473,69 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
+  },
+  draftsCard: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    borderRadius: Radii.lg,
+    padding: Spacing.md,
+    borderWidth: 1.5,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  draftsCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  draftsTitleContainer: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  draftsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radii.full,
+  },
+  quickApproveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: Radii.full,
+  },
+  draftsListSnippet: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: Spacing.md,
+  },
+  draftPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: Radii.full,
+    borderWidth: 1,
+    maxWidth: 160,
+  },
+  miniStatusBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  reviewDraftsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: Radii.md,
   },
 });

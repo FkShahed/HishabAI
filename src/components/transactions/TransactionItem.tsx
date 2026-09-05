@@ -17,6 +17,7 @@ export interface TransactionItemProps {
 
 export function TransactionItem({ transaction, onPress, showDate = false, isLast = false }: TransactionItemProps) {
   const currency = useUIStore((s) => s.currency);
+  const transactionTitleMode = useUIStore((s) => s.transactionTitleMode);
   const colors = useThemeColors();
   const isDark = colors.bg.primary === '#080810';
 
@@ -30,6 +31,16 @@ export function TransactionItem({ transaction, onPress, showDate = false, isLast
 
   const sourceIcon = getSourceIcon();
   const rowDividerColor = isDark ? colors.bg.glassBorder : 'rgba(0, 0, 0, 0.04)';
+
+  const showNoteFirst = transactionTitleMode !== 'category';
+  const hasNote = showNoteFirst && Boolean(transaction.comment && transaction.comment.trim().length > 0);
+  const primaryTitle = hasNote ? transaction.comment.trim() : transaction.categoryNameSnapshot;
+
+  const subtitleParts: string[] = [];
+  if (showDate && transaction.transactionDate) {
+    subtitleParts.push(formatDateShort(transaction.transactionDate));
+  }
+  const subtitle = subtitleParts.join(' • ');
 
   return (
     <TouchableOpacity
@@ -53,13 +64,13 @@ export function TransactionItem({ transaction, onPress, showDate = false, isLast
         />
         <View style={styles.info}>
           <Text variant="sm" weight="regular" numberOfLines={1}>
-            {transaction.categoryNameSnapshot}
+            {primaryTitle}
           </Text>
-          {showDate && (
-            <Text variant="xs" color={colors.text.tertiary} style={styles.date}>
-              {formatDateShort(transaction.transactionDate)}
+          {subtitle ? (
+            <Text variant="xs" color={colors.text.tertiary} style={styles.date} numberOfLines={1}>
+              {subtitle}
             </Text>
-          )}
+          ) : null}
         </View>
       </View>
 

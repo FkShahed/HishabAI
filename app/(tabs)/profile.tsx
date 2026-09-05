@@ -37,10 +37,13 @@ export default function ProfileScreen() {
   const dailyReminderEnabled = useUIStore((s) => s.dailyReminderEnabled);
   const setDailyReminderEnabled = useUIStore((s) => s.setDailyReminderEnabled);
   const backgroundPreset = useUIStore((s) => s.backgroundPreset) || 'aurora';
+  const transactionTitleMode = useUIStore((s) => s.transactionTitleMode);
+  const setTransactionTitleMode = useUIStore((s) => s.setTransactionTitleMode);
 
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isCurrencyModalVisible, setCurrencyModalVisible] = useState(false);
+  const [isTitleModeModalVisible, setTitleModeModalVisible] = useState(false);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isSignOutModalVisible, setSignOutModalVisible] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -501,6 +504,30 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
             </View>
           </TouchableOpacity>
+
+          {/* Transaction Title Display Preference */}
+          <TouchableOpacity 
+            style={[styles.settingItem, { borderBottomColor: sectionBorder }]}
+            onPress={() => setTitleModeModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.settingLeft}>
+              <View style={styles.settingIconWrapper}>
+                <Ionicons 
+                  name="text-outline" 
+                  size={20} 
+                  color={colors.accent.primary} 
+                />
+              </View>
+              <Text variant="base" style={styles.settingText}>Transaction Title</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text variant="xs" weight="semibold" color={colors.accent.primary} style={{ marginRight: Spacing.xs }}>
+                {transactionTitleMode === 'category' ? 'Only Category' : 'Note (or Category)'}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+            </View>
+          </TouchableOpacity>
           
           {/* Daily Reminders */}
           <View style={[styles.settingItem, styles.settingItemLast]}>
@@ -813,6 +840,70 @@ export default function ProfileScreen() {
                 );
               })}
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Transaction Title Mode Selection Modal */}
+      <Modal visible={isTitleModeModalVisible} animationType="slide" transparent onRequestClose={() => setTitleModeModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, padding: Spacing.md }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle }]}>
+              <Text variant="md" weight="bold">Transaction Title Display</Text>
+              <TouchableOpacity onPress={() => setTitleModeModalVisible(false)} style={{ padding: Spacing.xs }}>
+                <Ionicons name="close" size={20} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ paddingVertical: Spacing.xs }}>
+              <TouchableOpacity
+                style={[
+                  styles.currencyRow,
+                  { borderBottomColor: colors.border.subtle },
+                  transactionTitleMode === 'note' && { backgroundColor: colors.accent.primaryDim }
+                ]}
+                onPress={() => {
+                  setTransactionTitleMode('note');
+                  setTitleModeModalVisible(false);
+                }}
+              >
+                <View style={{ flex: 1, paddingRight: Spacing.sm }}>
+                  <Text variant="sm" weight="bold" color={transactionTitleMode === 'note' ? colors.accent.primary : colors.text.primary}>
+                    Note (or Category fallback)
+                  </Text>
+                  <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
+                    Show note if available; otherwise show category name.
+                  </Text>
+                </View>
+                {transactionTitleMode === 'note' && (
+                  <Ionicons name="checkmark-circle" size={18} color={colors.accent.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.currencyRow,
+                  { borderBottomColor: 'transparent' },
+                  transactionTitleMode === 'category' && { backgroundColor: colors.accent.primaryDim }
+                ]}
+                onPress={() => {
+                  setTransactionTitleMode('category');
+                  setTitleModeModalVisible(false);
+                }}
+              >
+                <View style={{ flex: 1, paddingRight: Spacing.sm }}>
+                  <Text variant="sm" weight="bold" color={transactionTitleMode === 'category' ? colors.accent.primary : colors.text.primary}>
+                    Only Category Name
+                  </Text>
+                  <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
+                    Always show category name as primary title in transaction lists.
+                  </Text>
+                </View>
+                {transactionTitleMode === 'category' && (
+                  <Ionicons name="checkmark-circle" size={18} color={colors.accent.primary} />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

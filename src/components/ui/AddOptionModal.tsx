@@ -7,7 +7,7 @@ import Svg, { Rect, Defs, LinearGradient as SvgGradient, Stop } from 'react-nati
 
 import { Text } from './Text';
 import { Spacing, Radii, Shadows, useThemeColors } from '../../constants/colors';
-import { useUIStore, usePreviewStore, useCategoryStore } from '../../store';
+import { useUIStore, usePreviewStore, useCategoryStore, useDraftStore } from '../../store';
 import { AIServiceClient } from '../../services/api';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
@@ -128,9 +128,11 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
   const [textInput, setTextInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorAlert, setErrorAlert] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
+  const isSwitchedToBackgroundRef = useRef(false);
 
   const getAICategoryList = useCategoryStore((s) => s.getAICategoryList);
   const setPreview = usePreviewStore((s) => s.setPreview);
+  const queueDraft = useDraftStore((s) => s.queueDraft);
 
   const onCardLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -149,10 +151,13 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
   const handleProcessText = async () => {
     if (!textInput.trim()) return;
 
+    isSwitchedToBackgroundRef.current = false;
     setIsProcessing(true);
     try {
       const categories = getAICategoryList();
       const result = await AIServiceClient.parseText(textInput, categories);
+
+      if (isSwitchedToBackgroundRef.current) return;
 
       if (result.success && result.transactions && result.transactions.length > 0) {
         setPreview(result.transactions, 'voice', result.rawTranscript || textInput, result.processingNotes);
@@ -169,6 +174,7 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
         });
       }
     } catch (error: any) {
+      if (isSwitchedToBackgroundRef.current) return;
       console.warn('[AddOptionModal] text parsing failed:', error);
       setErrorAlert({
         visible: true,
@@ -176,7 +182,39 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
         message: error.message || 'Failed to process text. Please try again.'
       });
     } finally {
-      setIsProcessing(false);
+      if (!isSwitchedToBackgroundRef.current) {
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  const handleProcessInBackground = () => {
+    if (!textInput.trim()) return;
+    isSwitchedToBackgroundRef.current = true;
+    setIsProcessing(false);
+
+    try {
+      const categories = getAICategoryList();
+      const trimmed = textInput.trim();
+      const snippet = trimmed.length > 25 ? `${trimmed.substring(0, 25)}...` : trimmed;
+
+      queueDraft(`Note: ${snippet}`, 'text', {
+        type: 'text',
+        input: trimmed,
+        categories,
+        rawText: trimmed,
+      });
+
+      setIsTextInputVisible(false);
+      setTextInput('');
+      onClose();
+    } catch (e: any) {
+      console.error('Background text processing error:', e);
+      setErrorAlert({
+        visible: true,
+        title: 'Error Processing Text',
+        message: e.message || 'Failed to start background process.',
+      });
     }
   };
 
@@ -419,6 +457,19 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[
+                    styles.backgroundButton,
+                    { backgroundColor: colors.bg.glass, borderColor: colors.accent.primary },
+                    !textInput.trim() && { opacity: 0.5 }
+                  ]}
+                  onPress={handleProcessInBackground}
+                  disabled={!textInput.trim()}
+                >
+                  <Ionicons name="flash" size={16} color={colors.accent.primary} style={{ marginRight: 6 }} />
+                  <Text variant="sm" weight="bold" color={colors.accent.primary}>In Background</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
                     styles.submitButton,
                     { backgroundColor: colors.accent.primary },
                     (!textInput.trim() || isProcessing) && { opacity: 0.5 }
@@ -431,7 +482,7 @@ export function AddOptionModal({ visible, onClose }: AddOptionModalProps) {
                   ) : (
                     <>
                       <Ionicons name="sparkles" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                      <Text variant="base" weight="bold" color="#FFFFFF">Process with AI</Text>
+                      <Text variant="base" weight="bold" color="#FFFFFF">Process Now</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -574,15 +625,24 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    gap: Spacing.sm,
+  },
+  backgroundButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radii.md,
+    borderWidth: 1.5,
   },
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
     borderRadius: Radii.md,
-    minWidth: 150,
   },
   alertOverlay: {
     flex: 1,

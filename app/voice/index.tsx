@@ -9,7 +9,7 @@ import { Text } from '../../src/components/ui/Text';
 import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { Header } from '../../src/components/ui/Header';
-import { usePreviewStore, useCategoryStore, useUIStore } from '../../src/store';
+import { usePreviewStore, useCategoryStore, useUIStore, useDraftStore } from '../../src/store';
 import { AIServiceClient } from '../../src/services/api';
 import { getTodayString } from '../../src/utils/finance';
 
@@ -49,6 +49,75 @@ export default function VoiceAIScreen() {
   const getAICategoryList = useCategoryStore(s => s.getAICategoryList);
   const sttModel = useUIStore(s => s.sttModel);
   const setSttModel = useUIStore(s => s.setSttModel);
+  const queueDraft = useDraftStore(s => s.queueDraft);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [currentAudioUri, setCurrentAudioUri] = useState<string | null>(null);
+  const isSwitchedToBackgroundRef = useRef(false);
+
+  const handleSendActiveAudioToBackground = () => {
+    if (!currentAudioUri) return;
+    isSwitchedToBackgroundRef.current = true;
+    setIsProcessing(false);
+
+    try {
+      const categories = getAICategoryList();
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      queueDraft(`Voice Note (${timeStr})`, 'voice', {
+        type: 'voice',
+        input: currentAudioUri,
+        categories,
+        sttModel,
+        rawText: 'Voice Recording',
+      });
+
+      setCurrentAudioUri(null);
+      setToastMsg('⚡ Switched to background! Draft saved. You can record another now.');
+      setTimeout(() => setToastMsg(null), 5000);
+    } catch (e: any) {
+      console.error('Background voice processing error:', e);
+      alert('Failed to process in background: ' + (e.message || 'Unknown error'));
+    }
+  };
+
+  const handleProcessInBackground = async () => {
+    if (!isRecording || !recording) return;
+
+    try {
+      setIsRecording(false);
+      let audioUri: string | null = null;
+      try {
+        const status = await recording.getStatusAsync();
+        if (status.canRecord || status.isRecording) {
+          await recording.stopAndUnloadAsync();
+        }
+        audioUri = recording.getURI();
+      } catch (e) {
+        audioUri = recording.getURI();
+      }
+      setRecording(null);
+
+      if (!audioUri) {
+        alert('No audio recorded. Please try again.');
+        return;
+      }
+
+      const categories = getAICategoryList();
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      queueDraft(`Voice Note (${timeStr})`, 'voice', {
+        type: 'voice',
+        input: audioUri,
+        categories,
+        sttModel,
+        rawText: 'Voice Recording',
+      });
+
+      setToastMsg('⚡ Processing in background! Saved as draft. You can record another now.');
+      setTimeout(() => setToastMsg(null), 5000);
+    } catch (e: any) {
+      console.error('Background voice processing error:', e);
+      alert('Failed to process in background: ' + (e.message || 'Unknown error'));
+    }
+  };
 
   const handleToggleRecord = async () => {
     try {
@@ -80,8 +149,12 @@ export default function VoiceAIScreen() {
         let parsedSuccessfully = false;
 
         if (audioUri) {
+          setCurrentAudioUri(audioUri);
+          isSwitchedToBackgroundRef.current = false;
           try {
             const result = await AIServiceClient.parseVoice(audioUri, categories, sttModel);
+            if (isSwitchedToBackgroundRef.current) return;
+
             transcript = result.rawTranscript || '';
             processingNotes = result.processingNotes || '';
             if (result.engineUsed) {
@@ -92,13 +165,17 @@ export default function VoiceAIScreen() {
               parsedSuccessfully = true;
             }
           } catch (apiError: any) {
+            if (isSwitchedToBackgroundRef.current) return;
             console.warn('[VoiceAI] Backend API call failed:', apiError);
             alert(apiError.message || 'Voice processing failed. Please try again.');
             setIsProcessing(false);
             setRecording(null);
+            setCurrentAudioUri(null);
             return;
           }
         }
+
+        if (isSwitchedToBackgroundRef.current) return;
 
         if (!parsedSuccessfully) {
           if (transcript.trim().length > 0) {
@@ -248,21 +325,73 @@ export default function VoiceAIScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity 
-          style={[
-            styles.recordButton, 
-            { backgroundColor: colors.accent.primary, shadowColor: colors.accent.primary },
-            isRecording && { backgroundColor: colors.semantic.danger, shadowColor: colors.semantic.danger }
-          ]}
-          onPress={handleToggleRecord}
-          disabled={isProcessing}
-        >
-          {isRecording ? (
-            <View style={styles.stopSquare} />
-          ) : (
+        {/* Toast notification */}
+        {toastMsg && (
+          <View style={[styles.toastContainer, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+            <Ionicons name="cloud-upload" size={18} color={colors.accent.primary} style={{ marginRight: 8 }} />
+            <Text variant="xs" weight="medium" color={colors.text.primary} style={{ flex: 1 }}>
+              {toastMsg}
+            </Text>
+          </View>
+        )}
+
+        {/* When processing, show button to switch to background */}
+        {isProcessing && currentAudioUri && (
+          <TouchableOpacity
+            style={[
+              styles.backgroundActionButton,
+              { backgroundColor: colors.bg.glass, borderColor: colors.accent.primary, borderWidth: 1.5, marginBottom: Spacing.xl }
+            ]}
+            onPress={handleSendActiveAudioToBackground}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="flash" size={18} color={colors.accent.primary} />
+            <Text variant="xs" weight="bold" color={colors.accent.primary} style={{ marginLeft: 6 }}>
+              Send to Background & Record Next
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Action Buttons */}
+        {isRecording ? (
+          <View style={styles.actionButtonRow}>
+            <TouchableOpacity 
+              style={[
+                styles.recordButton, 
+                { backgroundColor: colors.semantic.danger, shadowColor: colors.semantic.danger }
+              ]}
+              onPress={handleToggleRecord}
+              disabled={isProcessing}
+            >
+              <View style={styles.stopSquare} />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[
+                styles.backgroundActionButton, 
+                { backgroundColor: colors.bg.glass, borderColor: colors.accent.primary, borderWidth: 1.5 }
+              ]}
+              onPress={handleProcessInBackground}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="flash" size={20} color={colors.accent.primary} />
+              <Text variant="xs" weight="bold" color={colors.accent.primary} style={{ marginLeft: 6 }}>
+                In Background
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={[
+              styles.recordButton, 
+              { backgroundColor: colors.accent.primary, shadowColor: colors.accent.primary }
+            ]}
+            onPress={handleToggleRecord}
+            disabled={isProcessing}
+          >
             <Ionicons name="mic" size={40} color="#FFFFFF" />
-          )}
-        </TouchableOpacity>
+          </TouchableOpacity>
+        )}
       </View>
     </GlassBackground>
   );
@@ -280,6 +409,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.xl,
+  },
+  actionButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+  },
+  backgroundActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: Radii.full,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  toastContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+    maxWidth: 340,
   },
   animationContainer: {
     height: 200,
