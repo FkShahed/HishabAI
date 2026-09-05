@@ -1,5 +1,29 @@
 [
   {
+    "version": "4.1.0",
+    "buildNumber": 5,
+    "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v4.1.0/app-release.apk",
+    "releaseNotes": "• Persistent Background AI Processing (Voice, Receipt, Text) with Drafts\n• Minimalist executive Home draft status banner with dynamic error alerts\n• Transaction title preference toggle (Note vs Category)\n• Interactive Day-of-Week spending pattern drilldown in Charts\n• Voice AI network error fix with fast Base64 payload\n• Performance optimizations and bug fixes",
+    "forceUpdate": false,
+    "minVersion": "1.0.0",
+    "releaseDate": "2026-09-05",
+    "fileSize": "97.1 MB",
+    "updatedAt": "2026-09-05T12:33:20.981Z",
+    "id": "cf92a77a-c6a2-49d8-a290-a64e0f87ef72"
+  },
+  {
+    "version": "4.0.0",
+    "buildNumber": 4,
+    "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v4.0.0/app-release.apk",
+    "releaseNotes": "• Dedicated Category Management Screen\n• Smart high-quality iconography system\n• Performance optimizations and bug fixes",
+    "forceUpdate": false,
+    "minVersion": "1.0.0",
+    "releaseDate": "2026-08-30",
+    "fileSize": "93.2 MB",
+    "updatedAt": "2026-08-30T13:36:01.103Z",
+    "id": "v4-0-0-release-id"
+  },
+  {
     "version": "2.0.0",
     "buildNumber": 2,
     "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v2.0.0/hisabai-v2.0.0.apk",
