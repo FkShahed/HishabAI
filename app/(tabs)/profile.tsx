@@ -748,14 +748,7 @@ export default function ProfileScreen() {
                   color={dailyReminderEnabled ? colors.accent.primary : colors.text.tertiary} 
                 />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text variant="base" style={styles.settingText}>Daily Reminder</Text>
-                <Text variant="xs" color={colors.text.tertiary}>
-                  {dailyReminderEnabled 
-                    ? `Daily at ${formatReminderTime(reminderHour, reminderMinute)}` 
-                    : 'Off • Tap to set time'}
-                </Text>
-              </View>
+              <Text variant="base" style={styles.settingText}>Daily Reminder</Text>
             </TouchableOpacity>
 
             <View style={styles.settingRight}>
