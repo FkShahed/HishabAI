@@ -12,7 +12,8 @@ export interface CustomAlertModalProps {
   transcript?: string | null;
   missingDetails?: string | null;
   message?: string | null;
-  type?: 'warning' | 'error' | 'info';
+  type?: 'warning' | 'error' | 'info' | 'success';
+  iconOverride?: keyof typeof Ionicons.glyphMap;
   primaryButtonText?: string;
   onPrimaryPress?: () => void;
   secondaryButtonText?: string;
@@ -28,6 +29,7 @@ export function CustomAlertModal({
   missingDetails,
   message,
   type = 'warning',
+  iconOverride,
   primaryButtonText = 'Try Again',
   onPrimaryPress,
   secondaryButtonText,
@@ -37,7 +39,18 @@ export function CustomAlertModal({
   const colors = useThemeColors();
 
   const getBadgeConfig = () => {
+    if (iconOverride) {
+      const color = type === 'success' ? colors.semantic.income : type === 'error' ? colors.semantic.danger : type === 'info' ? colors.accent.primary : colors.semantic.warning;
+      const bgColor = type === 'success' ? colors.semantic.incomeDim : type === 'error' ? colors.semantic.dangerDim : type === 'info' ? colors.accent.primaryDim : colors.semantic.warningDim;
+      return { icon: iconOverride, color, bgColor };
+    }
     switch (type) {
+      case 'success':
+        return {
+          icon: 'checkmark-circle' as const,
+          color: colors.semantic.income,
+          bgColor: colors.semantic.incomeDim,
+        };
       case 'error':
         return {
           icon: 'alert-circle' as const,

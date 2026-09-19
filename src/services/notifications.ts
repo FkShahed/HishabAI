@@ -126,8 +126,8 @@ export const NotificationService = {
       await notif.scheduleNotificationAsync({
         identifier: REMINDER_NOTIFICATION_ID,
         content: {
-          title: '💡 Daily Expense Reminder',
-          body: "Don't forget to log your daily expenses in HisabAI today!",
+          title: 'Daily Expense Check-in 💳',
+          body: "Take 30 seconds to log today's spending in HisabAI and keep your financial goals on track!",
           sound: 'default',
           priority: notif.AndroidNotificationPriority.HIGH,
           data: { screen: '/(tabs)' },

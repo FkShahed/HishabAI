@@ -3,12 +3,12 @@
     "version": "4.1.3",
     "buildNumber": 8,
     "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v4.1.3/app-release.apk",
-    "releaseNotes": "• Clean Profile UI: Removed redundant subtitle text from Daily Reminder setting row for minimal, streamlined appearance\n• Interactive custom digital Daily Reminder time picker with hour/minute steppers, AM/PM toggle, and quick presets\n• Instant background notification scheduling and permission handling\n• Sleek, low-contrast reminder popup UI with modern neutral buttons\n• Custom alert modal system replacing generic system alerts for smoother feedback\n• Button component enhancement with flexible textColor support\n• Performance optimizations and UI stability improvements",
+    "releaseNotes": "• Daily Reminder: Resolved hour & minute number clipping on Android with optimized line height and font padding\n• Custom Alert Dialog: Integrated custom-styled modal for reminder confirmations replacing native system alerts\n• Motivating Notifications: Upgraded daily reminder push notification message to be user-friendly, professional, and encouraging\n• Transaction Title Display: Added generous padding and card styling to options in preferences\n• Performance optimizations and stability improvements",
     "forceUpdate": false,
     "minVersion": "1.0.0",
     "releaseDate": "2026-09-20",
     "fileSize": "97.1 MB",
-    "updatedAt": "2026-09-19T18:29:00.000Z",
+    "updatedAt": "2026-09-20T01:14:00.000Z",
     "id": "v4-1-3-release-id"
   },
   {

@@ -18,12 +18,19 @@ import { SUPPORTED_CURRENCIES, getCurrencySymbol } from '../../src/utils/finance
 import { NotificationService } from '../../src/services/notifications';
 import { VersionServiceClient, CheckUpdateResult } from '../../src/services/api';
 import { AddCategoryModal } from '../../src/components/ui/AddCategoryModal';
+import { CustomAlertModal } from '../../src/components/ui/CustomAlertModal';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const [imageFailed, setImageFailed] = useState(false);
   const [isAddCatModalVisible, setIsAddCatModalVisible] = useState(false);
+  const [saveReminderAlert, setSaveReminderAlert] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'info' | 'warning' | 'error';
+  }>({ visible: false, title: '', message: '', type: 'success' });
   
   const setTransactions = useTransactionStore((s) => s.setTransactions);
   const currency = useUIStore((s) => s.currency);
@@ -458,32 +465,40 @@ export default function ProfileScreen() {
         if (granted) {
           const success = await NotificationService.scheduleDailyReminder(h24, m);
           if (success) {
-            Alert.alert(
-              'Daily Reminder Saved ⏰',
-              `Reminder scheduled daily at ${formatReminderTime(h24, m)}.`
-            );
+            setSaveReminderAlert({
+              visible: true,
+              title: 'Daily Reminder Saved ⏰',
+              message: `Reminder scheduled daily at ${formatReminderTime(h24, m)}.`,
+              type: 'success',
+            });
             return;
           }
         }
-        Alert.alert(
-          'Daily Reminder Saved ⏰',
-          `Daily reminder saved for ${formatReminderTime(h24, m)}. Please ensure notifications are enabled in device settings to receive alerts.`
-        );
+        setSaveReminderAlert({
+          visible: true,
+          title: 'Daily Reminder Saved ⏰',
+          message: `Daily reminder saved for ${formatReminderTime(h24, m)}. Please ensure notifications are enabled in device settings to receive alerts.`,
+          type: 'warning',
+        });
       } catch (err) {
         console.warn('[Profile] Error scheduling daily reminder:', err);
-        Alert.alert(
-          'Daily Reminder Saved ⏰',
-          `Daily reminder saved for ${formatReminderTime(h24, m)}.`
-        );
+        setSaveReminderAlert({
+          visible: true,
+          title: 'Daily Reminder Saved ⏰',
+          message: `Daily reminder saved for ${formatReminderTime(h24, m)}.`,
+          type: 'success',
+        });
       }
     } else {
       try {
         await NotificationService.cancelDailyReminder();
       } catch (e) {}
-      Alert.alert(
-        'Daily Reminder Saved ⏰',
-        `Daily reminder time updated to ${formatReminderTime(h24, m)} (Reminder is currently OFF).`
-      );
+      setSaveReminderAlert({
+        visible: true,
+        title: 'Daily Reminder Updated ⏰',
+        message: `Daily reminder time updated to ${formatReminderTime(h24, m)} (Reminder is currently OFF).`,
+        type: 'info',
+      });
     }
   };
 
@@ -1091,52 +1106,67 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={{ paddingVertical: Spacing.xs }}>
+            <View style={{ paddingVertical: Spacing.sm }}>
               <TouchableOpacity
-                style={[
-                  styles.currencyRow,
-                  { borderBottomColor: colors.border.subtle },
-                  transactionTitleMode === 'note' && { backgroundColor: colors.accent.primaryDim }
-                ]}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingVertical: Spacing.md,
+                  paddingHorizontal: Spacing.md,
+                  borderRadius: Radii.md,
+                  borderWidth: 1,
+                  borderColor: transactionTitleMode === 'note' ? colors.accent.primary : colors.border.subtle,
+                  backgroundColor: transactionTitleMode === 'note' ? colors.accent.primaryDim : colors.bg.card,
+                  marginBottom: Spacing.sm,
+                }}
                 onPress={() => {
                   setTransactionTitleMode('note');
                   setTitleModeModalVisible(false);
                 }}
+                activeOpacity={0.7}
               >
                 <View style={{ flex: 1, paddingRight: Spacing.sm }}>
                   <Text variant="sm" weight="bold" color={transactionTitleMode === 'note' ? colors.accent.primary : colors.text.primary}>
                     Note (or Category fallback)
                   </Text>
-                  <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
+                  <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 3 }}>
                     Show note if available; otherwise show category name.
                   </Text>
                 </View>
                 {transactionTitleMode === 'note' && (
-                  <Ionicons name="checkmark-circle" size={18} color={colors.accent.primary} />
+                  <Ionicons name="checkmark-circle" size={20} color={colors.accent.primary} />
                 )}
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[
-                  styles.currencyRow,
-                  { borderBottomColor: 'transparent' },
-                  transactionTitleMode === 'category' && { backgroundColor: colors.accent.primaryDim }
-                ]}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingVertical: Spacing.md,
+                  paddingHorizontal: Spacing.md,
+                  borderRadius: Radii.md,
+                  borderWidth: 1,
+                  borderColor: transactionTitleMode === 'category' ? colors.accent.primary : colors.border.subtle,
+                  backgroundColor: transactionTitleMode === 'category' ? colors.accent.primaryDim : colors.bg.card,
+                }}
                 onPress={() => {
                   setTransactionTitleMode('category');
                   setTitleModeModalVisible(false);
                 }}
+                activeOpacity={0.7}
               >
                 <View style={{ flex: 1, paddingRight: Spacing.sm }}>
                   <Text variant="sm" weight="bold" color={transactionTitleMode === 'category' ? colors.accent.primary : colors.text.primary}>
                     Only Category Name
                   </Text>
-                  <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 2 }}>
+                  <Text variant="xs" color={colors.text.secondary} style={{ marginTop: 3 }}>
                     Always show category name as primary title in transaction lists.
                   </Text>
                 </View>
                 {transactionTitleMode === 'category' && (
-                  <Ionicons name="checkmark-circle" size={18} color={colors.accent.primary} />
+                  <Ionicons name="checkmark-circle" size={20} color={colors.accent.primary} />
                 )}
               </TouchableOpacity>
             </View>
@@ -1212,7 +1242,7 @@ export default function ProfileScreen() {
                       {...hourPanResponder.panHandlers}
                       style={[styles.timeDigitBox, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle }]}
                     >
-                      <Text style={[styles.timeDigitText, { color: colors.text.primary }]}>
+                      <Text variant="xxxl" weight="bold" style={[styles.timeDigitText, { color: colors.text.primary }]}>
                         {String(selectedHour12).padStart(2, '0')}
                       </Text>
                     </View>
@@ -1247,7 +1277,7 @@ export default function ProfileScreen() {
                       {...minutePanResponder.panHandlers}
                       style={[styles.timeDigitBox, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle }]}
                     >
-                      <Text style={[styles.timeDigitText, { color: colors.text.primary }]}>
+                      <Text variant="xxxl" weight="bold" style={[styles.timeDigitText, { color: colors.text.primary }]}>
                         {String(selectedMinute).padStart(2, '0')}
                       </Text>
                     </View>
@@ -1722,6 +1752,17 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      {/* Daily Reminder Save Feedback Custom Alert Modal */}
+      <CustomAlertModal
+        visible={saveReminderAlert.visible}
+        onClose={() => setSaveReminderAlert((prev) => ({ ...prev, visible: false }))}
+        title={saveReminderAlert.title}
+        message={saveReminderAlert.message}
+        type={saveReminderAlert.type}
+        primaryButtonText="Got It"
+        showExamples={false}
+      />
+
     </GlassBackground>
   );
 }
@@ -2035,7 +2076,7 @@ const styles = StyleSheet.create({
   },
   timeDigitBox: {
     width: 78,
-    height: 70,
+    height: 72,
     borderRadius: Radii.md,
     borderWidth: 1,
     alignItems: 'center',
@@ -2043,8 +2084,11 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   timeDigitText: {
-    fontSize: 38,
+    fontSize: 34,
     fontWeight: '700',
+    lineHeight: 44,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   colonContainer: {
     width: 28,
