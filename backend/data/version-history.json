@@ -1,5 +1,17 @@
 [
   {
+    "version": "4.1.2",
+    "buildNumber": 7,
+    "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v4.1.2/app-release.apk",
+    "releaseNotes": "• Daily Reminder: Interactive custom digital time picker with hour/minute steppers, AM/PM toggle, and quick presets\n• Instant background notification scheduling and permission handling\n• Sleek, low-contrast reminder popup UI with modern neutral buttons\n• Custom alert modal system replacing generic system alerts for smoother feedback\n• Button component enhancement with flexible textColor support\n• Performance optimizations and UI stability improvements",
+    "forceUpdate": false,
+    "minVersion": "1.0.0",
+    "releaseDate": "2026-09-19",
+    "fileSize": "97.1 MB",
+    "updatedAt": "2026-09-19T16:52:00.000Z",
+    "id": "v4-1-2-release-id"
+  },
+  {
     "version": "4.1.1",
     "buildNumber": 6,
     "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v4.1.1/app-release.apk",

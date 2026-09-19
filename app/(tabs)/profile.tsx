@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, Image, Platform, Linking } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, Image, Platform, Linking, PanResponder } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -36,6 +36,9 @@ export default function ProfileScreen() {
   const setUserPhotoUrl = useUIStore((s) => s.setUserPhotoUrl);
   const dailyReminderEnabled = useUIStore((s) => s.dailyReminderEnabled);
   const setDailyReminderEnabled = useUIStore((s) => s.setDailyReminderEnabled);
+  const reminderHour = useUIStore((s) => s.reminderHour) ?? 20;
+  const reminderMinute = useUIStore((s) => s.reminderMinute) ?? 0;
+  const setReminderTime = useUIStore((s) => s.setReminderTime);
   const backgroundPreset = useUIStore((s) => s.backgroundPreset) || 'aurora';
   const transactionTitleMode = useUIStore((s) => s.transactionTitleMode);
   const setTransactionTitleMode = useUIStore((s) => s.setTransactionTitleMode);
@@ -43,6 +46,11 @@ export default function ProfileScreen() {
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isCurrencyModalVisible, setCurrencyModalVisible] = useState(false);
+  const [isReminderTimeModalVisible, setReminderTimeModalVisible] = useState(false);
+  const [selectedHour12, setSelectedHour12] = useState(8);
+  const [selectedMinute, setSelectedMinute] = useState(0);
+  const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>('PM');
+  const [modalReminderActive, setModalReminderActive] = useState(dailyReminderEnabled);
   const [isTitleModeModalVisible, setTitleModeModalVisible] = useState(false);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isSignOutModalVisible, setSignOutModalVisible] = useState(false);
@@ -266,19 +274,216 @@ export default function ProfileScreen() {
     setNameModalVisible(false);
   };
 
+  const formatReminderTime = (h: number, m: number) => {
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayHour = h % 12 === 0 ? 12 : h % 12;
+    const displayMinute = m < 10 ? `0${m}` : m;
+    return `${displayHour}:${displayMinute} ${period}`;
+  };
+
   const handleToggleDailyReminder = async (val: boolean) => {
     setDailyReminderEnabled(val);
+    setModalReminderActive(val);
+
+    if (auth.currentUser) {
+      FirebaseService.saveUserProfile(auth.currentUser.uid, { dailyReminderEnabled: val }).catch(() => {});
+    }
+
     if (val) {
-      const granted = await NotificationService.requestPermissions();
-      if (granted) {
-        await NotificationService.scheduleDailyReminder(20, 0); // 8:00 PM
-        Alert.alert('Daily Reminder Set ⏰', "You will receive a daily reminder at 8:00 PM to record your expenses.");
-      } else {
-        setDailyReminderEnabled(false);
-        Alert.alert('Permission Denied', 'Notification permissions are required to enable daily reminders.');
+      try {
+        const granted = await NotificationService.requestPermissions();
+        if (granted) {
+          const success = await NotificationService.scheduleDailyReminder(reminderHour, reminderMinute);
+          if (success) {
+            Alert.alert(
+              'Daily Reminder Active ⏰',
+              `You'll receive a daily reminder at ${formatReminderTime(reminderHour, reminderMinute)} to record your expenses.`
+            );
+            return;
+          }
+        }
+        Alert.alert(
+          'Reminder Enabled ⏰',
+          `Daily reminder enabled for ${formatReminderTime(reminderHour, reminderMinute)}. Please allow notifications in device settings to receive alerts.`
+        );
+      } catch (err) {
+        console.warn('[Profile] Error enabling daily reminder:', err);
       }
     } else {
-      await NotificationService.cancelDailyReminder();
+      try {
+        await NotificationService.cancelDailyReminder();
+      } catch (err) {
+        console.warn('[Profile] Error canceling daily reminder:', err);
+      }
+    }
+  };
+
+  const openReminderTimeModal = () => {
+    const period = reminderHour >= 12 ? 'PM' : 'AM';
+    const h12 = reminderHour % 12 === 0 ? 12 : reminderHour % 12;
+    setSelectedHour12(h12);
+    setSelectedMinute(reminderMinute);
+    setSelectedPeriod(period);
+    setModalReminderActive(dailyReminderEnabled);
+    setReminderTimeModalVisible(true);
+  };
+
+  const incrementHour = () => {
+    setSelectedHour12((prev) => (prev % 12) + 1);
+  };
+
+  const decrementHour = () => {
+    setSelectedHour12((prev) => (prev === 1 ? 12 : prev - 1));
+  };
+
+  const incrementMinute = (step: number = 1) => {
+    setSelectedMinute((prev) => (prev + step) % 60);
+  };
+
+  const decrementMinute = (step: number = 1) => {
+    setSelectedMinute((prev) => (prev - step + 60) % 60);
+  };
+
+  // Swipe up / down responders for interactive touch wheel
+  const hourPanResponder = useMemo(() => {
+    let accumulatedDy = 0;
+    const STEP_THRESHOLD = 18;
+
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 3,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: () => {
+        accumulatedDy = 0;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        const delta = gestureState.dy - accumulatedDy;
+        if (delta < -STEP_THRESHOLD) {
+          const steps = Math.floor(Math.abs(delta) / STEP_THRESHOLD);
+          for (let i = 0; i < steps; i++) {
+            setSelectedHour12((prev) => (prev % 12) + 1);
+          }
+          accumulatedDy -= steps * STEP_THRESHOLD;
+        } else if (delta > STEP_THRESHOLD) {
+          const steps = Math.floor(delta / STEP_THRESHOLD);
+          for (let i = 0; i < steps; i++) {
+            setSelectedHour12((prev) => (prev === 1 ? 12 : prev - 1));
+          }
+          accumulatedDy += steps * STEP_THRESHOLD;
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (Math.abs(gestureState.dy) < STEP_THRESHOLD && Math.abs(gestureState.vy) > 0.3) {
+          if (gestureState.vy < 0) {
+            setSelectedHour12((prev) => (prev % 12) + 1);
+          } else {
+            setSelectedHour12((prev) => (prev === 1 ? 12 : prev - 1));
+          }
+        }
+      },
+    });
+  }, []);
+
+  const minutePanResponder = useMemo(() => {
+    let accumulatedDy = 0;
+    const STEP_THRESHOLD = 16;
+
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 3,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: () => {
+        accumulatedDy = 0;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        const delta = gestureState.dy - accumulatedDy;
+        if (delta < -STEP_THRESHOLD) {
+          const steps = Math.floor(Math.abs(delta) / STEP_THRESHOLD);
+          for (let i = 0; i < steps; i++) {
+            setSelectedMinute((prev) => (prev + 1) % 60);
+          }
+          accumulatedDy -= steps * STEP_THRESHOLD;
+        } else if (delta > STEP_THRESHOLD) {
+          const steps = Math.floor(delta / STEP_THRESHOLD);
+          for (let i = 0; i < steps; i++) {
+            setSelectedMinute((prev) => (prev - 1 + 60) % 60);
+          }
+          accumulatedDy += steps * STEP_THRESHOLD;
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (Math.abs(gestureState.dy) < STEP_THRESHOLD && Math.abs(gestureState.vy) > 0.3) {
+          if (gestureState.vy < 0) {
+            setSelectedMinute((prev) => (prev + 1) % 60);
+          } else {
+            setSelectedMinute((prev) => (prev - 1 + 60) % 60);
+          }
+        }
+      },
+    });
+  }, []);
+
+  const applyPresetTime = (h24: number, m: number) => {
+    const period = h24 >= 12 ? 'PM' : 'AM';
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    setSelectedHour12(h12);
+    setSelectedMinute(m);
+    setSelectedPeriod(period);
+  };
+
+  const handleSaveCustomReminderTime = async () => {
+    const h24 = selectedPeriod === 'PM'
+      ? (selectedHour12 === 12 ? 12 : selectedHour12 + 12)
+      : (selectedHour12 === 12 ? 0 : selectedHour12);
+    const m = Math.max(0, Math.min(59, selectedMinute));
+
+    // 1. Unconditionally save time and toggle state in Zustand & local storage
+    setReminderTime(h24, m);
+    setDailyReminderEnabled(modalReminderActive);
+    setReminderTimeModalVisible(false);
+
+    // 2. Persist to Firebase profile
+    if (auth.currentUser) {
+      FirebaseService.saveUserProfile(auth.currentUser.uid, {
+        dailyReminderEnabled: modalReminderActive,
+        reminderHour: h24,
+        reminderMinute: m,
+      }).catch((e) => console.warn('[Profile] Firebase save error:', e));
+    }
+
+    // 3. Configure OS Notifications
+    if (modalReminderActive) {
+      try {
+        const granted = await NotificationService.requestPermissions();
+        if (granted) {
+          const success = await NotificationService.scheduleDailyReminder(h24, m);
+          if (success) {
+            Alert.alert(
+              'Daily Reminder Saved ⏰',
+              `Reminder scheduled daily at ${formatReminderTime(h24, m)}.`
+            );
+            return;
+          }
+        }
+        Alert.alert(
+          'Daily Reminder Saved ⏰',
+          `Daily reminder saved for ${formatReminderTime(h24, m)}. Please ensure notifications are enabled in device settings to receive alerts.`
+        );
+      } catch (err) {
+        console.warn('[Profile] Error scheduling daily reminder:', err);
+        Alert.alert(
+          'Daily Reminder Saved ⏰',
+          `Daily reminder saved for ${formatReminderTime(h24, m)}.`
+        );
+      }
+    } else {
+      try {
+        await NotificationService.cancelDailyReminder();
+      } catch (e) {}
+      Alert.alert(
+        'Daily Reminder Saved ⏰',
+        `Daily reminder time updated to ${formatReminderTime(h24, m)} (Reminder is currently OFF).`
+      );
     }
   };
 
@@ -529,15 +734,53 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
           
-          {/* Daily Reminders */}
+          {/* Daily Reminder (Consolidated Setting: Time + Quick Toggle) */}
           <View style={[styles.settingItem, styles.settingItemLast]}>
-            <View style={styles.settingLeft}>
+            <TouchableOpacity 
+              style={styles.settingLeft}
+              onPress={openReminderTimeModal}
+              activeOpacity={0.7}
+            >
               <View style={styles.settingIconWrapper}>
-                <Ionicons name="notifications-outline" size={20} color={colors.text.primary} />
+                <Ionicons 
+                  name={dailyReminderEnabled ? "notifications" : "notifications-off-outline"} 
+                  size={20} 
+                  color={dailyReminderEnabled ? colors.accent.primary : colors.text.tertiary} 
+                />
               </View>
-              <Text variant="base" style={styles.settingText}>Daily Reminder (8:00 PM)</Text>
-            </View>
+              <View style={{ flex: 1 }}>
+                <Text variant="base" style={styles.settingText}>Daily Reminder</Text>
+                <Text variant="xs" color={colors.text.tertiary}>
+                  {dailyReminderEnabled 
+                    ? `Daily at ${formatReminderTime(reminderHour, reminderMinute)}` 
+                    : 'Off • Tap to set time'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
             <View style={styles.settingRight}>
+              <TouchableOpacity 
+                onPress={openReminderTimeModal}
+                activeOpacity={0.7}
+                style={{
+                  backgroundColor: dailyReminderEnabled ? colors.accent.primaryDim : colors.bg.card,
+                  paddingHorizontal: Spacing.sm,
+                  paddingVertical: 3,
+                  borderRadius: Radii.full,
+                  marginRight: Spacing.xs,
+                  borderWidth: 1,
+                  borderColor: dailyReminderEnabled ? colors.accent.primary + '35' : colors.border.subtle,
+                }}
+              >
+                <Text 
+                  variant="xs" 
+                  weight="bold" 
+                  color={dailyReminderEnabled ? colors.accent.primary : colors.text.tertiary}
+                >
+                  {formatReminderTime(reminderHour, reminderMinute)}
+                </Text>
+              </TouchableOpacity>
+
               <Switch 
                 value={dailyReminderEnabled} 
                 onValueChange={handleToggleDailyReminder}
@@ -904,6 +1147,235 @@ export default function ProfileScreen() {
                 )}
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Reminder Time Selection Modal */}
+      <Modal 
+        visible={isReminderTimeModalVisible} 
+        animationType="slide" 
+        transparent 
+        onRequestClose={() => setReminderTimeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle, padding: Spacing.lg, borderRadius: 28, maxHeight: '90%' }]}>
+            {/* Modal Header */}
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border.subtle, paddingBottom: Spacing.sm, marginBottom: Spacing.md }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="alarm-outline" size={22} color={colors.text.primary} style={{ marginRight: Spacing.xs }} />
+                <Text variant="md" weight="bold">Daily Reminder</Text>
+              </View>
+              <TouchableOpacity 
+                onPress={() => setReminderTimeModalVisible(false)} 
+                style={{ 
+                  width: 32, 
+                  height: 32, 
+                  borderRadius: 16, 
+                  alignItems: 'center', 
+                  justifyContent: 'center' 
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close" size={20} color={colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingVertical: Spacing.xs }}>
+              {/* Simple Toggle Row */}
+              <View style={{ 
+                flexDirection: 'row', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                paddingVertical: Spacing.sm, 
+                marginBottom: Spacing.md 
+              }}>
+                <Text variant="sm" weight="semibold" color={colors.text.primary}>
+                  Reminder Alert
+                </Text>
+                <Switch
+                  value={modalReminderActive}
+                  onValueChange={setModalReminderActive}
+                  trackColor={{ true: colors.accent.primary, false: colors.border.medium }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+
+              {/* Digital Time Picker Card */}
+              <View style={[styles.timePickerCard, { backgroundColor: colors.bg.card, borderColor: colors.border.subtle }]}>
+                <View style={styles.timePickerRow}>
+                  {/* Hour Column */}
+                  <View style={styles.timeDigitColumn}>
+                    <TouchableOpacity 
+                      onPress={incrementHour} 
+                      style={styles.stepperArrowBtn}
+                      activeOpacity={0.6}
+                      hitSlop={{ top: 12, bottom: 8, left: 14, right: 14 }}
+                    >
+                      <Ionicons name="chevron-up" size={26} color={colors.text.secondary} />
+                    </TouchableOpacity>
+
+                    <View 
+                      {...hourPanResponder.panHandlers}
+                      style={[styles.timeDigitBox, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle }]}
+                    >
+                      <Text style={[styles.timeDigitText, { color: colors.text.primary }]}>
+                        {String(selectedHour12).padStart(2, '0')}
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity 
+                      onPress={decrementHour} 
+                      style={styles.stepperArrowBtn}
+                      activeOpacity={0.6}
+                      hitSlop={{ top: 8, bottom: 12, left: 14, right: 14 }}
+                    >
+                      <Ionicons name="chevron-down" size={26} color={colors.text.secondary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Colon Separator - exactly in the middle */}
+                  <View style={styles.colonContainer}>
+                    <Text style={[styles.colonText, { color: colors.text.secondary }]}>:</Text>
+                  </View>
+
+                  {/* Minute Column */}
+                  <View style={styles.timeDigitColumn}>
+                    <TouchableOpacity 
+                      onPress={() => incrementMinute(1)} 
+                      style={styles.stepperArrowBtn}
+                      activeOpacity={0.6}
+                      hitSlop={{ top: 12, bottom: 8, left: 14, right: 14 }}
+                    >
+                      <Ionicons name="chevron-up" size={26} color={colors.text.secondary} />
+                    </TouchableOpacity>
+
+                    <View 
+                      {...minutePanResponder.panHandlers}
+                      style={[styles.timeDigitBox, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle }]}
+                    >
+                      <Text style={[styles.timeDigitText, { color: colors.text.primary }]}>
+                        {String(selectedMinute).padStart(2, '0')}
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity 
+                      onPress={() => decrementMinute(1)} 
+                      style={styles.stepperArrowBtn}
+                      activeOpacity={0.6}
+                      hitSlop={{ top: 8, bottom: 12, left: 14, right: 14 }}
+                    >
+                      <Ionicons name="chevron-down" size={26} color={colors.text.secondary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* AM / PM Segmented Capsule */}
+                  <View style={[styles.periodColumn, { backgroundColor: colors.bg.modal, borderColor: colors.border.subtle }]}>
+                    <TouchableOpacity
+                      style={[
+                        styles.periodBtn,
+                        selectedPeriod === 'AM' 
+                          ? { backgroundColor: colors.accent.primary }
+                          : { backgroundColor: 'transparent' }
+                      ]}
+                      onPress={() => setSelectedPeriod('AM')}
+                      activeOpacity={0.7}
+                    >
+                      <Text 
+                        variant="sm" 
+                        weight={selectedPeriod === 'AM' ? 'bold' : 'regular'} 
+                        color={selectedPeriod === 'AM' ? '#FFFFFF' : colors.text.tertiary}
+                      >
+                        AM
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.periodBtn,
+                        selectedPeriod === 'PM' 
+                          ? { backgroundColor: colors.accent.primary }
+                          : { backgroundColor: 'transparent' }
+                      ]}
+                      onPress={() => setSelectedPeriod('PM')}
+                      activeOpacity={0.7}
+                    >
+                      <Text 
+                        variant="sm" 
+                        weight={selectedPeriod === 'PM' ? 'bold' : 'regular'} 
+                        color={selectedPeriod === 'PM' ? '#FFFFFF' : colors.text.tertiary}
+                      >
+                        PM
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
+              {/* Quick Presets Section */}
+              <View style={{ marginBottom: Spacing.lg }}>
+                <Text variant="xs" color={colors.text.tertiary} style={{ marginBottom: Spacing.sm, marginLeft: 2, letterSpacing: 0.5 }}>
+                  Quick Presets
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                  {[
+                    { hour: 20, minute: 0, label: '8:00 PM' },
+                    { hour: 21, minute: 0, label: '9:00 PM' },
+                    { hour: 22, minute: 0, label: '10:00 PM' },
+                    { hour: 9, minute: 0, label: '9:00 AM' },
+                  ].map((opt) => {
+                    const optPeriod = opt.hour >= 12 ? 'PM' : 'AM';
+                    const optH12 = opt.hour % 12 === 0 ? 12 : opt.hour % 12;
+                    const isMatched = selectedHour12 === optH12 && selectedMinute === opt.minute && selectedPeriod === optPeriod;
+
+                    return (
+                      <TouchableOpacity
+                        key={`${opt.hour}-${opt.minute}`}
+                        style={{
+                          paddingHorizontal: 16,
+                          paddingVertical: 8,
+                          borderRadius: Radii.full,
+                          backgroundColor: isMatched ? colors.accent.primaryDim : colors.bg.card,
+                          borderWidth: 1,
+                          borderColor: isMatched ? colors.accent.primary : colors.border.subtle,
+                        }}
+                        onPress={() => applyPresetTime(opt.hour, opt.minute)}
+                        activeOpacity={0.7}
+                      >
+                        <Text 
+                          variant="xs" 
+                          weight={isMatched ? 'bold' : 'regular'} 
+                          color={isMatched ? colors.accent.primary : colors.text.secondary}
+                        >
+                          {opt.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={{ marginTop: Spacing.xs, gap: Spacing.sm }}>
+                <Button
+                  variant="primary"
+                  label={`Save Reminder (${selectedHour12}:${String(selectedMinute).padStart(2, '0')} ${selectedPeriod})`}
+                  onPress={handleSaveCustomReminderTime}
+                  textColor="#FFFFFF"
+                  style={{
+                    backgroundColor: theme === 'dark' ? '#242436' : '#0F172A',
+                    borderWidth: theme === 'dark' ? 1 : 0,
+                    borderColor: colors.border.medium,
+                  }}
+                />
+                <Button
+                  variant="ghost"
+                  label="Cancel"
+                  textColor={colors.text.secondary}
+                  onPress={() => setReminderTimeModalVisible(false)}
+                />
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1368,9 +1840,11 @@ const styles = StyleSheet.create({
     height: 50,
     paddingHorizontal: Spacing.md,
     borderBottomWidth: 1,
+    borderBottomColor: 'transparent',
   },
   settingItemLast: {
     borderBottomWidth: 0,
+    borderBottomColor: 'transparent',
     borderBottomLeftRadius: Radii.md,
     borderBottomRightRadius: Radii.md,
   },
@@ -1533,5 +2007,80 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     borderRadius: Radii.sm,
     borderWidth: 1,
+  },
+  reminderActiveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.sm,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    marginBottom: Spacing.sm + 2,
+  },
+  timePickerCard: {
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radii.xl,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+  },
+  timePickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeDigitColumn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperArrowBtn: {
+    width: 68,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  timeDigitBox: {
+    width: 78,
+    height: 70,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 6,
+  },
+  timeDigitText: {
+    fontSize: 38,
+    fontWeight: '700',
+  },
+  colonContainer: {
+    width: 28,
+    height: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colonText: {
+    fontSize: 32,
+    fontWeight: '700',
+    textAlign: 'center',
+    includeFontPadding: false,
+    lineHeight: 36,
+    marginBottom: 4,
+  },
+  periodColumn: {
+    marginLeft: Spacing.lg,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    padding: 4,
+    justifyContent: 'center',
+    gap: 6,
+  },
+  periodBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 46,
   },
 });

@@ -10,6 +10,7 @@ import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Button } from '../../src/components/ui/Button';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { Header } from '../../src/components/ui/Header';
+import { CustomAlertModal } from '../../src/components/ui/CustomAlertModal';
 import { usePreviewStore, useCategoryStore, useDraftStore } from '../../src/store';
 import { AIServiceClient, getFriendlyErrorMessage } from '../../src/services/api';
 
@@ -21,6 +22,19 @@ export default function ReceiptAIScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const isSwitchedToBackgroundRef = useRef(false);
+
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    missingDetails?: string | null;
+    message?: string | null;
+    type?: 'warning' | 'error' | 'info';
+    primaryButtonText?: string;
+    onPrimaryPress?: () => void;
+  }>({
+    visible: false,
+    title: 'Receipt Scan',
+  });
 
   const setPreview = usePreviewStore(s => s.setPreview);
   const getAICategoryList = useCategoryStore(s => s.getAICategoryList);
@@ -77,12 +91,30 @@ export default function ReceiptAIScreen() {
         setPreview(result.transactions, 'receipt');
         router.push('/transaction-preview');
       } else {
-        alert(result.error || 'Failed to process receipt');
+        setAlertConfig({
+          visible: true,
+          type: 'warning',
+          title: 'No Transactions Found',
+          missingDetails: result.error || 'Could not extract items or amounts from this image. Please ensure the receipt is clear, well-lit, and legible.',
+          primaryButtonText: 'Try Another Photo',
+          onPrimaryPress: () => {
+            setAlertConfig(prev => ({ ...prev, visible: false }));
+            setImage(null);
+            setImageBase64(null);
+          },
+        });
       }
     } catch (error: any) {
       if (isSwitchedToBackgroundRef.current) return;
       const msg = getFriendlyErrorMessage(error);
-      alert(msg);
+      setAlertConfig({
+        visible: true,
+        type: 'error',
+        title: 'Receipt Processing Failed',
+        message: msg || 'An error occurred while scanning the receipt. Please try again.',
+        primaryButtonText: 'OK',
+        onPrimaryPress: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+      });
     } finally {
       if (!isSwitchedToBackgroundRef.current) {
         setIsProcessing(false);
@@ -222,6 +254,19 @@ export default function ReceiptAIScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Custom Alert Modal */}
+        <CustomAlertModal
+          visible={alertConfig.visible}
+          onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+          title={alertConfig.title}
+          type={alertConfig.type}
+          missingDetails={alertConfig.missingDetails}
+          message={alertConfig.message}
+          primaryButtonText={alertConfig.primaryButtonText}
+          onPrimaryPress={alertConfig.onPrimaryPress}
+          showExamples={false}
+        />
       </View>
     </GlassBackground>
   );

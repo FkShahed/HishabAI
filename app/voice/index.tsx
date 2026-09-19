@@ -9,6 +9,7 @@ import { Text } from '../../src/components/ui/Text';
 import { GlassBackground } from '../../src/components/ui/GlassBackground';
 import { Spacing, Radii, useThemeColors } from '../../src/constants/colors';
 import { Header } from '../../src/components/ui/Header';
+import { CustomAlertModal } from '../../src/components/ui/CustomAlertModal';
 import { usePreviewStore, useCategoryStore, useUIStore, useDraftStore } from '../../src/store';
 import { AIServiceClient } from '../../src/services/api';
 import { getTodayString } from '../../src/utils/finance';
@@ -53,6 +54,22 @@ export default function VoiceAIScreen() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [currentAudioUri, setCurrentAudioUri] = useState<string | null>(null);
   const isSwitchedToBackgroundRef = useRef(false);
+
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    transcript?: string | null;
+    missingDetails?: string | null;
+    message?: string | null;
+    type?: 'warning' | 'error' | 'info';
+    primaryButtonText?: string;
+    onPrimaryPress?: () => void;
+    secondaryButtonText?: string;
+    onSecondaryPress?: () => void;
+  }>({
+    visible: false,
+    title: 'Needs More Details',
+  });
 
   const handleSendActiveAudioToBackground = () => {
     if (!currentAudioUri) return;
@@ -167,7 +184,14 @@ export default function VoiceAIScreen() {
           } catch (apiError: any) {
             if (isSwitchedToBackgroundRef.current) return;
             console.warn('[VoiceAI] Backend API call failed:', apiError);
-            alert(apiError.message || 'Voice processing failed. Please try again.');
+            setAlertConfig({
+              visible: true,
+              type: 'error',
+              title: 'Voice Processing Failed',
+              message: apiError.message || 'Voice processing failed. Please check your connection and try again.',
+              primaryButtonText: 'Try Again',
+              onPrimaryPress: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+            });
             setIsProcessing(false);
             setRecording(null);
             setCurrentAudioUri(null);
@@ -178,16 +202,34 @@ export default function VoiceAIScreen() {
         if (isSwitchedToBackgroundRef.current) return;
 
         if (!parsedSuccessfully) {
-          if (transcript.trim().length > 0) {
-            const missingMsg = processingNotes 
-              ? `The AI heard: "${transcript}"\n\nMissing details: ${processingNotes}`
-              : `The AI heard: "${transcript}", but couldn't identify transaction details. Please specify both the amount and item/category (e.g. "Spent 500 on groceries").`;
-            alert(missingMsg);
-          } else {
-            alert('No audio was captured. Please speak clearly into the microphone and try again.');
-          }
           setIsProcessing(false);
           setRecording(null);
+
+          if (transcript.trim().length > 0) {
+            setAlertConfig({
+              visible: true,
+              type: 'warning',
+              title: 'Transaction Details Incomplete',
+              transcript: transcript,
+              missingDetails: processingNotes || 'No financial transaction mentioned. Please specify the item or category and the amount spent or earned.',
+              primaryButtonText: 'Try Speaking Again',
+              onPrimaryPress: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+              secondaryButtonText: 'Enter Manually',
+              onSecondaryPress: () => {
+                setAlertConfig(prev => ({ ...prev, visible: false }));
+                router.replace('/transaction/new');
+              },
+            });
+          } else {
+            setAlertConfig({
+              visible: true,
+              type: 'info',
+              title: 'No Audio Captured',
+              message: 'No speech was detected. Please speak clearly into the microphone and try again.',
+              primaryButtonText: 'Got It',
+              onPrimaryPress: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+            });
+          }
           return;
         }
 
@@ -203,7 +245,14 @@ export default function VoiceAIScreen() {
         }
 
         if (!perm.granted) {
-          alert('Microphone permission is required to use Voice AI. Please enable it in Settings.');
+          setAlertConfig({
+            visible: true,
+            type: 'warning',
+            title: 'Microphone Permission Needed',
+            message: 'Microphone permission is required to use Voice AI. Please enable it in Settings.',
+            primaryButtonText: 'OK',
+            onPrimaryPress: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+          });
           return;
         }
 
@@ -392,6 +441,21 @@ export default function VoiceAIScreen() {
             <Ionicons name="mic" size={40} color="#FFFFFF" />
           </TouchableOpacity>
         )}
+
+        {/* Custom Alert Box Modal */}
+        <CustomAlertModal
+          visible={alertConfig.visible}
+          onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+          title={alertConfig.title}
+          type={alertConfig.type}
+          transcript={alertConfig.transcript}
+          missingDetails={alertConfig.missingDetails}
+          message={alertConfig.message}
+          primaryButtonText={alertConfig.primaryButtonText}
+          onPrimaryPress={alertConfig.onPrimaryPress}
+          secondaryButtonText={alertConfig.secondaryButtonText}
+          onSecondaryPress={alertConfig.onSecondaryPress}
+        />
       </View>
     </GlassBackground>
   );

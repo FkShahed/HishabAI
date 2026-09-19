@@ -10,6 +10,7 @@ export interface ButtonProps extends TouchableOpacityProps {
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  textColor?: string;
 }
 
 export function Button({
@@ -19,6 +20,7 @@ export function Button({
   isLoading = false,
   leftIcon,
   rightIcon,
+  textColor,
   style,
   disabled,
   ...props
@@ -37,6 +39,7 @@ export function Button({
   };
 
   const getTextColor = () => {
+    if (textColor) return textColor;
     if (disabled) return colors.text.tertiary;
     switch (variant) {
       case 'primary': return '#FFFFFF';

@@ -323,6 +323,8 @@ interface UIState {
   userName: string;
   userPhotoUrl: string | null;
   dailyReminderEnabled: boolean;
+  reminderHour: number;
+  reminderMinute: number;
   sttModel: 'gemini' | 'whisper';
   transactionTitleMode: TransactionTitleMode;
 
@@ -338,6 +340,7 @@ interface UIState {
   setUserName: (name: string) => void;
   setUserPhotoUrl: (url: string | null) => void;
   setDailyReminderEnabled: (enabled: boolean) => void;
+  setReminderTime: (hour: number, minute: number) => void;
   setSttModel: (model: 'gemini' | 'whisper') => void;
   setTransactionTitleMode: (mode: TransactionTitleMode) => void;
   fetchAndSyncUserProfile: (userId: string) => Promise<void>;
@@ -357,6 +360,8 @@ export const useUIStore = create<UIState>()(
       userName: 'Guest User',
       userPhotoUrl: null,
       dailyReminderEnabled: false,
+      reminderHour: 20,
+      reminderMinute: 0,
       sttModel: 'whisper',
       transactionTitleMode: 'note',
 
@@ -426,6 +431,12 @@ export const useUIStore = create<UIState>()(
           FirebaseService.saveUserProfile(auth.currentUser.uid, { dailyReminderEnabled }).catch(() => {});
         }
       },
+      setReminderTime: (reminderHour, reminderMinute) => {
+        set({ reminderHour, reminderMinute });
+        if (auth?.currentUser) {
+          FirebaseService.saveUserProfile(auth.currentUser.uid, { reminderHour, reminderMinute }).catch(() => {});
+        }
+      },
       setSttModel: (sttModel) => set({ sttModel }),
       setTransactionTitleMode: (transactionTitleMode) => {
         set({ transactionTitleMode });
@@ -442,6 +453,8 @@ export const useUIStore = create<UIState>()(
           backgroundPreset: 'aurora',
           backgroundOpacity: 0.5,
           dailyReminderEnabled: false,
+          reminderHour: 20,
+          reminderMinute: 0,
           sttModel: 'whisper',
           transactionTitleMode: 'note',
         });
@@ -470,6 +483,8 @@ export const useUIStore = create<UIState>()(
             if (profile.backgroundPreset) set({ backgroundPreset: profile.backgroundPreset as BackgroundPreset });
             if (profile.backgroundOpacity !== undefined) set({ backgroundOpacity: profile.backgroundOpacity });
             if (profile.dailyReminderEnabled !== undefined) set({ dailyReminderEnabled: profile.dailyReminderEnabled });
+            if ((profile as any).reminderHour !== undefined) set({ reminderHour: (profile as any).reminderHour });
+            if ((profile as any).reminderMinute !== undefined) set({ reminderMinute: (profile as any).reminderMinute });
             if ((profile as any).transactionTitleMode) set({ transactionTitleMode: (profile as any).transactionTitleMode as TransactionTitleMode });
           } else if (auth.currentUser) {
             const initialName = hasCustomLocalName ? localName : (auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'User');
@@ -494,6 +509,8 @@ export const useUIStore = create<UIState>()(
         userName: state.userName,
         userPhotoUrl: state.userPhotoUrl,
         dailyReminderEnabled: state.dailyReminderEnabled,
+        reminderHour: state.reminderHour,
+        reminderMinute: state.reminderMinute,
         sttModel: state.sttModel,
         transactionTitleMode: state.transactionTitleMode,
       }),

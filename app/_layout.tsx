@@ -1,9 +1,11 @@
+import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { useThemeColors } from '../src/constants/colors';
 import { useUIStore } from '../src/store';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
+import { NotificationService } from '../src/services/notifications';
 
 // Must be called at app root so auth.expo.io deep link redirects are intercepted
 // immediately when Expo Go re-opens after Google OAuth.
@@ -25,6 +27,31 @@ export default function RootLayout() {
   const colors = useThemeColors();
   const theme = useUIStore((s) => s.theme);
   const isDark = theme === 'dark' || colors.bg.primary === '#080810';
+
+  useEffect(() => {
+    // 1. Initialize notification system (creates high-importance channel on Android)
+    NotificationService.init();
+
+    // 2. If user has daily reminder enabled, verify it's still registered with the OS
+    const checkReminderSync = async () => {
+      try {
+        const dailyEnabled = useUIStore.getState().dailyReminderEnabled;
+        if (dailyEnabled) {
+          const isScheduled = await NotificationService.isReminderScheduled();
+          if (!isScheduled) {
+            const reminderHour = useUIStore.getState().reminderHour ?? 20;
+            const reminderMinute = useUIStore.getState().reminderMinute ?? 0;
+            console.log(`[App] Syncing daily reminder on launch (${reminderHour}:${reminderMinute})...`);
+            await NotificationService.scheduleDailyReminder(reminderHour, reminderMinute);
+          }
+        }
+      } catch (e) {
+        console.warn('[App] Notification sync error:', e);
+      }
+    };
+
+    checkReminderSync();
+  }, []);
 
   return (
     <>

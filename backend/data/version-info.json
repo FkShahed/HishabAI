@@ -1,11 +1,11 @@
 {
-  "version": "4.1.1",
-  "buildNumber": 6,
-  "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v4.1.1/app-release.apk",
-  "releaseNotes": "• Fixed light mode draft box dark border and contrast styling on Android\n• Removed popup alert on draft approval for smooth one-tap save\n• Persistent Background AI Processing (Voice, Receipt, Text) with Drafts\n• Minimalist executive Home draft status banner with dynamic error alerts\n• Transaction title preference toggle (Note vs Category)\n• Interactive Day-of-Week spending pattern drilldown in Charts\n• Voice AI network error fix with fast Base64 payload\n• Performance optimizations and bug fixes",
+  "version": "4.1.2",
+  "buildNumber": 7,
+  "apkUrl": "https://github.com/FkShahed/HishabAI/releases/download/v4.1.2/app-release.apk",
+  "releaseNotes": "• Daily Reminder: Interactive custom digital time picker with hour/minute steppers, AM/PM toggle, and quick presets\n• Instant background notification scheduling and permission handling\n• Sleek, low-contrast reminder popup UI with modern neutral buttons\n• Custom alert modal system replacing generic system alerts for smoother feedback\n• Button component enhancement with flexible textColor support\n• Performance optimizations and UI stability improvements",
   "forceUpdate": false,
   "minVersion": "1.0.0",
-  "releaseDate": "2026-09-05",
+  "releaseDate": "2026-09-19",
   "fileSize": "97.1 MB",
-  "updatedAt": "2026-09-05T15:46:00.000Z"
+  "updatedAt": "2026-09-19T16:52:00.000Z"
 }
